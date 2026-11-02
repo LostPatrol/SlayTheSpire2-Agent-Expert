@@ -1,27 +1,38 @@
-# Model tools
+<!-- Read-only model tool architecture, extension points, and protocol boundaries. -->
+# 模型工具
 
-`model_tools.py` is the central read-only tool registry. `Provider.configure_tools()` binds the combat simulator, a callback returning this run's complete public memory events, the strategy library, and the controller's request-budget check. `Provider.decide()` binds each call to its current public observation. Tools cannot execute real game actions or select a replacement action.
+`src/sts2_agent/model_tools.py` 是只读工具注册入口。`Provider.configure_tools()` 注入推演器、同局公开历史、攻略库和请求预算检查；`Provider.decide()` 将调用绑定到当前公开观察。工具提供依据，最终动作仍由会话验证与执行。
 
-| Tool | Data source |
+## 工具与修改入口
+
+| 工具 | 数据来源与用途 |
 |---|---|
-| `simulation_evaluate` | `CombatSimulator.evaluate`: declared fixed candidate plans and existing episode simulation allowance |
-| `history_search` | Same-run experienced public events, newest first, complete records with pagination |
-| `wiki_lookup` | Frozen `KnowledgeBase.lookup_detailed`, including explicit related rules and rewards |
-| `wiki_search` | Frozen wiki search; incompatible game versions remain unavailable |
-| `strategy_search` | Complete attributed `StrategyLibrary` sections |
+| `simulation_evaluate` | `CombatSimulator.evaluate`：按声明的候选动作前缀比较假想后继，使用现有 episode 推演额度 |
+| `history_search` | 本局已发生的完整公开事件，倒序检索并分页 |
+| `wiki_lookup` | 冻结 `KnowledgeBase.lookup_detailed`，含显式关联规则与奖励 |
+| `wiki_search` | 冻结 Wiki 检索，不兼容版本不可用 |
+| `strategy_search` | `StrategyLibrary` 中有来源署名的完整攻略章节 |
 
-To add a tool, add its function schema and description in `TOOL_SPECS`, dispatch it in `ModelTools._dispatch`, and verify the public-data boundary with an offline test. The provider serially answers model-generated tool calls, then requests one final action JSON. At most six tool rounds and eight calls per batch are accepted. Every HTTP attempt, including tool continuations and retries, passes the ordinary cumulative request/time limits. Simulation paths use the simulator's existing persistent allowance.
+新增工具时，在 `TOOL_SPECS` 添加描述与参数 schema，在 `ModelTools._dispatch` 接入实现，并验证公开信息边界。请求与续接逻辑在 `provider.py`，知识与攻略实现分别在 `knowledge.py`、`strategies.py`，以上均位于 `src/sts2_agent/`。
 
-The provider emits `tool_call_started`, `tool_call_completed` and `tool_call_failed` with `tool_call_id`, name, complete arguments, result/error, timing and decision correlation. The session records these events for the dashboard and replay. A failed tool returns a visible error to the model; it does not silently replace the model's action.
+## 调用合同
 
-Repeated Wiki/strategy queries may reuse an exact result only within the same decision and public root, with `cache_hit` recorded. Simulation calls retain their budget effects, and history searches remain fresh. The static schema validators and frozen knowledge dependencies are cached independently of tool results.
+- 工具不能执行真实游戏动作，也不能在失败后替模型改选动作。推演使用假想世界，失败、截断和未完成结果应可见，不能将搜索价值解释为实战胜率。
+- Provider 串行处理工具调用，最后要求动作 JSON。工具续接、重试及格式修复均受会话累计请求与时间预算约束；推演额度另由推演器管理。
+- 会话记录 `tool_call_started`、`tool_call_completed`、`tool_call_failed`，以 `tool_call_id` 关联参数、结果、错误及决策。工具错误返回给模型，并保留在仪表盘和回放中。
+- Wiki/攻略结果仅在同一决策、同一公开根内复用，并标记 `cache_hit`。推演不能通过缓存绕过预算，历史检索保持当前结果。
+- thinking 启用且使用工具时，按 [DeepSeek 协议](https://api-docs.deepseek.com/guides/thinking_mode/) 保留续接所需完整 `reasoning_content`；`thinking=disabled` 不回传该字段，也不发送 `reasoning_effort`。未完成或已取消的流不派发工具，取消后的部分回答不进入上下文。
 
-`provider.compact_simulation_tool_results` enables tool-local sharing (omission means false). Daily `a0-simulation.json` enables it with `simulation_tool_compression_mode=static_and_states`. Mode `static` shares only repeated static modeling descriptions/card text at reviewed evaluator paths, keeping full live state inline. Mode `static_and_states` additionally shares complete, exactly equal sample states of at least 1024 characters. Different HP, costs, handles or modifiers produce distinct states; card IDs alone never merge instances. All definitions are complete original values with no generated nested references, using the existing `public-shared-values-v1` wrapper; every lookup resolves in this message alone. Sample metrics, statuses, failures and stop reasons remain inline in both modes. Encoding is used only when it saves at least 512 characters and 2% including overhead. Complete raw results remain in logs, and the profile version/mode bind cached-proposal identity. Reversibility does not prove identical model decisions.
+工具结果可共享重复内容，但必须能从当前请求完整还原，完整原始结果仍进入日志。新增结果字段时核对公开摘要与共享编码，不通过删除事实压缩输入。
 
-DeepSeek's [thinking-mode protocol](https://api-docs.deepseek.com/guides/thinking_mode/) requires complete `reasoning_content` on all retained assistant messages when tools are enabled. Tool mode therefore retains and resends that protocol field, including final-answer turns; it is not independently inserted as a fact or strategy. The previous no-tools path still omits reasoning from subsequent requests. Context reset discards tool messages, reasoning, public definitions and retained-event signatures together. An unfinished SSE stream never dispatches a tool.
+计划生命周期由会话管理：`build_plan` 跨房间，`scene_plan` 绑定场景；对话与共享定义在新战斗或新幕重建。自动单步流程在 `automatic.py` 中复用正常准入与回执链。
 
-Strategy balance is part of the fixed decision prompt: assess current/near-term threats before comparing growth and Boss needs, compare the immediate opportunity cost of preserved resources, and keep `build_plan` separate from the scene-limited `scene_plan`. Their lifecycle is managed by the session, not by tool dispatch.
+## 开发验证
 
-The session persists only the build summary across rooms. Scene tactics bind to the observed act, floor and room screen; card-selection/view/modal overlays remain in their originating room. A room change clears the tactic and provider conversation together, preserving public facts, map, budgets and logs. An omitted plan field keeps its value; an explicit empty string clears it. Unscoped legacy mixed plans are not revived on upgrade.
+在项目根目录运行相关离线检查：
 
-`automatic.py` handles public housekeeping one action at a time, using the same token, pause and receipt gate as model decisions. It opens card rewards but never chooses a card, and delegates potion collection when an empty slot has a known relic tradeoff. The room's accepted `scene_actions` distinguishes first shop entry from a closed inventory, preventing reopen loops. Set `automatic.enabled=false` to disable it.
+```powershell
+.venv/Scripts/python.exe -m pytest tests/test_model_tools.py tests/test_provider.py tests/test_provider_cancellation.py tests/test_strategy_scenes.py
+```
+
+推演语义见[推演与验证](combat-simulation.md)，输入与动作边界见[架构与扩展入口](architecture-decisions.md)。

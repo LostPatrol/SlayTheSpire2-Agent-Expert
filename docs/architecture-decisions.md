@@ -1,75 +1,63 @@
-<!-- Current architecture, execution invariants, and extension points. -->
+<!-- Development backbone, module ownership, and execution boundaries. -->
 # 架构与扩展入口
 
-游戏通过 C# 桥导出白名单公开状态；唯一 `DashboardSession` 负责观测、预算、决策、原子准入、回执与稳定后继。战斗与整局分别选择大模型、上游网络辅助或上游直接执行；上游直接模式不调用模型 API，不支持的局面明确暂停。FastAPI 网页与 CLI 共用会话，服务启动保持暂停。日常配置为 `configs/a0-simulation.json`。
+项目以一个 `DashboardSession` 控制真实游戏。CLI 与网页共用观测、预算、决策和动作账本，服务启动时保持暂停。战斗与非战斗可分别选择大模型、Mentor 辅助或 Mentor 直接执行；直接执行不调用模型 API，不支持的局面会明确暂停。
 
 ```mermaid
 flowchart LR
-  G[真实游戏] --> B[C# 公开桥]
-  B --> S[唯一 Python 会话]
-  S --> K[冻结知识与公开记忆]
-  S --> M[原 CombatMirror 与共享原生 Mentor 搜索]
-  K --> L[DeepSeek 决策与只读工具]
+  G[真实游戏] --> B[C# 游戏桥]
+  B --> S[DashboardSession]
+  S --> K[公开记忆与冻结知识]
+  S --> M[CombatMirror 与 Mentor]
+  K --> L[模型与只读工具]
   M --> L
-  M -->|上游直接模式| A
-  L --> A[单动作准入]
+  M -->|直接执行| A[单动作准入]
+  L --> A
   A --> B
-  B --> R[回执与稳定后继]
+  B --> R[动作回执与稳定后继]
   R --> S
 ```
 
-## 修改入口
+## 模块与修改入口
+
+表内 Python 文件位于 `src/sts2_agent/`；Mentor Rust 文件位于 `experiments/mentor_simulation/host/src/`。
 
 | 修改内容 | 入口 |
 |---|---|
-| 公开字段、操作权限、token | `vendor/STS2-Agent` 的 `FairDecisionProtocol`、`GameStateService`、`PublicRulesText` |
-| 原子执行与幂等回执 | 桥 `GameActionService`、`Router` |
-| HTTP、进程绑定、稳定等待 | `src/sts2_agent/bridge.py` |
-| 单会话、预算、暂停、恢复、提案 | `session.py`；CLI 包装 `controller.py` |
-| 当前动作验证、公开历史 | `public.py`、`public_history.py`、`rules.py` |
-| 模型请求、固定提示、上下文 | `provider.py`、`prompt_context.py`、`prompt_projection.py` |
-| 只读工具、知识、攻略 | `model_tools.py`、`knowledge.py`、`strategies.py` |
-| 公开记忆、指导、自动流程 | `memory.py`、`instructions.py`、`automatic.py` |
-| 镜像、动作坐标与推演协议 | `src/sts2_agent/mentor_runtime.py`、`experiments/mentor_simulation/host/src/public.rs`、`production.rs` |
-| 上游网络与决策适配 | 同目录 `networks.rs`、`mcts.rs`、`ppo.rs`；直接使用上游编码器/推理/策略入口 |
-| 上游及公开适配整局对照 | 同目录 `alignment.rs` 与 `experiments/solver_validation/` |
-| 推演 IPC、episode 额度、摘要 | `src/sts2_agent/simulation.py` |
-| 原生差分与批量验证 | `experiments/native_oracle/`、`experiments/combat_simulation/` |
-| 冻结基线与策略实验 | `experiments/policy_evaluation/benchmark.py` |
-| 启动、网页、日志、复盘 | `game_launcher.py`、`dashboard.py`、`web/`、`telemetry.py`、`replay.py` |
+| 游戏公开字段、token、权限及幂等执行 | `vendor/STS2-Agent/STS2AIAgent/Game/` 的 `FairDecisionProtocol`、`GameStateService`、`GameActionService`；`Server/Router.cs` |
+| 桥通信、进程身份与稳定等待 | `bridge.py` |
+| 会话、预算、暂停恢复、动作准入 | `session.py`；CLI 包装 `controller.py` |
+| 公开状态、历史与动作验证 | `public.py`、`public_history.py`、`rules.py` |
+| 模型请求、提示与输入投影 | `provider.py`、`prompt_context.py`、`prompt_projection.py`、`model_view.py` |
+| 只读工具、知识与攻略 | `model_tools.py`、`knowledge.py`、`strategies.py` |
+| 公开记忆、人工指导与自动单步流程 | `memory.py`、`instructions.py`、`automatic.py` |
+| 镜像与推演调用 | `mentor_runtime.py`、`simulation.py`；Rust `public.rs`、`production.rs` |
+| Mentor 网络与策略适配 | Rust `networks.rs`、`mcts.rs`、`ppo.rs` |
+| 网页、历史、遥测与回放 | `dashboard.py`、`web/`、`history.py`、`telemetry.py`、`replay.py` |
+| 游戏启动与全解锁存档检查 | `game_launcher.py`、`save_guard.py` |
+| 规则验证与策略对照 | `experiments/native_oracle/`、`experiments/solver_validation/`、`experiments/policy_evaluation/` |
 
-## 信息与执行边界
+新增功能优先放入对应模块，复用现有会话与动作链，不另建控制器或模拟器。
 
-模型只接收公开状态、同局公开记忆及冻结知识。公开以人类理论可观察或推断为准，内部字段不自动视为作弊。原 CombatMirror 可读取真实牌序、RNG 与机械状态校准已发生事件；这些数据保留在独立私域。公开搜索先克隆镜像，再在先验、过滤和预览之前运行 BeliefDraw；内部模式允许真值未来推演。只读工具不能执行真实动作。原生 DLL oracle 是离线测试参照。
+## 必须保持的合同
 
-桥在游戏线程中校验公开 token、当前合法句柄和操作权限，再执行动作；相同 action_id 返回原回执。Python 的预算与单写入账本不由桥代管。HTTP 失响应只查同一 PID/instance_id 的回执，不再次 POST。不得盲删 `local/pending-action.json` 绕过未明动作。
+- **公开信息。** 模型只接收白名单公开状态、同局公开记忆与冻结知识。公开以人类理论可观察或推断为准。新字段须同时维护白名单与公共 token，不能恢复原始状态兜底。
+- **镜像与搜索。** `CombatMirror` 可用真实牌序、RNG 和机械状态校准已发生事件，但真值留在私域。公开搜索在镜像副本上先运行 BeliefDraw，再做先验、过滤和预览。校准后的相等不证明此前预测正确；预测验证应比较校准前的结果。
+- **真实动作。** 桥在游戏线程校验 token、当前句柄与权限，相同 `action_id` 返回原回执。HTTP 结果未知时，只查同一 PID/instance 的回执，不能重复 POST 或删除 pending 记录绕过未明动作。
+- **稳定后继。** 提案生成后重新读取 settled 根；每个真实动作后重新观察。战斗需要 `Phase == Play`、合法权限及连续 ready 稳定帧，选择界面使用自己的权限。这不证明所有异步抽牌均已结束。
+- **暂停与取消。** 暂停或停止取消未完成模型生成，阻止重试、工具续接及格式修复；恢复重新生成被取消的决策，部分回答不进入上下文。已完成缓存重新校验，已提交游戏动作仍按原回执结算。
+- **持久性与预算。** 会话保存预算、公开记忆、缓存提案与在途动作。工具续接、重试和格式修复均计请求预算；暂停、取消及升级不退款。规则身份改变可废弃提案，但不能抹掉在途动作证据。
+- **职责分离。** 只读工具不能执行游戏动作；`automatic.py` 只处理已审核单步流程并走相同准入链。辅助模式保留模型选择，直接模式只执行当前首动作。推演失败须说明原因，不自动切换付费模型。
 
-策略完成后再次取得 settled 观测才准入，每个真实动作后重新观察。战斗要求原生玩家 `Phase == Play`、合法操作权限及连续两次 ready 稳定帧；选牌和弹窗沿用各自权限。保留保守稳定等待，不能将该条件宣称为所有延迟抽牌已经结束的证明。
+`build_plan` 跨房间保留，`scene_plan` 与对话绑定当前场景。后台动作审计使用冻结的动作前根，不改动作、不重发，也不覆盖后续决策展示。
 
-`automatic.py` 只处理已审核的公开单步流程，复用相同准入/回执链；卡牌奖励打开后交给配置的执行者，有药水取舍时不自动代选。上游模式按原策略顺序先处理满栏换药，再处理卡牌奖励；实际原生领取许可优先于空槽推断。SpeedX 已有独立配置，不能通过压缩稳定等待替代游戏加速。
+## 开发验证
 
-## 会话与持久性
+按修改范围选择检查，命令在项目根目录运行：
 
-`local/dashboard-session.json` 保存预算、公开记忆、指导、缓存提案与在途动作。普通暂停可接收完整响应，恢复时重新校验；重决策增加 epoch，但同一公开决策点沿用 episode。工具续接、重试和格式修复均消耗请求预算；暂停、停服及规则升级不退款。
+```powershell
+.venv/Scripts/python.exe -m pytest tests/test_session_controls.py tests/test_executor.py tests/test_public_history.py
+.venv/Scripts/python.exe -m pytest tests/test_mentor_runtime.py tests/test_simulation.py
+```
 
-未提交提案绑定提示/schema、知识快照、工具编码和实际推演规则身份。规则改变只废弃旧提案，保留在途原生证据。终局冻结耗时与结果，桥断连不覆盖终局。新局按标准启动器归档旧账本，沿用同一 clientId/profile 累积解锁。
-
-战斗计数器随本局持久化，同一 episode 重试复用；旧局仅按已见公开 episode 恢复并注明边界。PPO 续体计划随待提交动作保留，只有原生接受回执才提交；未知 POST 不提前改变策略上下文。满栏换药是丢弃、重新观察、领取三个阶段，不能假装成一个原生原子动作。
-
-动作提交、预算及生命周期变化仍立即持久化；推演、计算和工具开始展示合并账本写入，工具完成/失败仍持久化，完整事件日志保留。`stage-timings.jsonl` 记录阶段耗时和稳定轮询指标，计时为 inclusive，后台及父子阶段可能重叠，不能把各项总和当作墙钟耗时。
-
-## 模型、知识与推演
-
-Provider 生命周期内复用 HTTP 连接，停服关闭自有 client；注入 client 由调用方管理。工具 schema、静态知识依赖与文本解析复用缓存，同决策同根的 Wiki/攻略查询可复用；有预算副作用的推演和变化中的历史检索不按此方式缓存。
-
-默认 high、32轮/640000字符保持不变，当前消息完整发送。工具协议要求的完整 reasoning 随保留历史回传；无工具路径不回传推理。场景切换、重建上下文或指导失效时共同清理历史及共享定义。当前动作句柄直接展示，公开资料按值共享。日常配置启用推演工具静态文字及完全相同大状态的单层引用；指标、样本状态和失败原因直接展开，完整原始结果继续记录。状态定义不再引用其他定义；可以切到static模式只共享文字，或关闭主开关。仍无模型质量非劣证明。
-
-生产 Mentor 由 Python JSONL 服务持有原 CombatMirror，共享原生扩展直接克隆完整 PyCombatState 调用上游 MCTS 包装层，包含药水和多回合随机续局。已删除公开状态重建和历史后验恢复主路径，Mentor 仅提供原 MCTS。模型提案与自动搜索共用规则；读取权限与执行者独立配置。终局统计、截断估值和即时快照分开；辅助模式保留模型选择，直接模式只执行当前首动作，详见[推演与验证](combat-simulation.md)。
-
-已选动作预测默认在准入后异步审计冻结的动作前根，与原生执行重叠；不影响动作、不触发重发、不覆盖更新决策的展示。审计与下一次推演共享服务锁，因此不承诺完全消除推演延迟。
-
-## 当前限制
-
-保持单会话与独立模块，不引入多服务或多模型投票。已知顶底牌生命周期、隐藏 AI 计数、未审核复杂规则、完整版本兼容过滤及跨局经验仍有缺口。局部推演失败须说明原因；辅助模式可由模型继续判断，直接模式明确暂停，不自动改用付费 API。
-
-现有完整开发局包含自主败北与人工辅助终局，不能用于冻结版本胜率结论。新基线与实验工具区分真实运行身份、候选源码身份、公开题库和规则后继验证；具体部署及使用见[本机手册](local-runbook.md)。
+构建与运行见[本机手册](local-runbook.md)，推演合同与验证范围见[推演与验证](combat-simulation.md)，前端及工具扩展分别见[仪表盘开发](dashboard.md)和[模型工具](model-tools.md)。离线接口与规则检查通过，不等于实机整局覆盖或胜率证明。
