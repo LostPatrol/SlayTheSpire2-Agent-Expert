@@ -1,0 +1,700 @@
+diff --git a/sts2-rs/crates/sts2-content/src/run_bridge.rs b/sts2-rs/crates/sts2-content/src/run_bridge.rs
+index e38a5bc..f5f4390 100644
+--- a/sts2-rs/crates/sts2-content/src/run_bridge.rs
++++ b/sts2-rs/crates/sts2-content/src/run_bridge.rs
+@@ -466,6 +466,7 @@ pub fn enter_combat_from_roster(
+     state.is_elite = room_type == RoomType::Elite;
+     state.is_boss = room_type == RoomType::Boss;
+ 
++    state.combat_log.event_log.set_public_history_recording(rs.record_public_combat_history);
+     let _ = sts2_core::combat_loop::start_combat(&mut state);
+     let _ = sts2_core::combat_loop::start_player_turn(&mut state);
+ 
+diff --git a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+new file mode 100644
+index 0000000..323399b
+--- /dev/null
++++ b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+@@ -0,0 +1,174 @@
++//! Public combat-history recording through real card dispatch and the content factory.
++//! Recording is diagnostic only; metadata uses completed iteration tokens, not rule counters.
++
++use sts2_content::{cards::dispatch, monster_dispatch::MonsterSpawnArgs};
++use sts2_core::cards::{Card, CardId, CardType, TargetType};
++use sts2_core::potions::CharacterId;
++use sts2_core::runstate::{RoomType, RunState};
++use sts2_core::{CardUid, CombatState, MonsterKind, PowerKind};
++
++/// Build the same combat with recording on or off before its initial hooks and hand draw.
++fn factory(record: bool) -> CombatState {
++    dispatch::ensure_installed();
++    let mut run = RunState {
++        character_id: CharacterId::Ironclad,
++        current_hp: 80,
++        max_hp: 80,
++        record_public_combat_history: record,
++        ..RunState::default()
++    };
++    sts2_content::run_callbacks::populate_starter_deck(&mut run, CharacterId::Ironclad);
++    sts2_content::run_bridge::enter_combat_from_roster(
++        &run,
++        &[(MonsterKind::Nibbit, MonsterSpawnArgs::None, 9999)],
++        RoomType::Monster,
++    )
++}
++
++/// Keep a live opponent while controlling the actual played and auto-played instances.
++fn fixture() -> CombatState {
++    let mut state = factory(true);
++    state.player.hand.clear();
++    state.player.draw.clear();
++    state.player.discard.clear();
++    state.player.energy = 20;
++    state
++}
++
++/// Add one real skill instance, with replay metadata consumed by the original dispatcher.
++fn skill(state: &mut CombatState, id: CardId, replay: i32) -> CardUid {
++    let uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++    state.cards.push(Card {
++        uid,
++        card_id: id,
++        cost: 0,
++        card_type: CardType::Skill,
++        target_type: TargetType::Self_,
++        base_block: 5,
++        base_replay_count: replay,
++        ..Card::pod_defaults()
++    });
++    uid
++}
++
++/// Opt-in is visible from the initial draw, and cannot change game state or RNG.
++#[test]
++fn public_history_factory_records_from_birth_without_changing_the_world() {
++    let plain = factory(false);
++    let recorded = factory(true);
++    assert_eq!(plain, recorded);
++    assert!(plain.combat_log.event_log.public_history().is_none());
++    let history = recorded.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert!(recorded
++        .combat_log
++        .event_log
++        .rows()
++        .iter()
++        .any(|row| matches!(
++            row.entry,
++            sts2_core::event_log::EventLogEntry::CardDrawn { .. }
++        )));
++}
++
++/// Initial turn-start auto-plays are captured before the first externally chosen action.
++#[test]
++fn public_history_initial_turn_auto_play_is_not_lost() {
++    let mut state = fixture();
++    for _ in 0..6 {
++        let uid = skill(&mut state, CardId::DefendIronclad, 0);
++        state.player.draw.push(uid);
++    }
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Mayhem, 1);
++    state.phase = sts2_core::CombatPhase::Setup;
++    let _ = sts2_core::combat_loop::start_combat(&mut state);
++    let _ = sts2_core::combat_loop::start_player_turn(&mut state);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert!(history
++        .plays
++        .iter()
++        .any(|play| play.auto_played && play.first_in_series));
++}
++
++/// Base and Echo replays have separate finished entries and separate block iteration tokens.
++#[test]
++fn public_history_manual_base_and_echo_replays_have_independent_finished_tokens() {
++    let mut state = fixture();
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::EchoForm, 1);
++    let uid = skill(&mut state, CardId::DefendIronclad, 1);
++    state.player.hand.push(uid);
++    let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert_eq!(history.plays.len(), 3);
++    assert_eq!(history.blocks.len(), 3);
++    assert_eq!(
++        history
++            .plays
++            .iter()
++            .map(|p| p.first_in_series)
++            .collect::<Vec<_>>(),
++        vec![true, false, false]
++    );
++    for (play, block) in history.plays.iter().zip(&history.blocks) {
++        assert!(!play.auto_played);
++        assert_eq!(play.card_uid, uid);
++        assert_eq!(play.token, block.play_token);
++        assert_eq!(block.amount, 5);
++    }
++    assert_eq!(
++        state
++            .combat_log
++            .event_log
++            .rows()
++            .iter()
++            .filter(|row| matches!(
++                row.entry,
++                sts2_core::event_log::EventLogEntry::CardPlayFinished { .. }
++            ))
++            .count(),
++        3
++    );
++}
++
++/// Havoc finishes after its child; FeelNoPain's unpowered block is never card-attributed.
++#[test]
++fn public_history_nested_havoc_and_auto_replay_preserve_completion_order_and_block_props() {
++    let mut state = fixture();
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::FeelNoPain, 3);
++    let parent = skill(&mut state, CardId::Havoc, 0);
++    let child = skill(&mut state, CardId::DefendIronclad, 1);
++    state.player.hand.push(parent);
++    state.player.draw.push(child);
++    let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert_eq!(
++        history.plays.iter().map(|p| p.card_uid).collect::<Vec<_>>(),
++        vec![child, child, parent]
++    );
++    assert_eq!(
++        history
++            .plays
++            .iter()
++            .map(|p| p.auto_played)
++            .collect::<Vec<_>>(),
++        vec![true, true, false]
++    );
++    assert_eq!(
++        history
++            .plays
++            .iter()
++            .map(|p| p.first_in_series)
++            .collect::<Vec<_>>(),
++        vec![true, false, true]
++    );
++    assert_eq!(history.blocks.len(), 2);
++    assert_eq!(state.player.block, 13);
++    assert_eq!(history.blocks[0].play_token, history.plays[0].token);
++    assert_eq!(history.blocks[1].play_token, history.plays[1].token);
++}
+diff --git a/sts2-rs/crates/sts2-core/src/card_effects.rs b/sts2-rs/crates/sts2-core/src/card_effects.rs
+index e9c852f..cdfecc9 100644
+--- a/sts2-rs/crates/sts2-core/src/card_effects.rs
++++ b/sts2-rs/crates/sts2-core/src/card_effects.rs
+@@ -509,6 +509,7 @@ pub fn gain_block_player_with_props(state: &mut CombatState, base: i32, props: V
+         crate::event_log::flash_player_power(state, PowerKind::Fasten);
+     }
+     state.player.block = state.player.block.saturating_add(final_block);
++    crate::event_log::record_public_card_block(state, card_source, final_block);
+     // Event log (C# `BlockGainedEntry`), post-modify-chain like C#. Zero /
+     // negative grants record nothing, matching the `final_block > 0` gate the
+     // `after_block_gained` dispatch below uses.
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+index 6e1578f..600552d 100644
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -312,7 +312,9 @@ pub fn start_combat(state: &mut CombatState) -> StepResult {
+     // default is a structural no-op. Phase 6 splits the eight Python
+     // event lists into separate fields and this assignment becomes
+     // multi-line.
++    let public_history = state.combat_log.event_log.public_history().is_some();
+     state.combat_log = crate::TurnEvents::default();
++    if public_history { state.combat_log.event_log.begin_public_history(); }
+     // The reset above also clears the event log's opt-in flag, so re-assert it
+     // for the ONE caller that cannot re-arm per combat: `STS2_COMBAT_LOG=1`.
+     // Without this the env switch would print the first combat of a process
+@@ -7252,6 +7254,7 @@ pub fn play_card(state: &mut CombatState, hand_index: u8, target: Option<u8>) ->
+             false,
+             target,
+         );
++        crate::event_log::begin_public_play(state, card_uid, false, true);
+         // Same moment on the full event log (C# `CardPlayStartedEntry`), which
+         // ALSO opens the source frame every hit / block / power dispatched by
+         // this card attributes to — see `event_log::EventLog::track_source`.
+@@ -7950,6 +7953,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+     // Catastrophe) read it WITHOUT this still-in-flight parent. The replay
+     // loop below bumps once more per replay (each replay is its own C#
+     // `CardPlayFinished`). GoldAxe is the sole reader of this counter.
++    crate::event_log::finish_public_play(state, card_uid, false);
+     state.combat_log.player_card_plays_this_combat = state
+         .combat_log
+         .player_card_plays_this_combat
+@@ -8091,6 +8095,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         if multi_play_stops_v0111(state) {
+             break;
+         }
++        crate::event_log::begin_public_play(state, card_uid, false, false);
+         // C# `CardModel.OnPlayWrapper` fires `Hook.BeforeCardPlayed` once per
+         // play iteration (CardModel.cs:1496, inside the `i < playCount2` loop),
+         // so a duplicated/replayed card re-runs the FULL before-play dispatch:
+@@ -8158,6 +8163,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         // counter per replay to keep `player_card_plays_this_combat` equal to
+         // `History.CardPlaysFinished.Count` (the initial play was bumped once
+         // above before the effect dispatch).
++        crate::event_log::finish_public_play(state, card_uid, true);
+         state.combat_log.player_card_plays_this_combat = state
+             .combat_log
+             .player_card_plays_this_combat
+@@ -8250,6 +8256,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         // CardModel.cs:1898). The flash above stays: C# fires it from
+         // `GeneratePlayCount`, before the loop. No-op before v0.111.0.
+         if !multi_play_stops_v0111(state) {
++            crate::event_log::begin_public_play(state, card_uid, false, false);
+             // Re-run the FULL before-play dispatch per Echo replay (C# fires
+             // `Hook.BeforeCardPlayed` per play iteration) — re-arms Storm AND
+             // the Afterimage/SerpentForm/Oblivion/Strangle/Monologue snapshots
+@@ -8313,6 +8320,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+             // `CardPlayFinished` once per `i < playCount2`). Keep the
+             // combat-wide counter feeding GoldAxe's `CalculatedDamageVar`
+             // equal to `History.CardPlaysFinished.Count`.
++            crate::event_log::finish_public_play(state, card_uid, true);
+             state.combat_log.player_card_plays_this_combat = state
+                 .combat_log
+                 .player_card_plays_this_combat
+@@ -9813,6 +9821,7 @@ pub(crate) fn resolve_auto_played_card_with(
+         let energy = crate::cards::observational_energy_spent(inst);
+         let (id, up) = (inst.card_id, inst.upgraded);
+         record_play_into(&mut state.combat_log, id, up, energy, true, None);
++        crate::event_log::begin_public_play(state, top_uid, true, true);
+         crate::event_log::record(
+             state,
+             crate::event_log::EventLogEntry::CardPlayStarted {
+@@ -10355,6 +10364,7 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+     // `CardPlayFinished` unconditionally after `OnPlay`. Unplayable
+     // curses/status returned early above (C# `MoveToResultPileWithoutPlaying`
+     // records no `CardPlayFinished`), so they stay excluded.
++    crate::event_log::finish_public_play(state, top_uid, false);
+     state.combat_log.player_card_plays_this_combat = state
+         .combat_log
+         .player_card_plays_this_combat
+@@ -10500,6 +10510,7 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+             if multi_play_stops_v0111(state) {
+                 break;
+             }
++            crate::event_log::begin_public_play(state, top_uid, true, false);
+             // C# `CardModel.OnPlayWrapper` fires `Hook.BeforeCardPlayed` per
+             // play iteration (CardModel.cs:1496) for auto-plays too, so each
+             // replay of an auto-played card re-arms the Afterimage / SerpentForm
+@@ -10524,6 +10535,7 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+                 target_uid,
+             );
+             resolve_inline_auto_play_choices(state);
++            crate::event_log::finish_public_play(state, top_uid, true);
+             state.combat_log.player_card_plays_this_combat = state
+                 .combat_log
+                 .player_card_plays_this_combat
+diff --git a/sts2-rs/crates/sts2-core/src/event_log.rs b/sts2-rs/crates/sts2-core/src/event_log.rs
+index c999a66..5073f3e 100644
+--- a/sts2-rs/crates/sts2-core/src/event_log.rs
++++ b/sts2-rs/crates/sts2-core/src/event_log.rs
+@@ -50,12 +50,12 @@
+ //! Ironclad dealt 6 damage to Nibbit using Strike") is the workbench's job and
+ //! happens in Python, off the structured fields.
+ 
+-use crate::cards::CardId;
++use crate::cards::{CardId, CardType};
+ use crate::monsters::MonsterId;
+ use crate::orbs::OrbKind;
+ use crate::potions::{CharacterId, PotionKind};
+ use crate::powers::PowerKind;
+-use crate::Side;
++use crate::{CardUid, Side};
+ 
+ /// Hard cap on rows per combat. A long fight records a few thousand; the cap
+ /// only bites a pathological loop, and the overflow is COUNTED
+@@ -510,6 +510,49 @@ impl EventLogRow {
+     }
+ }
+ 
++/// Public completion metadata; UID joins the current visible instance without exposing hidden order.
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub struct PublicCompletedPlay {
++    pub token: u64,
++    pub card_uid: CardUid,
++    pub card_id: CardId,
++    pub card_type: CardType,
++    pub auto_played: bool,
++    pub first_in_series: bool,
++    pub round: u16,
++    pub side: Side,
++}
++
++/// A positive card-sourced player block gain, joined to completion by its iteration token.
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub struct PublicCardBlock {
++    pub play_token: u64,
++    pub amount: i32,
++    pub round: u16,
++    pub side: Side,
++}
++
++/// Opt-in public events from combat birth; unfinished token joins remain explicitly incomplete.
++#[derive(Clone, Debug, Default, PartialEq, Eq)]
++pub struct PublicHistory {
++    pub complete: bool,
++    pub plays: Vec<PublicCompletedPlay>,
++    pub blocks: Vec<PublicCardBlock>,
++    active: Vec<PublicCompletedPlay>,
++    next_token: u64,
++}
++
++impl PublicHistory {
++    /// Every exported block must refer to an actually completed iteration.
++    pub fn blocks_complete(&self) -> bool {
++        self.complete
++            && self
++                .blocks
++                .iter()
++                .all(|block| self.plays.iter().any(|play| play.token == block.play_token))
++    }
++}
++
+ /// The combat-scoped log itself. Lives on [`crate::TurnEvents`], so it is
+ /// cloned with the state and travels across threads.
+ #[derive(Clone, Debug, Default)]
+@@ -527,6 +570,8 @@ pub struct EventLog {
+     recording: bool,
+     /// Rows refused after [`MAX_ROWS`].
+     dropped: u32,
++    /// Absent on ordinary worlds and every search clone; shares this log's lifecycle.
++    public_history: Option<Box<PublicHistory>>,
+ }
+ 
+ /// Two states that differ only in their event log are the SAME state.
+@@ -550,7 +595,7 @@ impl EventLog {
+     #[must_use]
+     #[inline]
+     pub const fn recording(&self) -> bool {
+-        self.recording
++        self.recording || self.public_history.is_some()
+     }
+ 
+     /// Turn recording on/off. Turning it OFF keeps the rows already recorded;
+@@ -559,6 +604,28 @@ impl EventLog {
+         self.recording = on;
+     }
+ 
++    /// Request recording for the next start; late enabling never claims a complete history.
++    pub fn set_public_history_recording(&mut self, on: bool) {
++        if on {
++            self.public_history.get_or_insert_with(Default::default);
++        } else {
++            self.public_history = None;
++        }
++    }
++
++    /// Reset the requested public recorder at the actual combat-birth boundary.
++    pub(crate) fn begin_public_history(&mut self) {
++        self.public_history = Some(Box::new(PublicHistory {
++            complete: true,
++            ..PublicHistory::default()
++        }));
++    }
++
++    /// Read recorded public events; block joins may await a currently resolving card's finish.
++    pub fn public_history(&self) -> Option<&PublicHistory> {
++        self.public_history.as_deref()
++    }
++
+     /// The recorded rows, oldest first.
+     #[must_use]
+     pub fn rows(&self) -> &[EventLogRow] {
+@@ -585,6 +652,7 @@ impl EventLog {
+             && self.dropped == other.dropped
+             && self.open == other.open
+             && self.recording == other.recording
++            && self.public_history == other.public_history
+     }
+ 
+     /// Drop every row and reset the open-source stack, keeping the flag.
+@@ -592,6 +660,9 @@ impl EventLog {
+         self.rows.clear();
+         self.open.clear();
+         self.dropped = 0;
++        if let Some(history) = self.public_history.as_mut() {
++            **history = PublicHistory::default();
++        }
+     }
+ 
+     /// Silence and empty this log for a search rollout.
+@@ -601,6 +672,7 @@ impl EventLog {
+     /// nobody reads — pure allocation on the hottest path in the engine.
+     pub fn disarm_for_search(&mut self) {
+         self.recording = false;
++        self.public_history = None;
+         self.clear();
+     }
+ 
+@@ -613,11 +685,12 @@ impl EventLog {
+         entry: EventLogEntry,
+         player: Option<CharacterId>,
+     ) {
+-        if !self.recording {
++        if !self.recording() {
+             return;
+         }
+         if self.rows.len() >= MAX_ROWS {
+             self.dropped = self.dropped.saturating_add(1);
++            if let Some(history) = self.public_history.as_mut() { history.complete = false; }
+             return;
+         }
+         // A monster move is caused by nothing that precedes it, so it must not
+@@ -720,6 +793,118 @@ pub fn armed(state: &crate::CombatState) -> bool {
+     state.combat_log.event_log.recording()
+ }
+ 
++/// Observe one real play iteration; replay trace rows open their own nested source frame.
++pub(crate) fn begin_public_play(
++    state: &mut crate::CombatState,
++    uid: CardUid,
++    auto: bool,
++    first: bool,
++) {
++    if !armed(state) {
++        return;
++    }
++    let Some(card) = state.cards.get(uid.get() as usize - 1) else {
++        if let Some(history) = state.combat_log.event_log.public_history.as_mut() {
++            history.complete = false;
++        }
++        return;
++    };
++    let (id, kind, upgraded, energy) = (
++        card.card_id,
++        card.card_type,
++        card.upgraded,
++        crate::cards::observational_energy_spent(card),
++    );
++    if let Some(history) = state.combat_log.event_log.public_history.as_mut() {
++        let token = history.next_token;
++        history.next_token += 1;
++        history.active.push(PublicCompletedPlay {
++            token,
++            card_uid: uid,
++            card_id: id,
++            card_type: kind,
++            auto_played: auto,
++            first_in_series: first,
++            round: state.round,
++            side: state.side,
++        });
++    }
++    if !first {
++        record(
++            state,
++            EventLogEntry::CardPlayStarted {
++                card: id,
++                upgraded,
++                energy_spent: energy,
++                auto_played: auto,
++                target: None,
++            },
++        );
++    }
++}
++
++/// Observe actual completion at the same pin as the engine's completed-play update.
++pub(crate) fn finish_public_play(state: &mut crate::CombatState, uid: CardUid, replay: bool) {
++    if !armed(state) {
++        return;
++    }
++    let card = state
++        .cards
++        .get(uid.get() as usize - 1)
++        .map(|c| (c.card_id, c.card_type, c.upgraded));
++    if let Some(history) = state.combat_log.event_log.public_history.as_mut() {
++        if let Some(index) = history.active.iter().rposition(|play| play.card_uid == uid) {
++            let mut play = history.active.remove(index);
++            play.round = state.round;
++            play.side = state.side;
++            if let Some((id, kind, _)) = card {
++                play.card_id = id;
++                play.card_type = kind;
++            } else {
++                history.complete = false;
++            }
++            history.plays.push(play);
++        } else {
++            history.complete = false;
++        }
++    }
++    if replay {
++        if let Some((card, _, upgraded)) = card {
++            record(state, EventLogEntry::CardPlayFinished { card, upgraded });
++        }
++    }
++}
++
++/// Attribute only actual positive card-sourced block, not relic/power grants during a play.
++pub(crate) fn record_public_card_block(
++    state: &mut crate::CombatState,
++    source: Option<CardUid>,
++    amount: i32,
++) {
++    let Some(uid) = source.filter(|_| amount > 0) else {
++        return;
++    };
++    let Some(history) = state.combat_log.event_log.public_history.as_mut() else {
++        return;
++    };
++    let play = history
++        .active
++        .iter()
++        .rev()
++        .find(|play| play.card_uid == uid)
++        .or_else(|| history.plays.iter().rev().find(|play| play.card_uid == uid));
++    if let Some(play) = play {
++        history.blocks.push(PublicCardBlock {
++            play_token: play.token,
++            amount,
++            round: state.round,
++            side: state.side,
++        });
++    } else {
++        history.complete = false;
++    }
++}
++
+ /// Record `entry` against `state`'s current round/side. No-op when the log is
+ /// not recording.
+ pub fn record(state: &mut crate::CombatState, entry: EventLogEntry) {
+@@ -1001,4 +1186,67 @@ mod tests {
+         push(&mut l, strike());
+         assert!(l.rows().is_empty(), "disarmed stays disarmed");
+     }
++
++    /// A live unresolved block keeps its token; identical gains are not deduplicated.
++    #[test]
++    fn public_history_pending_block_join_and_duplicate_gains_are_explicit() {
++        let mut state = crate::CombatState::default();
++        let uid = CardUid::new(1).unwrap();
++        state.cards.push(crate::cards::Card {
++            uid,
++            card_id: CardId::DefendIronclad,
++            card_type: CardType::Skill,
++            ..crate::cards::Card::pod_defaults()
++        });
++        state
++            .combat_log
++            .event_log
++            .set_public_history_recording(true);
++        assert!(
++            !state
++                .combat_log
++                .event_log
++                .public_history()
++                .unwrap()
++                .complete,
++            "late enable is incomplete"
++        );
++        state.combat_log.event_log.begin_public_history();
++        begin_public_play(&mut state, uid, false, true);
++        record_public_card_block(&mut state, None, 7);
++        record_public_card_block(&mut state, Some(uid), 5);
++        record_public_card_block(&mut state, Some(uid), 5);
++        assert!(!state
++            .combat_log
++            .event_log
++            .public_history()
++            .unwrap()
++            .blocks_complete());
++        finish_public_play(&mut state, uid, false);
++        let history = state.combat_log.event_log.public_history().unwrap();
++        assert!(history.complete && history.blocks_complete());
++        assert_eq!(history.blocks.len(), 2);
++        assert_eq!(history.blocks[0].play_token, history.plays[0].token);
++        assert_eq!(history.blocks[1].play_token, history.plays[0].token);
++        state.combat_log.event_log.disarm_for_search();
++        assert!(state.combat_log.event_log.public_history().is_none());
++        assert!(!state.combat_log.event_log.recording());
++    }
++
++    /// A refused trace row never leaves a public-history export claiming completeness.
++    #[test]
++    fn public_history_row_overflow_is_incomplete() {
++        let mut log = EventLog::default();
++        log.begin_public_history();
++        for _ in 0..=MAX_ROWS {
++            log.push(
++                1,
++                Side::Player,
++                EventLogEntry::EnergySpent { amount: 1 },
++                None,
++            );
++        }
++        assert_eq!(log.dropped(), 1);
++        assert!(!log.public_history().unwrap().complete);
++    }
+ }
+diff --git a/sts2-rs/crates/sts2-core/src/run_manager.rs b/sts2-rs/crates/sts2-core/src/run_manager.rs
+index 02d0a11..d74c973 100644
+--- a/sts2-rs/crates/sts2-core/src/run_manager.rs
++++ b/sts2-rs/crates/sts2-core/src/run_manager.rs
+@@ -1010,6 +1010,11 @@ impl RunManager {
+         self.with_act1(acts[0])
+     }
+ 
++    /// Record public events from birth in future combats; leaves an already-started combat unchanged.
++    pub fn set_public_history_recording(&mut self, enabled: bool) {
++        self.run_state.record_public_combat_history = enabled;
++    }
++
+     /// Inject content-layer callbacks. Builder-style — chain after
+     /// [`Self::new`] / [`Self::with_ascension`]. Bead `sts2-rs-7kl4f`.
+     #[must_use]
+diff --git a/sts2-rs/crates/sts2-core/src/runstate.rs b/sts2-rs/crates/sts2-core/src/runstate.rs
+index bd91e0a..db18cac 100644
+--- a/sts2-rs/crates/sts2-core/src/runstate.rs
++++ b/sts2-rs/crates/sts2-core/src/runstate.rs
+@@ -1016,6 +1016,8 @@ pub struct PinnedActBoss {
+ 
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct RunState {
++    /// Diagnostic opt-in propagated before combat birth; never a game rule or policy input.
++    pub record_public_combat_history: bool,
+     /// Reward queue. The combat-end / rest-site / event-room reward
+     /// fan-out pushes onto this; the modify_* hook channels mutate it
+     /// in place; the run-loop drains it into `pending_choice` once the
+@@ -1953,6 +1955,7 @@ pub struct RunState {
+ impl Default for RunState {
+     fn default() -> Self {
+         Self {
++            record_public_combat_history: false,
+             pending_rewards: Vec::new(),
+             relic_rewards: Vec::new(),
+             pending_card_selects: Vec::new(),
+diff --git a/sts2-rs/crates/sts2-mcts/src/lib.rs b/sts2-rs/crates/sts2-mcts/src/lib.rs
+index a7fcdc2..85c0a57 100644
+--- a/sts2-rs/crates/sts2-mcts/src/lib.rs
++++ b/sts2-rs/crates/sts2-mcts/src/lib.rs
+@@ -7465,6 +7465,7 @@ mod tests {
+     fn tree_root_is_disarmed_even_when_the_live_state_records() {
+         let mut live = CombatState::default();
+         live.combat_log.event_log.set_recording(true);
++        live.combat_log.event_log.set_public_history_recording(true);
+         live.combat_log.event_log.push(
+             1,
+             sts2_core::Side::Player,
+@@ -7474,6 +7475,8 @@ mod tests {
+         assert_eq!(live.combat_log.event_log.rows().len(), 1);
+ 
+         let tree = MctsTree::new(live.clone(), false);
++        assert!(tree.root_state.combat_log.event_log.public_history().is_none());
++        assert!(live.combat_log.event_log.public_history().is_some());
+         assert!(
+             !tree.root_state.combat_log.event_log.recording(),
+             "the search must not inherit recording from the live state"
+

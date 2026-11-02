@@ -1,0 +1,2791 @@
+diff --git a/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs b/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs
+index 7b51e53..1feb461 100644
+--- a/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs
++++ b/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs
+@@ -115,6 +115,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-bench/benches/combat.rs b/sts2-rs/crates/sts2-bench/benches/combat.rs
+index aa66e3d..ac1e181 100644
+--- a/sts2-rs/crates/sts2-bench/benches/combat.rs
++++ b/sts2-rs/crates/sts2-bench/benches/combat.rs
+@@ -116,6 +116,7 @@ fn make_cultist_combat(seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs b/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs
+index 76c79de..abda797 100644
+--- a/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs
++++ b/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs
+@@ -106,6 +106,7 @@ fn make_cultist_combat(seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs b/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs
+index db70fd0..656ed86 100644
+--- a/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs
++++ b/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs
+@@ -97,6 +97,7 @@ fn make_power_rich_combat(seed: u64) -> CombatState {
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs b/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs
+index 275716c..3fb3d38 100644
+--- a/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs
++++ b/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs
+@@ -102,6 +102,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs b/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs
+index e176f09..24a95cf 100644
+--- a/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs
++++ b/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs
+@@ -86,6 +86,7 @@ fn make_state(seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+     enemy_uids.push(cultist_uid);
+diff --git a/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs b/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs
+index e110c75..34f2ed4 100644
+--- a/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs
++++ b/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs
+@@ -86,6 +86,7 @@ fn make_cultist_combat(seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs b/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs
+index de2329c..ca7344d 100644
+--- a/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs
++++ b/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs
+@@ -110,6 +110,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+     enemy_uids.push(nibbit_uid);
+diff --git a/sts2-rs/crates/sts2-bench/examples/common/mod.rs b/sts2-rs/crates/sts2-bench/examples/common/mod.rs
+index 5e00850..7d1cc61 100644
+--- a/sts2-rs/crates/sts2-bench/examples/common/mod.rs
++++ b/sts2-rs/crates/sts2-bench/examples/common/mod.rs
+@@ -339,6 +339,7 @@ pub fn build_ironclad_state_with_deck(
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let is_elite = matches!(enc.tier, EncounterTier::Elite | EncounterTier::Boss);
+diff --git a/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs b/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs
+index 6e36401..0395603 100644
+--- a/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs
++++ b/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs
+@@ -85,6 +85,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs b/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs
+index 8ed2d3a..6fc654a 100644
+--- a/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs
++++ b/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs
+@@ -3380,6 +3380,7 @@ fn build_combat_state(
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     CombatState {
+diff --git a/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs b/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs
+index 7508006..ad5b2ca 100644
+--- a/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs
++++ b/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs
+@@ -152,6 +152,7 @@ pub fn build_state_with_ascension(
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: smallvec::SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut state = CombatState {
+diff --git a/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs b/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
+index 516dee7..2a40dda 100644
+--- a/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
++++ b/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
+@@ -154,6 +154,7 @@ fn make_combat(seed: u64, idx: u8) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut state = CombatState {
+diff --git a/sts2-rs/crates/sts2-content/tests/act1_smoke.rs b/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
+index 4b1c9dd..283e34c 100644
+--- a/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
++++ b/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
+@@ -123,6 +123,7 @@ fn make_combat(seed: u64, monsters: &[(MonsterKind, MonsterSpawnArgs)]) -> Comba
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let mut state = CombatState {
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
+index b2e7533..1c5106e 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
+@@ -139,6 +139,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let enemy_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
+index 3aa3c1e..39227b5 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
+@@ -134,6 +134,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let enemy_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
+index 46f4739..3c778e9 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
+@@ -214,6 +214,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let enemy_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
+index 21fd07f..da2b418 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
+@@ -130,6 +130,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let enemy_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs b/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
+index 769c244..de91983 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
+@@ -297,6 +297,7 @@ fn build_state(fixture_initial: &Value, encounter: &str, seed: u64) -> CombatSta
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let enemy_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs b/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
+index 136e6d2..49717c9 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
+@@ -268,6 +268,7 @@ fn build_state(fixture_initial: &Value, encounter: &str, seed: u64) -> CombatSta
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let enemy_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-core/src/blindfold.rs b/sts2-rs/crates/sts2-core/src/blindfold.rs
+index 0a893cf..9687509 100644
+--- a/sts2-rs/crates/sts2-core/src/blindfold.rs
++++ b/sts2-rs/crates/sts2-core/src/blindfold.rs
+@@ -149,6 +149,10 @@ fn reseed_hidden_streams(state: &mut CombatState, seed: u64, salt: u64) {
+ /// `config.seed` (never from anything in `state`), exactly like
+ /// `blindfold_root`'s call site.
+ pub fn belief_root(state: &mut CombatState, seed: u64) {
++    crate::draw_knowledge::initialize_for_search(&mut state.player, &state.cards);
++    if state.player.draw_knowledge.as_ref().is_some_and(|k|!k.observed) {
++        crate::draw_knowledge::mark_unwitnessed_priority(&mut state.player);
++    }
+     canonicalize_unknown_middle(&mut state.player);
+     state.player.deferred_draw_order = true;
+     reseed_hidden_streams(state, seed, BELIEF_ROOT_STREAM_SALT);
+diff --git a/sts2-rs/crates/sts2-core/src/card_effects.rs b/sts2-rs/crates/sts2-core/src/card_effects.rs
+index 827d5b2..e9c852f 100644
+--- a/sts2-rs/crates/sts2-core/src/card_effects.rs
++++ b/sts2-rs/crates/sts2-core/src/card_effects.rs
+@@ -2234,6 +2234,7 @@ pub fn spawn_card_into_draw_pile_random(
+         let len = state.player.draw.len();
+         let idx = state.run_rng.shuffle.next_int(0, len as i32) as usize;
+         state.player.draw.insert(idx, uid);
++        crate::draw_knowledge::inserted_randomly(&mut state.player, uid);
+     }
+     fire_card_generation_listeners(state, uid, PileKind::Draw, added_by_player);
+     uid
+@@ -2762,6 +2763,7 @@ pub fn spawn_card_into_draw_pile_random_position(
+         let len = state.player.draw.len();
+         let idx = state.run_rng.shuffle.next_int(0, len as i32) as usize;
+         state.player.draw.insert(idx, uid);
++        crate::draw_knowledge::inserted_randomly(&mut state.player, uid);
+     }
+     fire_after_card_entered_combat(state, uid, PileKind::Draw, true);
+     // C# `AddGeneratedCardToCombat` fires `AfterCardGeneratedForCombat` on every
+@@ -3189,6 +3191,7 @@ pub fn move_card_to_pile(
+                     // Inclusive [0, len] — len+1 possible slots (true append).
+                     let idx = state.run_rng.combat_card_selection.next_int(0, len as i32) as usize;
+                     state.player.draw.insert(idx, uid);
++                    crate::draw_knowledge::inserted_randomly(&mut state.player, uid);
+                 }
+             } else {
+                 state.player.draw.insert(0, uid);
+diff --git a/sts2-rs/crates/sts2-core/src/cards.rs b/sts2-rs/crates/sts2-core/src/cards.rs
+index c485efa..df78b8b 100644
+--- a/sts2-rs/crates/sts2-core/src/cards.rs
++++ b/sts2-rs/crates/sts2-core/src/cards.rs
+@@ -1864,8 +1864,16 @@ fn pile_slice(player: &PlayerCombatState, pile: PileKind) -> &[CardUid] {
+ fn pop_index(player: &mut PlayerCombatState, pile: PileKind, idx: usize) -> CardUid {
+     match pile {
+         PileKind::Hand => player.hand.remove(idx),
+-        PileKind::Draw => player.draw.remove(idx),
+-        PileKind::Discard => player.discard.remove(idx),
++        PileKind::Draw => {
++            let uid = player.draw[idx];
++            crate::draw_knowledge::removed_from_draw(player, uid);
++            player.draw.remove(idx)
++        }
++        PileKind::Discard => {
++            let uid = player.discard[idx];
++            crate::draw_knowledge::removed_from_discard(player, uid);
++            player.discard.remove(idx)
++        }
+         PileKind::Exhaust => player.exhaust.remove(idx),
+         PileKind::Play => player.play.remove(idx),
+     }
+@@ -1988,6 +1996,9 @@ pub fn shuffle(player: &mut PlayerCombatState, rng: &mut CombatRng) {
+         crate::blindfold::canonicalize_unknown_middle(player);
+         return;
+     }
++    if crate::draw_knowledge::reshuffle_unknown(player, rng) {
++        return;
++    }
+     // Fast path: no pins -> identical to the legacy single-call shuffle.
+     if player.pinned_top.is_empty() && player.pinned_bottom.is_empty() {
+         rng.shuffle(player.draw.as_mut_slice());
+@@ -2078,8 +2089,11 @@ pub fn unknown_middle_uids(player: &PlayerCombatState) -> SmallVec<[CardUid; 32]
+ /// unchecked `draw.remove(0)` this replaces.
+ pub(crate) fn pop_next_card(player: &mut PlayerCombatState, rng: &mut CombatRng) -> CardUid {
+     if !player.deferred_draw_order {
+-        return player.draw.remove(0);
++        let uid = player.draw.remove(0);
++        crate::draw_knowledge::consumed_top(player, uid);
++        return uid;
+     }
++    crate::draw_knowledge::normalize(player);
+     // Staleness guard (final-review finding, bead `sts2-rs-ztl78`): a raw
+     // `draw.remove(pos)` elsewhere that bypasses this function (and forgets
+     // to call `unpin`) can leave a `pinned_top`/`pinned_bottom` entry whose
+@@ -2093,23 +2107,22 @@ pub(crate) fn pop_next_card(player: &mut PlayerCombatState, rng: &mut CombatRng)
+     player.pinned_top.retain(|uid| player.draw.contains(uid));
+     player.pinned_bottom.retain(|uid| player.draw.contains(uid));
+     if !player.pinned_top.is_empty() {
+-        return player.draw.remove(0);
++        let uid = player.draw.remove(0);
++        crate::draw_knowledge::consumed_top(player, uid);
++        return uid;
+     }
+     let bottom_len = player.pinned_bottom.len();
+     let middle_len = player.draw.len().saturating_sub(bottom_len);
+     if middle_len == 0 {
+         // Unknown segment exhausted; only the known-bottom stack remains.
+-        return player.draw.remove(0);
++        let uid = player.draw.remove(0);
++        crate::draw_knowledge::consumed_top(player, uid);
++        return uid;
+     }
+-    let idx = if middle_len == 1 {
+-        0
+-    } else {
+-        // Fresh RNG consumption per draw — the random choice is deferred to
+-        // HERE, never pre-committed by a shuffle. Removing from a sorted
+-        // sub-range preserves the sortedness of what remains.
+-        rng.next_int(0, (middle_len - 1) as i32) as usize
+-    };
+-    player.draw.remove(idx)
++    let idx = crate::draw_knowledge::next_unknown_index(player, rng);
++    let uid = player.draw.remove(idx);
++    crate::draw_knowledge::consumed_top(player, uid);
++    uid
+ }
+ 
+ /// Pop the PHYSICAL TOP card of a non-empty draw pile for an effect that
+@@ -2194,7 +2207,12 @@ pub(crate) fn peek_top_card_if(
+ ) -> Option<CardUid> {
+     let &top = player.draw.first()?;
+     if !player.deferred_draw_order {
+-        return pred(top).then_some(top);
++        let matches=pred(top);
++        if !matches && player.draw_knowledge.is_some()
++            && crate::draw_knowledge::possible_next(player).iter().copied().any(&pred) {
++            crate::draw_knowledge::ordered_query(player);
++        }
++        return matches.then_some(top);
+     }
+     // Same staleness sweep as `pop_next_card`: a stale pin must not make
+     // the top look known.
+@@ -2210,10 +2228,20 @@ pub(crate) fn peek_top_card_if(
+     if !player.draw[..middle_len].iter().any(|&uid| pred(uid)) {
+         return None;
+     }
+-    let idx = rng.next_int(0, (middle_len - 1) as i32) as usize;
++    if player.draw_knowledge.is_some()
++        && !crate::draw_knowledge::possible_next(player).iter().copied().any(&pred) {
++        return None;
++    }
++    let idx = crate::draw_knowledge::next_unknown_index(player, rng);
+     let uid = player.draw.remove(idx);
+     player.draw.insert(0, uid);
+-    pin_top(player, uid);
++    // This is a sampled peek, not a real card move; retain its band membership.
++    player.pinned_bottom.retain(|u| *u != uid);
++    player.pinned_top.retain(|u| *u != uid);
++    player.pinned_top.insert(0, uid);
++    if !pred(uid) {
++        crate::draw_knowledge::ordered_query(player);
++    }
+     pred(uid).then_some(uid)
+ }
+ 
+@@ -2240,8 +2268,9 @@ pub(crate) fn drop_sampled_top_pin(player: &mut PlayerCombatState, uid: CardUid)
+         return;
+     }
+     player.draw.remove(0);
+-    unpin(player, uid);
+-    insert_into_unknown_sorted(player, uid);
++    player.pinned_top.retain(|u| *u != uid);
++    player.draw.push(uid);
++    crate::blindfold::canonicalize_unknown_middle(player);
+ }
+ 
+ /// Remove and return the FIRST draw-pile card, counting from the physical
+@@ -2263,6 +2292,9 @@ pub(crate) fn pop_first_card_matching(
+     rng: &mut CombatRng,
+     pred: impl Fn(CardUid) -> bool,
+ ) -> Option<CardUid> {
++    if player.draw_knowledge.is_some() && player.draw.iter().copied().any(&pred) {
++        crate::draw_knowledge::ordered_query(player);
++    }
+     let idx = if player.deferred_draw_order {
+         player.pinned_top.retain(|uid| player.draw.contains(uid));
+         player.pinned_bottom.retain(|uid| player.draw.contains(uid));
+@@ -2289,6 +2321,7 @@ pub(crate) fn pop_first_card_matching(
+         player.draw.iter().position(|&uid| pred(uid))?
+     };
+     let uid = player.draw.remove(idx);
++    crate::draw_knowledge::removed_from_draw(player, uid);
+     unpin(player, uid);
+     Some(uid)
+ }
+@@ -2311,6 +2344,8 @@ pub(crate) fn pop_first_card_matching(
+ /// function unconditionally inserts sorted (it has no "legacy" branch of
+ /// its own).
+ pub(crate) fn insert_into_unknown_sorted(player: &mut PlayerCombatState, uid: CardUid) {
++    crate::draw_knowledge::removed_from_discard(player, uid);
++    crate::draw_knowledge::inserted_randomly(player, uid);
+     // Stale-pin sweep FIRST — same retain-against-draw sweep
+     // [`crate::blindfold::canonicalize_unknown_middle`] and [`shuffle`]
+     // perform. Without it, a pin whose card left the pile WITHOUT an
+@@ -2426,6 +2461,8 @@ fn find_card(cards: &CardStore, uid: CardUid) -> Option<&Card> {
+ /// from either the top or bottom pin list before inserting at the
+ /// front of `pinned_top`.
+ pub fn pin_top(player: &mut PlayerCombatState, uid: CardUid) {
++    crate::draw_knowledge::removed_from_draw(player, uid);
++    crate::draw_knowledge::removed_from_discard(player, uid);
+     player.pinned_top.retain(|u| *u != uid);
+     player.pinned_bottom.retain(|u| *u != uid);
+     player.pinned_top.insert(0, uid);
+@@ -2435,6 +2472,8 @@ pub fn pin_top(player: &mut PlayerCombatState, uid: CardUid) {
+ /// [`pin_top`] for Forethought-style "insert at bottom of draw"
+ /// semantics. Bead `sts2-rs-o6xw`.
+ pub fn pin_bottom(player: &mut PlayerCombatState, uid: CardUid) {
++    crate::draw_knowledge::removed_from_draw(player, uid);
++    crate::draw_knowledge::removed_from_discard(player, uid);
+     player.pinned_top.retain(|u| *u != uid);
+     player.pinned_bottom.retain(|u| *u != uid);
+     player.pinned_bottom.insert(0, uid);
+@@ -2444,6 +2483,9 @@ pub fn pin_bottom(player: &mut PlayerCombatState, uid: CardUid) {
+ /// drawn / moved between piles so stale pins don't survive past
+ /// their card's tenure in the draw pile. Bead `sts2-rs-o6xw`.
+ pub fn unpin(player: &mut PlayerCombatState, uid: CardUid) {
++    if player.draw_knowledge.is_some() && !player.draw.contains(&uid) {
++        crate::draw_knowledge::removed_from_draw(player, uid);
++    }
+     // Early-out: called once per card drawn (~hundreds of thousands of
+     // times per MCTS search) but pins are rare — skip the two `retain`
+     // walks entirely in the overwhelmingly common no-pins case.
+@@ -2468,11 +2510,8 @@ pub fn unpin(player: &mut PlayerCombatState, uid: CardUid) {
+ ///     fire_after_shuffle(self)  # hook firing deferred to a later bead
+ /// ```
+ ///
+-/// Phase 1 leaves the `apply_enchantment_shuffle_order` call as a no-op
+-/// (no enchantments in scope) and intentionally does not fire the
+-/// `after_shuffle` hook here — hook wiring lands in P1-3 / P2-x once
+-/// `hooks.rs` exposes a typed dispatcher. The TODO is tracked in the
+-/// downstream parity bead (sts2-rs-yr4).
++/// PerfectFit receiver moves run here before the first draw. State-aware
++/// callers still own the subsequent relic/power `after_shuffle` notifications.
+ ///
+ /// This helper is called from [`draw`] when the draw pile runs dry mid-draw
+ /// and the discard pile is non-empty. It is also exposed publicly because
+@@ -2774,6 +2813,7 @@ pub fn discard_pile_into_draw_pile_signaling(
+     if !player.draw.is_empty() || player.discard.is_empty() {
+         return false;
+     }
++    let priority = crate::draw_knowledge::prepare_shuffle(player, cards);
+     emit_pile_trace(player, cards, "shuf", rng.counter(), None);
+     // Bead `sts2-rs-o6xw`: a true reshuffle scrambles all knowledge of
+     // draw-pile position. Drop any lingering pins before refilling so
+@@ -2814,7 +2854,10 @@ pub fn discard_pile_into_draw_pile_signaling(
+     // the tied run lands at the C# slot.
+     presort_draw_for_reshuffle(player, cards);
+     shuffle(player, rng);
+-    // Phase 6+: apply_enchantment_shuffle_order(state.draw, is_initial_shuffle=False)
++    let mut draw = std::mem::take(&mut player.draw);
++    crate::draw_knowledge::apply_shuffle(player, &mut draw, priority);
++    player.draw = draw;
++    // PerfectFit was applied above while its pre-shuffle receiver order was available.
+     // Bead `sts2-rs-jlc`: the caller now fires the `after_shuffle`
+     // relic-bus channel based on the returned signal.
+     true
+@@ -2843,6 +2886,7 @@ pub fn shuffle_draw_and_discard(
+     cards: &CardStore,
+     rng: &mut CombatRng,
+ ) {
++    let priority = crate::draw_knowledge::prepare_shuffle(player, cards);
+     emit_pile_trace(player, cards, "shuf", rng.counter(), None);
+     // A full shuffle scrambles all draw-pile position knowledge.
+     player.pinned_top.clear();
+@@ -2853,6 +2897,9 @@ pub fn shuffle_draw_and_discard(
+     // same C# `StableShuffle` -> `list.Sort()` as the auto-reshuffle.
+     presort_draw_for_reshuffle(player, cards);
+     shuffle(player, rng);
++    let mut draw = std::mem::take(&mut player.draw);
++    crate::draw_knowledge::apply_shuffle(player, &mut draw, priority);
++    player.draw = draw;
+ }
+ 
+ /// Number of shuffles that occurred during the most recent
+@@ -5395,6 +5442,7 @@ mod tests {
+     fn deferred_player_with_draw(order: &[u32]) -> PlayerCombatState {
+         PlayerCombatState {
+             deferred_draw_order: true,
++            draw_knowledge: None,
+             ..player_with_draw(order)
+         }
+     }
+@@ -5914,6 +5962,7 @@ mod tests {
+         let mut p = PlayerCombatState {
+             discard: [5u32, 3, 1, 4, 2].into_iter().map(uid).collect(),
+             deferred_draw_order: true,
++            draw_knowledge: None,
+             ..PlayerCombatState::default()
+         };
+         let cards: CardStore = (1..=5).map(sample_card).collect();
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+index d851767..6e1578f 100644
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -291,6 +291,8 @@ pub fn start_combat(state: &mut CombatState) -> StepResult {
+     // (those collections start empty) but keeps the canonical entry
+     // point. Determinism is preserved: identical seeds yield identical
+     // draw orderings.
++    crate::draw_knowledge::initialize_for_search(&mut state.player,&state.cards);
++    crate::draw_knowledge::clear_priority(&mut state.player);
+     crate::cards::shuffle(&mut state.player, &mut state.run_rng.shuffle);
+ 
+     // Bead `sts2-rs-d03` Phase 1: ensure the player has a unified
+diff --git a/sts2-rs/crates/sts2-core/src/draw_knowledge.rs b/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
+new file mode 100644
+index 0000000..b8adb55
+--- /dev/null
++++ b/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
+@@ -0,0 +1,1147 @@
++//! PerfectFit receiver order and public draw-order knowledge.
++//! Priority bands have a known order; members of one band remain unordered.
++//! Unsupported conditional orders stop belief search instead of inventing ranks.
++
++use crate::cards::{Card, EnchantmentId};
++use crate::dotnet_rng::Rng;
++use crate::{CardUid, PlayerCombatState};
++use smallvec::SmallVec;
++
++/// A nonterminal limitation of the finite draw-order representation.
++#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
++pub enum UnsupportedDrawOrder {
++    UnwitnessedPriority,
++    NonTopRemovalAfterInsertion,
++    ConditionalOrderQuery,
++    InsertedPerfectFitReshuffle,
++    UnknownDiscardInsertion,
++    MissingPreactionSnapshot,
++}
++
++impl UnsupportedDrawOrder {
++    /// Decode a persisted diagnostic without treating an unknown code as supported.
++    pub fn from_code(code: &str) -> Option<Self> {
++        [
++            Self::UnwitnessedPriority,
++            Self::NonTopRemovalAfterInsertion,
++            Self::ConditionalOrderQuery,
++            Self::InsertedPerfectFitReshuffle,
++            Self::UnknownDiscardInsertion,
++            Self::MissingPreactionSnapshot,
++        ]
++        .into_iter()
++        .find(|r| r.code() == code)
++    }
++    /// Stable diagnostic identity, separate from terminal or depth cutoffs.
++    pub const fn code(self) -> &'static str {
++        match self {
++            Self::UnwitnessedPriority => "perfect_fit_priority_unwitnessed",
++            Self::NonTopRemovalAfterInsertion => "priority_non_top_removal_after_insertion",
++            Self::ConditionalOrderQuery => "priority_conditional_order_query",
++            Self::InsertedPerfectFitReshuffle => "priority_inserted_perfect_fit_reshuffle",
++            Self::UnknownDiscardInsertion => "priority_unknown_discard_insertion",
++            Self::MissingPreactionSnapshot => "priority_cutoff_without_preaction_snapshot",
++        }
++    }
++}
++
++/// Optional public order constraints, including PerfectFit and certified top/bottom placements.
++#[derive(Clone, Debug, Default, PartialEq, Eq)]
++pub struct DrawKnowledge {
++    /// A real initial shuffle or explicit public certificate established this draw law.
++    pub observed: bool,
++    /// Earlier bands precede later bands; one band's internal order is unknown.
++    pub groups: Vec<SmallVec<[CardUid; 4]>>,
++    /// Uniform random-position insertions interleave with the original base.
++    pub inserted: SmallVec<[CardUid; 4]>,
++    /// Tracks base removals that would require a richer conditional posterior.
++    pub base: SmallVec<[CardUid; 32]>,
++    /// Public discard chronology: outer order is known, inner order is not.
++    pub discard_groups: Vec<SmallVec<[CardUid; 4]>>,
++    /// Low-level shuffle already applied the hook before any subsequent draw.
++    pub prepared: bool,
++    /// Honest-search cutoff reason; never a game-terminal marker.
++    pub unsupported: Option<UnsupportedDrawOrder>,
++}
++
++/// Allocate knowledge only for the rare enchanted-card path.
++fn knowledge_mut(player: &mut PlayerCombatState) -> &mut DrawKnowledge {
++    player.draw_knowledge.get_or_insert_with(Default::default)
++}
++
++/// Initialize rollback coverage even when the first priority is created mid-action.
++pub fn initialize_for_search(player: &mut PlayerCombatState, cards: &[Card]) {
++    if cards
++        .iter()
++        .any(|c| c.has_enchantment(EnchantmentId::PerfectFit))
++    {
++        let _ = knowledge_mut(player);
++    }
++}
++
++/// Mark the aggregate root discard order as unknown, without reading a private order.
++pub fn set_unknown_discard(player: &mut PlayerCombatState, cards: &[Card]) {
++    initialize_for_search(player, cards);
++    if player.draw_knowledge.is_some() {
++        let discard: SmallVec<[CardUid; 4]> = player.discard.iter().copied().collect();
++        knowledge_mut(player).discard_groups = if discard.is_empty() {
++            vec![]
++        } else {
++            vec![discard]
++        };
++    }
++}
++
++/// Install only publicly certified bands; a singleton alone certifies an exact rank.
++pub fn set_priority_groups(
++    player: &mut PlayerCombatState,
++    groups: Vec<Vec<CardUid>>,
++) -> Result<(), &'static str> {
++    let mut seen = SmallVec::<[CardUid; 32]>::new();
++    for uid in groups.iter().flatten() {
++        if !player.draw.contains(uid) || seen.contains(uid) {
++            return Err("priority groups must contain distinct cards currently in draw");
++        }
++        seen.push(*uid);
++    }
++    let base = player.draw.clone();
++    let knowledge = knowledge_mut(player);
++    knowledge.groups = groups
++        .into_iter()
++        .filter(|g| !g.is_empty())
++        .map(|g| g.into_iter().collect())
++        .collect();
++    knowledge.base = base;
++    knowledge.inserted.clear();
++    knowledge.unsupported = None;
++    knowledge.prepared = false;
++    knowledge.observed = true;
++    normalize(player);
++    Ok(())
++}
++
++/// Validate a set of public group members against a single physical pile.
++fn validate_groups(groups: &[Vec<CardUid>], pile: &[CardUid]) -> Result<(), &'static str> {
++    let mut seen = SmallVec::<[CardUid; 32]>::new();
++    for uid in groups.iter().flatten() {
++        if !pile.contains(uid) || seen.contains(uid) {
++            return Err("group members must be distinct and in the named pile");
++        }
++        seen.push(*uid);
++    }
++    Ok(())
++}
++
++/// Install explicit free insertions without sampling their hidden physical slots.
++pub fn set_random_insertions(
++    player: &mut PlayerCombatState,
++    inserted: Vec<CardUid>,
++) -> Result<(), &'static str> {
++    validate_groups(&[inserted.clone()], &player.draw)?;
++    if player.draw_knowledge.as_ref().is_some_and(|k| {
++        inserted
++            .iter()
++            .any(|u| k.groups.iter().any(|g| g.contains(u)))
++    }) {
++        return Err("random insertions must not overlap priority bands");
++    }
++    let base = player
++        .draw
++        .iter()
++        .copied()
++        .filter(|u| !inserted.contains(u))
++        .collect();
++    let k = knowledge_mut(player);
++    k.inserted = inserted.into_iter().collect();
++    k.base = base;
++    normalize(player);
++    Ok(())
++}
++
++/// Preserve certified discard chronology; unknown groups remain internally unordered.
++pub fn set_discard_groups(
++    player: &mut PlayerCombatState,
++    groups: Vec<Vec<CardUid>>,
++) -> Result<(), &'static str> {
++    validate_groups(&groups, &player.discard)?;
++    knowledge_mut(player).discard_groups = groups
++        .into_iter()
++        .filter(|g| !g.is_empty())
++        .map(|g| g.into_iter().collect())
++        .collect();
++    Ok(())
++}
++
++/// Install one complete public certificate without borrowing any materialized hidden order.
++pub fn set_root_knowledge(
++    player: &mut PlayerCombatState,
++    groups: Vec<Vec<CardUid>>,
++    inserted: Vec<CardUid>,
++    discard_groups: Vec<Vec<CardUid>>,
++) -> Result<(), &'static str> {
++    validate_groups(&groups, &player.draw)?;
++    validate_groups(&[inserted.clone()], &player.draw)?;
++    validate_groups(&discard_groups, &player.discard)?;
++    if inserted
++        .iter()
++        .any(|u| groups.iter().any(|g| g.contains(u)))
++    {
++        return Err("random insertions must not overlap priority bands");
++    }
++    set_priority_groups(player, groups)?;
++    set_random_insertions(player, inserted)?;
++    set_discard_groups(player, discard_groups)?;
++    normalize(player);
++    Ok(())
++}
++
++/// An observed initial shuffle carries no PerfectFit priority.
++pub fn clear_priority(player: &mut PlayerCombatState) {
++    if let Some(k) = player.draw_knowledge.as_mut() {
++        k.groups.clear();
++        k.base.clear();
++        k.inserted.clear();
++        k.prepared = false;
++        k.unsupported = None;
++        k.observed = true;
++    }
++}
++
++/// Preserve an explicit root information gap instead of treating it as uniform draw.
++pub fn mark_unwitnessed_priority(player: &mut PlayerCombatState) {
++    knowledge_mut(player).unsupported = Some(UnsupportedDrawOrder::UnwitnessedPriority);
++}
++
++/// Read the belief cutoff reason; materialized game rules never consult it.
++pub fn unsupported_reason(player: &PlayerCombatState) -> Option<&'static str> {
++    player
++        .draw_knowledge
++        .as_ref()
++        .and_then(|k| k.unsupported)
++        .map(|r| r.code())
++}
++
++/// Record a public-belief limitation; materialized rules ignore the marker.
++pub fn mark_unsupported(player: &mut PlayerCombatState, reason: UnsupportedDrawOrder) {
++    let _ = knowledge_mut(player).unsupported.get_or_insert(reason);
++}
++
++/// Remove stale memberships and detect unobserved non-top base removals.
++pub fn normalize(player: &mut PlayerCombatState) {
++    let Some(k) = player.draw_knowledge.as_mut() else {
++        return;
++    };
++    // One unconstrained band covering the whole base plus uniform insertions
++    // is simply an ordinary uniform pile, not a PerfectFit ordering constraint.
++    let uniform_base = k.groups.len() == 1
++        && k.base.iter().all(|uid| player.draw.contains(uid))
++        && player
++            .draw
++            .iter()
++            .filter(|uid| {
++                !player.pinned_top.contains(uid)
++                    && !player.pinned_bottom.contains(uid)
++                    && !k.inserted.contains(uid)
++            })
++            .all(|uid| k.groups[0].contains(uid));
++    if uniform_base {
++        k.groups.clear();
++        k.base.clear();
++        k.inserted.clear();
++    }
++    if !k.inserted.is_empty() && k.base.iter().any(|uid| !player.draw.contains(uid)) {
++        let _ = k
++            .unsupported
++            .get_or_insert(UnsupportedDrawOrder::NonTopRemovalAfterInsertion);
++    }
++    k.base.retain(|uid| player.draw.contains(uid));
++    k.inserted.retain(|uid| player.draw.contains(uid));
++    for group in &mut k.groups {
++        group.retain(|uid| player.draw.contains(uid));
++    }
++    k.groups.retain(|g| !g.is_empty());
++    for group in &mut k.discard_groups {
++        group.retain(|uid| player.discard.contains(uid));
++    }
++    k.discard_groups.retain(|g| !g.is_empty());
++    if k.groups.is_empty() {
++        k.base.clear();
++        k.inserted.clear();
++    }
++}
++
++/// Forget a genuinely consumed top card without creating an unsupported removal.
++pub fn consumed_top(player: &mut PlayerCombatState, uid: CardUid) {
++    if let Some(k) = player.draw_knowledge.as_mut() {
++        k.base.retain(|u| *u != uid);
++        k.inserted.retain(|u| *u != uid);
++        for group in &mut k.groups {
++            group.retain(|u| *u != uid);
++        }
++        k.groups.retain(|g| !g.is_empty());
++    }
++}
++
++/// A directed removal is safe until random insertions introduce rank information.
++pub fn removed_from_draw(player: &mut PlayerCombatState, uid: CardUid) {
++    let unsupported = player
++        .draw_knowledge
++        .as_ref()
++        .is_some_and(|k| !k.inserted.is_empty() && k.base.contains(&uid));
++    if unsupported {
++        mark_unsupported(player, UnsupportedDrawOrder::NonTopRemovalAfterInsertion);
++    }
++    consumed_top(player, uid);
++}
++
++/// A card leaving the root's unordered discard cannot inherit that old membership.
++pub fn removed_from_discard(player: &mut PlayerCombatState, uid: CardUid) {
++    if let Some(k) = player.draw_knowledge.as_mut() {
++        for group in &mut k.discard_groups {
++            group.retain(|u| *u != uid);
++        }
++        k.discard_groups.retain(|g| !g.is_empty());
++    }
++}
++
++/// Uniform random insertion adds a free interleaving card, not another base member.
++pub fn inserted_randomly(player: &mut PlayerCombatState, uid: CardUid) {
++    if !player.pinned_top.is_empty() || !player.pinned_bottom.is_empty() {
++        // The legacy sorted-middle insert preserves pins. Do not silently
++        // reinterpret that helper's layout as a full-pile random insertion.
++        mark_unsupported(player, UnsupportedDrawOrder::ConditionalOrderQuery);
++    }
++    if let Some(k) = player.draw_knowledge.as_mut() {
++        if !k.groups.is_empty() && !k.inserted.contains(&uid) {
++            k.inserted.push(uid);
++        }
++    }
++}
++
++/// An ordered query can expose constraints this finite representation cannot retain.
++pub fn ordered_query(player: &mut PlayerCombatState) {
++    if player
++        .draw_knowledge
++        .as_ref()
++        .is_some_and(|k| !k.groups.is_empty())
++    {
++        mark_unsupported(player, UnsupportedDrawOrder::ConditionalOrderQuery);
++    }
++}
++
++/// Observable support of the next draw; this does not select or expose a hidden rank.
++pub(crate) fn possible_next(player: &PlayerCombatState) -> SmallVec<[CardUid; 32]> {
++    if let Some(uid) = player
++        .pinned_top
++        .first()
++        .filter(|u| player.draw.contains(u))
++    {
++        return smallvec::smallvec![*uid];
++    }
++    let middle: SmallVec<[CardUid; 32]> = player
++        .draw
++        .iter()
++        .copied()
++        .filter(|u| !player.pinned_top.contains(u) && !player.pinned_bottom.contains(u))
++        .collect();
++    if middle.is_empty() {
++        return player.draw.first().copied().into_iter().collect();
++    }
++    let Some(k) = player.draw_knowledge.as_ref() else {
++        return middle;
++    };
++    let priority = k
++        .groups
++        .iter()
++        .find(|g| g.iter().any(|u| middle.contains(u)));
++    if let Some(group) = priority {
++        middle
++            .into_iter()
++            .filter(|u| group.contains(u) || k.inserted.contains(u))
++            .collect()
++    } else {
++        middle
++    }
++}
++
++/// Select the next unknown position without assigning an internal order to a band.
++pub(crate) fn next_unknown_index(player: &PlayerCombatState, rng: &mut Rng) -> usize {
++    let begin = player.pinned_top.len();
++    let end = player.draw.len().saturating_sub(player.pinned_bottom.len());
++    let active = player
++        .draw_knowledge
++        .as_ref()
++        .filter(|k| !k.groups.is_empty());
++    let Some(k) = active else {
++        return if end - begin == 1 {
++            begin
++        } else {
++            begin + rng.next_int(0, (end - begin - 1) as i32) as usize
++        };
++    };
++    let indices: SmallVec<[usize; 32]> = (begin..end).collect();
++    let priority: SmallVec<[usize; 32]> = k
++        .groups
++        .iter()
++        .find_map(|group| {
++            let matches: SmallVec<[usize; 32]> = indices
++                .iter()
++                .copied()
++                .filter(|&i| group.contains(&player.draw[i]))
++                .collect();
++            (!matches.is_empty()).then_some(matches)
++        })
++        .unwrap_or_default();
++    if priority.is_empty() {
++        return choose_index(&indices, rng);
++    }
++    let inserted: SmallVec<[usize; 32]> = indices
++        .iter()
++        .copied()
++        .filter(|&i| k.inserted.contains(&player.draw[i]))
++        .collect();
++    if inserted.is_empty() {
++        return choose_index(&priority, rng);
++    }
++    // Each free card has probability 1/N; the base's first band shares
++    // the remaining base_count/N, independently of its member count.
++    let branch = rng.next_int(0, (indices.len() - 1) as i32) as usize;
++    let member = if branch < inserted.len() || priority.len() == 1 {
++        0
++    } else {
++        rng.next_int(0, (priority.len() - 1) as i32) as usize
++    };
++    interleaving_index(&priority, &inserted, branch, member)
++}
++
++/// The finite branch kernel is enumerable independently of a particular RNG seed.
++fn interleaving_index(
++    priority: &[usize],
++    inserted: &[usize],
++    branch: usize,
++    member: usize,
++) -> usize {
++    if branch < inserted.len() {
++        inserted[branch]
++    } else {
++        priority[member]
++    }
++}
++
++/// A singleton band is deterministic and consumes no random draw.
++fn choose_index(indices: &[usize], rng: &mut Rng) -> usize {
++    if indices.len() == 1 {
++        indices[0]
++    } else {
++        indices[rng.next_int(0, (indices.len() - 1) as i32) as usize]
++    }
++}
++
++/// Inspect PerfectFit membership without relying on a card's physical array index.
++fn perfect_fit(cards: &[Card], uid: CardUid) -> bool {
++    cards
++        .get((uid.get() as usize).saturating_sub(1))
++        .is_some_and(|c| c.has_enchantment(EnchantmentId::PerfectFit))
++}
++
++/// Receiver order before a real shuffle: draw then discard; later receivers place on top.
++pub(crate) fn receiver_groups(
++    player: &PlayerCombatState,
++    cards: &[Card],
++) -> Vec<SmallVec<[CardUid; 4]>> {
++    let mut groups = Vec::new();
++    {
++        let mut remaining: SmallVec<[CardUid; 32]> = player
++            .draw
++            .iter()
++            .copied()
++            .filter(|uid| perfect_fit(cards, *uid))
++            .collect();
++        for uid in &player.pinned_top {
++            if remaining.contains(uid) {
++                groups.push(smallvec::smallvec![*uid]);
++                remaining.retain(|u| u != uid);
++            }
++        }
++        if let Some(k) = player.draw_knowledge.as_ref() {
++            for band in &k.groups {
++                let group: SmallVec<[CardUid; 4]> = band
++                    .iter()
++                    .copied()
++                    .filter(|u| remaining.contains(u))
++                    .collect();
++                if !group.is_empty() {
++                    remaining.retain(|u| !group.contains(u));
++                    groups.push(group);
++                }
++            }
++        }
++        let middle: SmallVec<[CardUid; 4]> = remaining
++            .iter()
++            .copied()
++            .filter(|u| !player.pinned_bottom.contains(u))
++            .collect();
++        if !middle.is_empty() {
++            groups.push(middle);
++        }
++        for uid in &player.pinned_bottom {
++            if remaining.contains(uid) {
++                groups.push(smallvec::smallvec![*uid]);
++            }
++        }
++    }
++    let mut certified = SmallVec::<[CardUid; 32]>::new();
++    if let Some(k) = player.draw_knowledge.as_ref() {
++        for band in &k.discard_groups {
++            certified.extend(band.iter().copied());
++            let members: SmallVec<[CardUid; 4]> = band
++                .iter()
++                .copied()
++                .filter(|u| player.discard.contains(u) && perfect_fit(cards, *u))
++                .collect();
++            if !members.is_empty() {
++                groups.push(members);
++            }
++        }
++    }
++    // Cards newly appended during this rollout have observed chronological order.
++    for uid in player
++        .discard
++        .iter()
++        .copied()
++        .filter(|u| !certified.contains(u) && perfect_fit(cards, *u))
++    {
++        groups.push(smallvec::smallvec![uid]);
++    }
++    groups.reverse();
++    groups
++}
++
++/// Physical receiver order belongs only to the materialized rule application.
++pub(crate) fn native_receiver_order(player: &PlayerCombatState, cards: &[Card]) -> Vec<CardUid> {
++    player
++        .draw
++        .iter()
++        .chain(&player.discard)
++        .copied()
++        .filter(|u| perfect_fit(cards, *u))
++        .rev()
++        .collect()
++}
++
++/// Local shuffle preparation separates physical truth from public order knowledge.
++pub(crate) struct PreparedShuffle {
++    groups: Vec<SmallVec<[CardUid; 4]>>,
++    native_order: Vec<CardUid>,
++}
++
++/// Capture receiver order before piles are drained or stably sorted by the shuffle.
++pub(crate) fn prepare_shuffle(player: &mut PlayerCombatState, cards: &[Card]) -> PreparedShuffle {
++    normalize(player);
++    if player
++        .draw_knowledge
++        .as_ref()
++        .is_some_and(|k| k.inserted.iter().any(|uid| perfect_fit(cards, *uid)))
++    {
++        mark_unsupported(player, UnsupportedDrawOrder::InsertedPerfectFitReshuffle);
++    }
++    let groups = receiver_groups(player, cards);
++    let native_order = native_receiver_order(player, cards);
++    // An empty-draw refill erases the old hidden order. Its source is the
++    // public discard chronology (or the explicitly unknown root prefix).
++    let fresh_refill = player.draw.is_empty();
++    if let Some(k) = player.draw_knowledge.as_mut() {
++        if fresh_refill
++            && !player.deferred_draw_order
++            && k.unsupported != Some(UnsupportedDrawOrder::UnknownDiscardInsertion)
++        {
++            k.unsupported = None;
++        }
++        k.groups.clear();
++        k.base.clear();
++        k.inserted.clear();
++        k.discard_groups.clear();
++        k.prepared = false;
++    }
++    PreparedShuffle {
++        groups,
++        native_order,
++    }
++}
++
++/// Apply deterministic receiver moves; only an explicitly unknown band uses a prior.
++pub(crate) fn apply_shuffle(
++    player: &mut PlayerCombatState,
++    shuffled: &mut [CardUid],
++    prepared: PreparedShuffle,
++) {
++    let groups: Vec<SmallVec<[CardUid; 4]>> = prepared
++        .groups
++        .into_iter()
++        .map(|g| g.into_iter().filter(|u| shuffled.contains(u)).collect())
++        .filter(|g: &SmallVec<[CardUid; 4]>| !g.is_empty())
++        .collect();
++    if groups.is_empty() {
++        return;
++    }
++    let mut reordered: SmallVec<[CardUid; 32]> = if player.deferred_draw_order {
++        groups.iter().flatten().copied().collect()
++    } else {
++        prepared
++            .native_order
++            .into_iter()
++            .filter(|u| shuffled.contains(u))
++            .collect()
++    };
++    reordered.extend(
++        shuffled
++            .iter()
++            .copied()
++            .filter(|uid| !groups.iter().any(|g| g.contains(uid))),
++    );
++    shuffled.copy_from_slice(&reordered);
++    let k = knowledge_mut(player);
++    k.groups = groups;
++    k.base = reordered;
++    k.inserted.clear();
++    k.prepared = true;
++    k.observed = true;
++    if player.deferred_draw_order {
++        // The physical array remains canonical; the separate bands carry order knowledge.
++        shuffled.sort_unstable();
++    }
++}
++
++/// Invoke the public hook directly when no low-level shuffle has prepared it.
++pub(crate) fn apply_direct_hook(
++    player: &mut PlayerCombatState,
++    cards: &mut [CardUid],
++    store: &[Card],
++) {
++    let prepared = PreparedShuffle {
++        groups: receiver_groups(player, store),
++        native_order: native_receiver_order(player, store),
++    };
++    apply_shuffle(player, cards, prepared);
++}
++
++/// Public memberships only; callers aggregate anonymous members and expose only already-seen IDs.
++#[derive(Clone, Debug)]
++pub struct PublicDrawKnowledge {
++    pub available: bool,
++    pub reason: Option<&'static str>,
++    pub bands: Vec<Vec<CardUid>>,
++    pub inserted: Vec<CardUid>,
++    /// Complete PF coverage only: ordinary hidden discard insertion ranks are not exported.
++    pub discard_bands: Vec<Vec<CardUid>>,
++}
++
++/// Export rule-derived constraints, never ordinary physical draw order or hidden inserted ranks.
++pub fn export_public_knowledge(player: &PlayerCombatState, cards: &[Card]) -> PublicDrawKnowledge {
++    let has_pf = cards
++        .iter()
++        .any(|c| c.has_enchantment(EnchantmentId::PerfectFit));
++    let reason = unsupported_reason(player).or_else(|| {
++        (has_pf && !player.draw_knowledge.as_ref().is_some_and(|k| k.observed))
++            .then_some(UnsupportedDrawOrder::UnwitnessedPriority.code())
++    });
++    let unordered = |members: Vec<CardUid>| {
++        let mut members = members;
++        members.sort_unstable();
++        members.dedup();
++        members
++    };
++    if reason.is_some() {
++        let draw = unordered(player.draw.to_vec());
++        let discard = unordered(
++            player
++                .discard
++                .iter()
++                .copied()
++                .filter(|u| perfect_fit(cards, *u))
++                .collect(),
++        );
++        return PublicDrawKnowledge {
++            available: false,
++            reason,
++            bands: if draw.is_empty() { vec![] } else { vec![draw] },
++            inserted: vec![],
++            discard_bands: if discard.is_empty() {
++                vec![]
++            } else {
++                vec![discard]
++            },
++        };
++    }
++    let mut bands = Vec::new();
++    let mut used = SmallVec::<[CardUid; 32]>::new();
++    for uid in player
++        .pinned_top
++        .iter()
++        .copied()
++        .filter(|u| player.draw.contains(u))
++    {
++        bands.push(vec![uid]);
++        used.push(uid);
++    }
++    let inserted = player
++        .draw_knowledge
++        .as_ref()
++        .map(|k| {
++            unordered(
++                k.inserted
++                    .iter()
++                    .copied()
++                    .filter(|u| {
++                        player.draw.contains(u)
++                            && !used.contains(u)
++                            && !player.pinned_bottom.contains(u)
++                    })
++                    .collect(),
++            )
++        })
++        .unwrap_or_default();
++    if let Some(k) = &player.draw_knowledge {
++        for group in &k.groups {
++            let members = unordered(
++                group
++                    .iter()
++                    .copied()
++                    .filter(|u| {
++                        player.draw.contains(u)
++                            && !used.contains(u)
++                            && !inserted.contains(u)
++                            && !player.pinned_bottom.contains(u)
++                    })
++                    .collect(),
++            );
++            if !members.is_empty() {
++                used.extend(members.iter().copied());
++                bands.push(members);
++            }
++        }
++    }
++    let middle = unordered(
++        player
++            .draw
++            .iter()
++            .copied()
++            .filter(|u| {
++                !used.contains(u) && !inserted.contains(u) && !player.pinned_bottom.contains(u)
++            })
++            .collect(),
++    );
++    if !middle.is_empty() {
++        bands.push(middle);
++    }
++    for uid in player
++        .pinned_bottom
++        .iter()
++        .copied()
++        .filter(|u| player.draw.contains(u))
++    {
++        if !used.contains(&uid) {
++            bands.push(vec![uid]);
++            used.push(uid);
++        }
++    }
++    let mut discard_bands = Vec::new();
++    let mut certified = SmallVec::<[CardUid; 32]>::new();
++    if let Some(k) = &player.draw_knowledge {
++        for band in &k.discard_groups {
++            certified.extend(band.iter().copied());
++            let members = unordered(
++                band.iter()
++                    .copied()
++                    .filter(|u| player.discard.contains(u) && perfect_fit(cards, *u))
++                    .collect(),
++            );
++            if !members.is_empty() {
++                discard_bands.push(members);
++            }
++        }
++    }
++    // The real-world tracker began at combat birth. New PF discards are
++    // append events; random PF insertions with ambiguous order latch unsupported.
++    for uid in player
++        .discard
++        .iter()
++        .copied()
++        .filter(|u| !certified.contains(u) && perfect_fit(cards, *u))
++    {
++        discard_bands.push(vec![uid]);
++    }
++    PublicDrawKnowledge {
++        available: true,
++        reason: None,
++        bands,
++        inserted,
++        discard_bands,
++    }
++}
++
++/// Preserve known priority bands when blindfolding a materialized unknown pile.
++pub(crate) fn reshuffle_unknown(player: &mut PlayerCombatState, rng: &mut Rng) -> bool {
++    let Some(k) = player.draw_knowledge.as_ref() else {
++        return false;
++    };
++    if k.groups.is_empty() {
++        return false;
++    }
++    let mut middle = SmallVec::<[CardUid; 32]>::new();
++    let in_middle =
++        |u: &CardUid| !player.pinned_top.contains(u) && !player.pinned_bottom.contains(u);
++    for group in &k.groups {
++        let mut members: SmallVec<[CardUid; 32]> = group
++            .iter()
++            .copied()
++            .filter(|u| player.draw.contains(u) && in_middle(u))
++            .collect();
++        members.sort_unstable();
++        rng.shuffle(members.as_mut_slice());
++        middle.extend(members);
++    }
++    let mut ordinary: SmallVec<[CardUid; 32]> = player
++        .draw
++        .iter()
++        .copied()
++        .filter(|u| {
++            in_middle(u) && !k.inserted.contains(u) && !k.groups.iter().any(|g| g.contains(u))
++        })
++        .collect();
++    rng.shuffle(ordinary.as_mut_slice());
++    middle.extend(ordinary);
++    let mut inserted = k.inserted.clone();
++    inserted.sort_unstable();
++    for uid in inserted
++        .into_iter()
++        .filter(|u| player.draw.contains(u) && in_middle(u))
++    {
++        let at = rng.next_int(0, middle.len() as i32) as usize;
++        middle.insert(at, uid);
++    }
++    let mut result = player.pinned_top.clone();
++    result.extend(middle);
++    result.extend(player.pinned_bottom.iter().copied());
++    player.draw = result.into_iter().collect();
++    true
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::cards::{CardId, CardStore};
++    use crate::CombatState;
++
++    /// Controlled card identities make both rank and instance counterexamples visible.
++    fn fixture() -> CombatState {
++        let mut state = CombatState::default();
++        for number in 1..=5 {
++            let mut card = Card {
++                uid: uid(number),
++                card_id: CardId::StrikeIronclad,
++                cost: 1,
++                ..Card::pod_defaults()
++            };
++            if number == 2 || number == 4 {
++                card.set_enchantment(EnchantmentId::PerfectFit, 1);
++            }
++            state.cards.push(card);
++        }
++        state
++    }
++
++    /// Stable test handles do not imply a known hidden card order.
++    fn uid(number: u32) -> CardUid {
++        CardUid::new(number).expect("nonzero")
++    }
++
++    /// Paired materialized shuffles consume identical RNG while receiver order decides PF.
++    #[test]
++    fn native_receiver_order_before_draw_matches_discard_and_mixed_cases() {
++        for reverse in [false, true] {
++            let mut state = fixture();
++            state.player.discard = (1..=5).map(uid).collect();
++            if reverse {
++                state.player.discard.reverse();
++            }
++            let mut ordinary = state.player.clone();
++            let mut plain: CardStore = state.cards.to_vec().into();
++            for card in plain.iter_mut() {
++                card.enchantments.clear();
++            }
++            let mut baseline_rng = Rng::new(7);
++            let mut enchanted_rng = Rng::new(7);
++            crate::cards::discard_pile_into_draw_pile(&mut ordinary, &plain, &mut baseline_rng);
++            // This batch draw must reorder BEFORE the first pop, without a
++            // later CombatState hook being needed to repair the returned card.
++            let _ = crate::cards::draw(&mut state.player, 2, &state.cards, &mut enchanted_rng);
++            let expected = if reverse {
++                vec![uid(2), uid(4)]
++            } else {
++                vec![uid(4), uid(2)]
++            };
++            assert_eq!(state.player.hand.as_slice(), expected.as_slice());
++            assert_eq!(enchanted_rng.counter(), baseline_rng.counter());
++        }
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(2), uid(1)];
++        state.player.discard = smallvec::smallvec![uid(4), uid(3), uid(5)];
++        crate::cards::shuffle_draw_and_discard(&mut state.player, &state.cards, &mut Rng::new(9));
++        assert_eq!(&state.player.draw[..2], &[uid(4), uid(2)]);
++        // The private physical old draw order is NOT persisted as known public ranks.
++        let groups = &state
++            .player
++            .draw_knowledge
++            .as_ref()
++            .expect("PF knowledge")
++            .groups;
++        let expected: Vec<SmallVec<[CardUid; 4]>> =
++            vec![smallvec::smallvec![uid(4)], smallvec::smallvec![uid(2)]];
++        assert_eq!(groups, &expected);
++        let mut hidden = fixture();
++        hidden.player.draw = smallvec::smallvec![uid(2), uid(1), uid(4)];
++        crate::cards::shuffle_draw_and_discard(
++            &mut hidden.player,
++            &hidden.cards,
++            &mut Rng::new(11),
++        );
++        assert_eq!(&hidden.player.draw[..2], &[uid(4), uid(2)]);
++        let bands = &hidden.player.draw_knowledge.as_ref().unwrap().groups;
++        assert_eq!(bands.len(), 1);
++        assert_eq!(
++            bands[0].len(),
++            2,
++            "unknown old draw order must not become singleton public ranks"
++        );
++    }
++
++    /// Initial shuffle is paired with the same unenchanted random permutation.
++    #[test]
++    fn initial_shuffle_never_creates_perfect_fit_priority() {
++        for seed in 0..32 {
++            let mut player = PlayerCombatState {
++                draw: (1..=5).map(uid).collect(),
++                ..PlayerCombatState::default()
++            };
++            let mut baseline = player.clone();
++            let cards = fixture().cards;
++            crate::cards::shuffle(&mut player, &mut Rng::new(seed));
++            crate::cards::shuffle(&mut baseline, &mut Rng::new(seed));
++            let mut order = player.draw.clone();
++            crate::enchantment_hooks::dispatch_modify_shuffle_order(
++                &mut player,
++                &mut order,
++                true,
++                &cards,
++            );
++            assert_eq!(order, baseline.draw);
++            assert!(player.draw_knowledge.is_none());
++        }
++    }
++
++    /// A public unknown band survives canonicalization and remains internally stochastic.
++    #[test]
++    fn belief_bands_survive_blindfold_without_uid_rank_or_initial_priority() {
++        let mut state = fixture();
++        state.player.draw = (1..=5).map(uid).collect();
++        set_priority_groups(&mut state.player, vec![vec![uid(4), uid(2)]]).unwrap();
++        let mut seen = std::collections::BTreeSet::new();
++        for seed in 0..128 {
++            let mut copy = state.clone();
++            crate::blindfold::belief_root(&mut copy, seed);
++            let first = crate::cards::pop_next_card(&mut copy.player, &mut copy.run_rng.shuffle);
++            assert!([uid(2), uid(4)].contains(&first));
++            seen.insert(first.get());
++            let second = crate::cards::pop_next_card(&mut copy.player, &mut copy.run_rng.shuffle);
++            assert_ne!(first, second);
++            assert!([uid(2), uid(4)].contains(&second));
++        }
++        assert_eq!(seen, [2, 4].into_iter().collect());
++        let mut unprioritized = state.clone();
++        clear_priority(&mut unprioritized.player);
++        crate::blindfold::belief_root(&mut unprioritized, 0);
++        // The finite unprioritized pool contains all five cards; the tag alone is insufficient.
++        assert!(unprioritized
++            .player
++            .draw_knowledge
++            .as_ref()
++            .unwrap()
++            .groups
++            .is_empty());
++    }
++
++    /// Enumerate every branch/member pair: A2/B1/C1 gives 3/8,3/8,0,1/4 exactly.
++    #[test]
++    fn random_insert_kernel_has_exact_finite_weights() {
++        let priority = [0, 1];
++        let inserted = [3];
++        let mut counts = [0u32; 4];
++        for branch in 0..4 {
++            for member in 0..2 {
++                counts[interleaving_index(&priority, &inserted, branch, member)] += 1;
++            }
++        }
++        assert_eq!(counts, [3, 3, 0, 2]);
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(2), uid(4)];
++        state.player.deferred_draw_order = true;
++        set_priority_groups(&mut state.player, vec![vec![uid(2), uid(4)]]).unwrap();
++        state.player.draw.push(uid(5));
++        inserted_randomly(&mut state.player, uid(5));
++        for seed in 0..64 {
++            let index = next_unknown_index(&state.player, &mut Rng::new(seed));
++            assert_ne!(
++                state.player.draw[index],
++                uid(1),
++                "old ordinary card cannot precede priority"
++            );
++        }
++        removed_from_draw(&mut state.player, uid(1));
++        assert_eq!(
++            unsupported_reason(&state.player),
++            Some("priority_non_top_removal_after_insertion")
++        );
++    }
++
++    /// Actual private PF source order and public unordered bands are distinct contracts.
++    #[test]
++    fn unknown_discard_prefix_and_known_suffix_do_not_leak_physical_order() {
++        let mut state = fixture();
++        state.player.discard = smallvec::smallvec![uid(2), uid(1)];
++        set_unknown_discard(&mut state.player, &state.cards);
++        state.player.discard.push(uid(4));
++        let expected: Vec<SmallVec<[CardUid; 4]>> =
++            vec![smallvec::smallvec![uid(4)], smallvec::smallvec![uid(2)]];
++        assert_eq!(receiver_groups(&state.player, &state.cards), expected);
++        let mut other = state.clone();
++        other.player.discard = smallvec::smallvec![uid(4), uid(2), uid(1)];
++        set_unknown_discard(&mut other.player, &other.cards);
++        assert_eq!(
++            receiver_groups(&other.player, &other.cards),
++            vec![SmallVec::<[CardUid; 4]>::from_slice(&[uid(4), uid(2)])]
++        );
++    }
++
++    /// TT and chance dedup must distinguish future draw laws, but not a band's listing order.
++    #[test]
++    fn priority_hashes_preserve_semantics_and_public_order_invariance() {
++        let mut state = fixture();
++        state.player.draw = (1..=5).map(uid).collect();
++        state.player.deferred_draw_order = true;
++        set_priority_groups(&mut state.player, vec![vec![uid(2), uid(4)]]).unwrap();
++        let mut reordered = state.clone();
++        set_priority_groups(&mut reordered.player, vec![vec![uid(4), uid(2)]]).unwrap();
++        assert_eq!(crate::search_hash(&state), crate::search_hash(&reordered));
++        assert_eq!(
++            crate::chance_outcome_hash(&state),
++            crate::chance_outcome_hash(&reordered)
++        );
++        set_priority_groups(&mut reordered.player, vec![vec![uid(4)], vec![uid(2)]]).unwrap();
++        assert_ne!(crate::search_hash(&state), crate::search_hash(&reordered));
++        assert_ne!(
++            crate::chance_outcome_hash(&state),
++            crate::chance_outcome_hash(&reordered)
++        );
++        let mut raw = fixture();
++        raw.player.discard = smallvec::smallvec![uid(2), uid(4)];
++        let mut reversed = raw.clone();
++        reversed.player.discard.reverse();
++        assert_ne!(crate::search_hash(&raw), crate::search_hash(&reversed));
++        set_unknown_discard(&mut raw.player, &raw.cards);
++        set_unknown_discard(&mut reversed.player, &reversed.cards);
++        raw.player.deferred_draw_order = true;
++        reversed.player.deferred_draw_order = true;
++        assert_eq!(crate::search_hash(&raw), crate::search_hash(&reversed));
++        assert_eq!(
++            crate::chance_outcome_hash(&raw),
++            crate::chance_outcome_hash(&reversed)
++        );
++    }
++
++    /// A later refill cannot validate an earlier guessed effect inside the same search action.
++    #[test]
++    fn unsupported_is_sticky_inside_belief_action_even_after_refill() {
++        let mut state = fixture();
++        state.player.deferred_draw_order = true;
++        state.player.discard = smallvec::smallvec![uid(2), uid(4), uid(1)];
++        mark_unsupported(
++            &mut state.player,
++            UnsupportedDrawOrder::ConditionalOrderQuery,
++        );
++        let _ = crate::cards::draw(&mut state.player, 1, &state.cards, &mut Rng::new(7));
++        assert_eq!(
++            unsupported_reason(&state.player),
++            Some("priority_conditional_order_query")
++        );
++        let mut actual = fixture();
++        actual.player.discard = smallvec::smallvec![uid(2), uid(4), uid(1)];
++        mark_unsupported(
++            &mut actual.player,
++            UnsupportedDrawOrder::ConditionalOrderQuery,
++        );
++        let _ = crate::cards::draw(&mut actual.player, 1, &actual.cards, &mut Rng::new(7));
++        assert_eq!(unsupported_reason(&actual.player), None);
++    }
++
++    /// Public export preserves constraints and never borrows physical hidden pile order.
++    #[test]
++    fn public_export_is_invariant_to_hidden_order_and_requires_a_witness() {
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(2), uid(3)];
++        state.player.discard = smallvec::smallvec![uid(4), uid(5)];
++        assert!(!export_public_knowledge(&state.player, &state.cards).available);
++        set_root_knowledge(
++            &mut state.player,
++            vec![vec![uid(2)], vec![uid(1), uid(3)]],
++            vec![],
++            vec![vec![uid(4)]],
++        )
++        .unwrap();
++        let first = export_public_knowledge(&state.player, &state.cards);
++        assert!(first.available);
++        assert_eq!(first.bands, vec![vec![uid(2)], vec![uid(1), uid(3)]]);
++        assert_eq!(first.discard_bands, vec![vec![uid(4)]]);
++        state.player.draw.reverse();
++        state.player.discard.reverse();
++        let second = export_public_knowledge(&state.player, &state.cards);
++        assert_eq!(first.bands, second.bands);
++        assert_eq!(first.discard_bands, second.discard_bands);
++    }
++
++    /// Legacy pin layout stays unchanged; its insertion law is explicitly unsupported.
++    #[test]
++    fn random_insertion_preserves_legacy_pins_but_cuts_belief() {
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(2), uid(3)];
++        state.player.pinned_top.push(uid(2));
++        state.player.deferred_draw_order = true;
++        state.player.draw.push(uid(5));
++        inserted_randomly(&mut state.player, uid(5));
++        assert_eq!(state.player.pinned_top.as_slice(), &[uid(2)]);
++        assert_eq!(
++            unsupported_reason(&state.player),
++            Some("priority_conditional_order_query")
++        );
++    }
++
++    /// A full unknown band plus free insertions is ordinary uniform order, not false priority.
++    #[test]
++    fn uniform_certificate_does_not_create_spurious_priority_constraints() {
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(2), uid(3)];
++        set_root_knowledge(
++            &mut state.player,
++            vec![vec![uid(1), uid(2)]],
++            vec![uid(3)],
++            vec![],
++        )
++        .unwrap();
++        let k = state.player.draw_knowledge.as_ref().unwrap();
++        assert!(k.groups.is_empty());
++        assert!(k.inserted.is_empty());
++        state.player.deferred_draw_order = true;
++        removed_from_draw(&mut state.player, uid(1));
++        assert_eq!(unsupported_reason(&state.player), None);
++    }
++}
+diff --git a/sts2-rs/crates/sts2-core/src/enchantment_hooks.rs b/sts2-rs/crates/sts2-core/src/enchantment_hooks.rs
+index d1de198..6a048c8 100644
+--- a/sts2-rs/crates/sts2-core/src/enchantment_hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/enchantment_hooks.rs
+@@ -464,16 +464,8 @@ fn before_flush_stub(state: &mut CombatState) {
+ // 4. modify_shuffle_order
+ // ---------------------------------------------------------------------------
+ 
+-/// Fire enchantment `modify_shuffle_order` on a freshly-shuffled card
+-/// list. PerfectFit-marked cards float to the top.
+-///
+-/// Python entry: `enchantments.py:149` —
+-/// `modify_shuffle_order(cards, *, is_initial_shuffle)`.
+-///
+-/// `is_initial_shuffle` is `true` for the combat-start shuffle (which
+-/// Python skips — PerfectFit only applies to mid-combat reshuffles).
+-/// The surface stub respects the Python early-out semantics (no-op
+-/// when initial) so the dispatch site can fire unconditionally.
++/// Run the native PerfectFit receiver moves; the initial shuffle is unchanged.
++/// Receiver order comes from the old piles, not the shuffled argument's order.
+ pub fn dispatch_modify_shuffle_order(
+     player: &mut PlayerCombatState,
+     cards: &mut [CardUid],
+@@ -493,46 +485,28 @@ pub fn dispatch_modify_shuffle_order(
+     if !any_enchanted {
+         return;
+     }
+-    modify_shuffle_order_stub(player, cards, state_cards);
++    modify_shuffle_order_native(player, cards, state_cards);
+ }
+ 
+-/// Listener body.
+-///
+-/// **Wave 4 (`sts2-rs-uafi0`):** PerfectFit re-ordering. Float
+-/// PerfectFit-marked cards to the front of `cards` while preserving
+-/// the relative order within both groups (stable partition).
+-///
+-/// Python pin (`enchantments.py:modify_shuffle_order`):
+-/// ```text
+-/// perfect_fit = [c for c in cards if c.has_enchantment("PerfectFit")]
+-/// if perfect_fit:
+-///     remaining = [c for c in cards if not c.has_enchantment("PerfectFit")]
+-///     cards[:] = perfect_fit + remaining
+-/// ```
+-///
+-/// The `is_initial_shuffle` guard already early-exits in the dispatch
+-/// wrapper.
++/// Each old Draw/Discard receiver places its card at the top without extra RNG.
+ #[inline]
+-fn modify_shuffle_order_stub(
+-    _player: &mut PlayerCombatState,
++fn modify_shuffle_order_native(
++    player: &mut PlayerCombatState,
+     cards: &mut [CardUid],
+     state_cards: &[Card],
+ ) {
+-    let has_perfect_fit = |uid: &CardUid| {
+-        state_cards
+-            .get((uid.get() as usize).saturating_sub(1))
+-            .is_some_and(|c| c.has_enchantment(EnchantmentId::PerfectFit))
+-    };
+-    // Stable partition: PerfectFit-bearing cards float to the front
+-    // while preserving relative order within each group. Mirrors
+-    // Python's `perfect_fit + remaining` list concat.
+-    let mut buf: Vec<CardUid> = Vec::with_capacity(cards.len());
+-    buf.extend(cards.iter().copied().filter(has_perfect_fit));
+-    if buf.is_empty() {
+-        return; // No PerfectFit cards — preserve input order.
+-    }
+-    buf.extend(cards.iter().copied().filter(|u| !has_perfect_fit(u)));
+-    cards.copy_from_slice(&buf);
++    // Real shuffle helpers capture old pile/listener order and apply the
++    // receiver moves BEFORE drawing. Do not run them a second time here.
++    if let Some(k) = player.draw_knowledge.as_mut() {
++        if k.prepared {
++            k.prepared = false;
++            return;
++        }
++    }
++    // Native Hook.ModifyShuffleOrder: Draw receivers then Discard receivers,
++    // each moving its own card to index zero (the final order is reversed).
++    crate::draw_knowledge::apply_direct_hook(player, cards, state_cards);
++    if let Some(k) = player.draw_knowledge.as_mut() { k.prepared = false; }
+ }
+ 
+ // ---------------------------------------------------------------------------
+@@ -1264,8 +1238,7 @@ mod tests {
+         assert_eq!(state.cards[0].cost, 3, "non-hand card untouched");
+     }
+ 
+-    /// PerfectFit: floats marked cards to the front while preserving
+-    /// relative order within each group (stable partition).
++    /// Native PerfectFit moves each old-pile receiver to the top in turn.
+     #[test]
+     fn perfect_fit_modify_shuffle_floats_marked_to_front() {
+         let mut state = CombatState::default();
+@@ -1289,9 +1262,10 @@ mod tests {
+         }
+         let mut shuffle = vec![uid(1), uid(2), uid(3), uid(4)];
+         let mut player = state.player.clone();
++        player.discard = shuffle.iter().copied().collect();
+         dispatch_modify_shuffle_order(&mut player, &mut shuffle, false, &state.cards);
+-        // PerfectFit (2,4) preserve relative order; remaining (1,3) too.
+-        assert_eq!(shuffle, vec![uid(2), uid(4), uid(1), uid(3)]);
++        // Discard receivers 2 then 4 produce top order 4 then 2.
++        assert_eq!(shuffle, vec![uid(4), uid(2), uid(1), uid(3)]);
+     }
+ 
+     /// PerfectFit with no marked cards leaves the order untouched.
+diff --git a/sts2-rs/crates/sts2-core/src/hashing.rs b/sts2-rs/crates/sts2-core/src/hashing.rs
+index 27fd20a..7ab6ae6 100644
+--- a/sts2-rs/crates/sts2-core/src/hashing.rs
++++ b/sts2-rs/crates/sts2-core/src/hashing.rs
+@@ -904,6 +904,7 @@ fn hash_player<E: HashEncoding, H: Hasher>(p: &PlayerCombatState, h: &mut H, sta
+         kind.hash(h);
+         E::pile(pile, h);
+     }
++    hash_priority_knowledge(p, state, h, false);
+     hash_player_tail::<E, H>(p, h, state);
+ }
+ 
+@@ -1006,6 +1007,7 @@ fn hash_player_chance_dedup<E: HashEncoding,H: Hasher>(p: &PlayerCombatState, h:
+     }
+     PileKind::Draw.hash(h);
+     hash_draw_pile_chance_dedup(p, state, h);
++    hash_priority_knowledge(p, state, h, true);
+     // Share the TT's actual power union and potion belt semantics while retaining pile dedup.
+     hash_player_tail::<E, H>(p, h, state);
+ }
+@@ -1030,6 +1032,60 @@ fn hash_draw_pile_chance_dedup<H: Hasher>(p: &PlayerCombatState, state: &CombatS
+     }
+ }
+ 
++/// Bind both known receiver order and unordered belief bands to their future draw law.
++fn hash_priority_knowledge<H: Hasher>(
++    player: &PlayerCombatState,
++    state: &CombatState,
++    h: &mut H,
++    observational: bool,
++) {
++    let receiver = if player.deferred_draw_order {
++        crate::draw_knowledge::receiver_groups(player, &state.cards)
++    } else {
++        crate::draw_knowledge::native_receiver_order(player, &state.cards).into_iter()
++            .map(|uid| smallvec::smallvec![uid]).collect()
++    };
++    if receiver.is_empty() && player.draw_knowledge.is_none() { return; }
++    // Empty ordinary positions retain the original hash; only PerfectFit states
++    // add this domain. Chance dedup uses card contents, not arbitrary instance UIDs.
++    "perfect_fit_order_knowledge_v1".hash(h);
++    (receiver.len() as u64).hash(h);
++    for group in &receiver {
++        hash_priority_members(group, state, h, observational);
++    }
++    if let Some(k) = &player.draw_knowledge {
++        k.observed.hash(h);
++        (k.groups.len() as u64).hash(h);
++        for group in &k.groups {
++            hash_priority_members(group, state, h, observational);
++        }
++        hash_priority_members(&k.inserted, state, h, observational);
++        hash_priority_members(&k.base, state, h, observational);
++        (k.discard_groups.len() as u64).hash(h);
++        for group in &k.discard_groups {hash_priority_members(group,state,h,observational);}
++        k.unsupported.hash(h);
++    } else {
++        0u64.hash(h);
++    }
++}
++
++/// A band's membership is unordered; band sequence is hashed by its caller.
++fn hash_priority_members<H: Hasher>(
++    members: &[crate::CardUid],
++    state: &CombatState,
++    h: &mut H,
++    observational: bool,
++) {
++    if observational {
++        hash_pile_observational(members, state, h);
++    } else {
++        let mut sorted: smallvec::SmallVec<[u32; 32]> = members.iter().map(|u| u.get()).collect();
++        sorted.sort_unstable();
++        sorted.len().hash(h);
++        for uid in sorted { uid.hash(h); }
++    }
++}
++
+ /// Fold `pile` into `h` as a SORTED list of [`card_observational_key`]
+ /// values — order- AND instance-uid-insensitive, content-sensitive.
+ /// Shared by [`hash_player_chance_dedup`]'s face-up piles (Hand, Discard,
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index 042f409..b1e9b87 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -48,6 +48,7 @@ pub use cards::{Card, CardStore};
+ /// Root blindfold for honest-search combat MCTS (F0). See module docs
+ /// for the canonicalization argument. Bead `sts2-rs-vqckz`.
+ pub mod blindfold;
++pub mod draw_knowledge;
+ 
+ /// Per-card afflictions (Devoured, Bound, Entangled, …). Mirrors C#
+ /// `MegaCrit.Sts2.Core.Models.Afflictions/`; scope + decomp at
+@@ -1756,6 +1757,9 @@ pub struct PlayerCombatState {
+     /// table between otherwise-identical positions.
+     pub deferred_draw_order: bool,
+ 
++    /// Optional receiver-order and priority-band knowledge for PerfectFit.
++    pub draw_knowledge: Option<Box<draw_knowledge::DrawKnowledge>>,
++
+     pub energy: i8,
+     pub max_energy: i8,
+     pub stars: i8,
+@@ -8575,10 +8579,12 @@ impl CombatState {
+             return true;
+         }
+         if let Some(pos) = self.player.draw.iter().position(|u| *u == uid) {
++            crate::draw_knowledge::removed_from_draw(&mut self.player, uid);
+             self.player.draw.remove(pos);
+             return true;
+         }
+         if let Some(pos) = self.player.discard.iter().position(|u| *u == uid) {
++            crate::draw_knowledge::removed_from_discard(&mut self.player, uid);
+             self.player.discard.remove(pos);
+             return true;
+         }
+@@ -8692,6 +8698,7 @@ impl CombatState {
+             // flood) advance the Shuffle stream the harness reads.
+             let insert_at = self.run_rng.shuffle.next_int(0, len as i32) as usize;
+             self.player.draw.insert(insert_at, uid);
++            crate::draw_knowledge::inserted_randomly(&mut self.player, uid);
+         } else {
+             self.player.draw.insert(0, uid);
+             // Definite-position insert at draw-top — same "player watched
+@@ -8722,6 +8729,12 @@ impl CombatState {
+             return;
+         }
+         if random_position {
++            let perfect_fit = |candidate| self.cards.iter().any(|card|
++                card.uid == candidate && card.has_enchantment(crate::cards::EnchantmentId::PerfectFit));
++            if perfect_fit(uid) && self.player.discard.iter().copied().any(perfect_fit) {
++                crate::draw_knowledge::mark_unsupported(&mut self.player,
++                    crate::draw_knowledge::UnsupportedDrawOrder::UnknownDiscardInsertion);
++            }
+             let len = self.player.discard.len();
+             let insert_at = self.run_rng.shuffle.next_int(0, len as i32) as usize;
+             self.player.discard.insert(insert_at, uid);
+diff --git a/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs b/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
+index 2c21ed3..9ccc90d 100644
+--- a/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
++++ b/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
+@@ -210,6 +210,7 @@ fn build_player(deck: &[CardSpec]) -> (PlayerCombatState, Vec<Card>) {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: smallvec::SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+     (player, arena)
+ }
+diff --git a/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs b/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
+index 3a522cd..62b5749 100644
+--- a/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
++++ b/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
+@@ -138,6 +138,7 @@ fn build_player(deck: &[CardSpec]) -> (PlayerCombatState, Vec<Card>) {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: smallvec::SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+     (player, arena)
+ }
+diff --git a/sts2-rs/crates/sts2-core/tests/card_play_log.rs b/sts2-rs/crates/sts2-core/tests/card_play_log.rs
+index 9377917..719fe3b 100644
+--- a/sts2-rs/crates/sts2-core/tests/card_play_log.rs
++++ b/sts2-rs/crates/sts2-core/tests/card_play_log.rs
+@@ -154,6 +154,7 @@ fn cascade_logs_trigger_then_auto_plays_in_order() {
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     // A single beefy enemy so the auto-played Strikes have a live target and
+diff --git a/sts2-rs/crates/sts2-core/tests/parity_harness.rs b/sts2-rs/crates/sts2-core/tests/parity_harness.rs
+index 7da650b..4d1d661 100644
+--- a/sts2-rs/crates/sts2-core/tests/parity_harness.rs
++++ b/sts2-rs/crates/sts2-core/tests/parity_harness.rs
+@@ -1489,6 +1489,7 @@ mod vthin1_setup_only {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+         CombatState {
+             phase: CombatPhase::Setup,
+@@ -1673,6 +1674,7 @@ mod vthin2_vulnerable_damage {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+ 
+         // VTHIN-2 power instance: VulnerablePower(amount=2) on the cultist.
+@@ -2062,6 +2064,7 @@ mod wave_a_fixtures {
+                 pinned_top: smallvec::SmallVec::new(),
+                 pinned_bottom: SmallVec::new(),
+                 deferred_draw_order: false,
++                draw_knowledge: None,
+             },
+             allies: SmallVec::new(),
+             enemy_uids: SmallVec::new(),
+@@ -2862,6 +2865,7 @@ mod zizk_relic_install {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+         let mut state = CombatState {
+             phase: CombatPhase::Setup,
+@@ -3072,6 +3076,7 @@ mod s16y_starter_relics {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+         let mut state = CombatState {
+             phase: CombatPhase::Setup,
+@@ -3332,6 +3337,7 @@ mod vmko_heavenly_drill {
+                 pinned_top: smallvec::SmallVec::new(),
+                 pinned_bottom: SmallVec::new(),
+                 deferred_draw_order: false,
++                draw_knowledge: None,
+             },
+             allies: SmallVec::new(),
+             enemy_uids: SmallVec::new(),
+@@ -3616,6 +3622,7 @@ mod rggx_act2_tunneler {
+             pinned_top: SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+ 
+         let tunneler_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs b/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs
+index d752bc4..ca75bab 100644
+--- a/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs
++++ b/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs
+@@ -230,6 +230,7 @@ mod shrinker {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         }
+     }
+ 
+diff --git a/sts2-rs/crates/sts2-core/tests/play_card.rs b/sts2-rs/crates/sts2-core/tests/play_card.rs
+index eebff78..85c4d57 100644
+--- a/sts2-rs/crates/sts2-core/tests/play_card.rs
++++ b/sts2-rs/crates/sts2-core/tests/play_card.rs
+@@ -104,6 +104,7 @@ fn build_handful(cards: &[(CardId, i32, i32, i8, TargetType)]) -> CombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: smallvec::SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let cultist_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-core/tests/prop_determinism.rs b/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
+index 294d9bf..f8387dc 100644
+--- a/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
++++ b/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
+@@ -75,6 +75,7 @@ fn make_player() -> PlayerCombatState {
+         pinned_top: SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs b/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
+index ce249cf..22a37cc 100644
+--- a/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
++++ b/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
+@@ -74,6 +74,7 @@ fn make_player() -> PlayerCombatState {
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: smallvec::SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-mcts/src/lib.rs b/sts2-rs/crates/sts2-mcts/src/lib.rs
+index 3eef663..a7fcdc2 100644
+--- a/sts2-rs/crates/sts2-mcts/src/lib.rs
++++ b/sts2-rs/crates/sts2-mcts/src/lib.rs
+@@ -54,10 +54,40 @@ use smallvec::SmallVec;
+ #[cfg(test)]
+ use sts2_core::StepResult;
+ use sts2_core::{
+-    apply as core_apply, evaluate_victory, evaluate_victory_carry, is_terminal, legal_actions,
++    evaluate_victory, evaluate_victory_carry, is_terminal, legal_actions,
+     loot_at_risk_hp_equiv, persistent_gain_hp_equiv, state_hash, terminal_value,
+     victory_hp_equiv_to_q, victory_hp_surplus, Action, CombatState, PersistentBaseline,
+ };
++use self::apply_search_action as core_apply;
++
++/// A finite-belief limitation is a nonterminal cutoff, never a solver proof.
++pub(crate) fn belief_cutoff(state: &CombatState) -> bool {
++    state.player.deferred_draw_order
++        && sts2_core::draw_knowledge::unsupported_reason(&state.player).is_some()
++}
++
++/// Roll back unsupported conditional actions so a guessed post-action world is never scored.
++pub fn apply_search_action(state: &mut CombatState, action: Action) -> sts2_core::StepResult {
++    let rollback = (state.player.deferred_draw_order && (state.player.draw_knowledge.is_some()
++        || !state.player.pinned_top.is_empty() || !state.player.pinned_bottom.is_empty()))
++        .then(|| state.clone());
++    let result = sts2_core::apply(state, action);
++    if state.player.draw_knowledge.is_some() {
++        sts2_core::draw_knowledge::normalize(&mut state.player);
++    }
++    if belief_cutoff(state) {
++        let reason = state.player.draw_knowledge.as_ref().and_then(|k| k.unsupported);
++        if let Some(mut before) = rollback {
++            if let Some(reason) = reason {
++                sts2_core::draw_knowledge::mark_unsupported(&mut before.player, reason);
++            }
++            *state = before;
++        } else if let Some(k)=state.player.draw_knowledge.as_mut() {
++            k.unsupported=Some(sts2_core::draw_knowledge::UnsupportedDrawOrder::MissingPreactionSnapshot);
++        }
++    }
++    result
++}
+ 
+ pub mod action_index;
+ pub mod corpus;
+@@ -2068,7 +2098,7 @@ impl MctsNode {
+         use_lethal_detector: bool,
+         state_hash_val: u64,
+     ) -> Self {
+-        let terminal = is_terminal(state);
++        let terminal = is_terminal(state) && !belief_cutoff(state);
+         // Bead `sts2-rs-wr8f`: seed proven flags from the terminal
+         // sign. `terminal_value` returns `(true, +0.5..=+1.0)` for a
+         // player win and `(true, -1.0)` for a loss; thresholds at
+@@ -2086,7 +2116,8 @@ impl MctsNode {
+         // proven flag from the branch above) and the config flag is on.
+         // The detector is conservative — see `lethal_detector` module
+         // docs — so a `true` return is a guaranteed forced-lethal.
+-        if !terminal && use_lethal_detector && lethal_detector::detect_lethal(state) {
++        if !terminal && state.player.draw_knowledge.is_none()
++            && use_lethal_detector && lethal_detector::detect_lethal(state) {
+             proven_win = true;
+         }
+         let enemies: SmallVec<[EnemySnapshot; 8]> = state
+@@ -2396,6 +2427,8 @@ pub struct Mcts<P: Policy = UniformPolicy> {
+     /// through this branch are the ones where the leaf evaluator's
+     /// quality actually matters. See [`Self::rollout_stats`].
+     depth_cap_hits: u64,
++    /// Nonterminal representation cuts, counted separately from depth caps.
++    belief_cut_reasons: std::collections::BTreeMap<&'static str, u64>,
+     /// Non-decisive leaves evaluated by playouts: one per simulation that
+     /// reached the playout step. Equals [`Self::rollouts_total`] at
+     /// [`MctsConfig::leaf_playouts`] `= 1` and `rollouts_total / k` at `k`
+@@ -2752,6 +2785,7 @@ impl<P: Policy> Mcts<P> {
+             rollouts_skipped: 0,
+             rollouts_total: 0,
+             depth_cap_hits: 0,
++            belief_cut_reasons: std::collections::BTreeMap::new(),
+             rollout_leaves: 0,
+             stale_child_edges: 0,
+             failed_apply: 0,
+@@ -2931,6 +2965,11 @@ impl<P: Policy> Mcts<P> {
+         (self.rollouts_total, self.depth_cap_hits)
+     }
+ 
++    /// Counts of honest nonterminal draw-belief cuts, independent of the depth budget.
++    pub fn belief_cut_stats(&self) -> &std::collections::BTreeMap<&'static str, u64> {
++        &self.belief_cut_reasons
++    }
++
+     /// Non-decisive leaves this tree evaluated by playouts (one per
+     /// simulation whose leaf was neither proven nor terminal), accumulated
+     /// like [`Self::rollout_stats`]. Each such leaf ran
+@@ -4009,7 +4048,7 @@ impl<P: Policy> Mcts<P> {
+             // Compute derived values from the new root state before taking
+             // a mutable borrow on the tree — the borrow checker cannot see
+             // that `root_state` and `arena[0]` are disjoint fields.
+-            let new_terminal = is_terminal(&self.tree.root_state);
++            let new_terminal = is_terminal(&self.tree.root_state) && !belief_cutoff(&self.tree.root_state);
+             let new_hash = state_hash(&self.tree.root_state);
+             let (proven_win, proven_loss) = if new_terminal {
+                 let (_, v) = terminal_value(&self.tree.root_state);
+@@ -4229,8 +4268,9 @@ impl<P: Policy> Mcts<P> {
+         // statistics and proofs. Terminal / lethal flags are re-derived the
+         // way `MctsNode::new` seeds a fresh root.
+         {
+-            let terminal = is_terminal(&root_state);
++            let terminal = is_terminal(&root_state) && !belief_cutoff(&root_state);
+             let lethal = !terminal
++                && root_state.player.draw_knowledge.is_none()
+                 && config.use_lethal_detector
+                 && lethal_detector::detect_lethal(&root_state);
+             let root = &mut arena[0];
+@@ -4319,6 +4359,7 @@ impl<P: Policy> Mcts<P> {
+         self.rollouts_skipped = 0;
+         self.rollouts_total = 0;
+         self.depth_cap_hits = 0;
++        self.belief_cut_reasons.clear();
+         self.rollout_leaves = 0;
+         self.expand_order = ExpandOrderStats::default();
+         // Renumbered nodes, and a root whose state was replaced (a chance
+@@ -4660,6 +4701,9 @@ impl<P: Policy> Mcts<P> {
+ 
+         // ── 1. SELECTION (pointer-follow over stored states) ────────────
+         loop {
++            if self.tree.node(node_id).realized.as_deref().is_some_and(belief_cutoff) {
++                break;
++            }
+             // Safety bound against pathological cycles introduced by TT
+             // merges (a merged node could otherwise close a loop).
+             if path.len() > self.config.chance_max_depth {
+@@ -4891,6 +4935,7 @@ impl<P: Policy> Mcts<P> {
+             let leaf = self.tree.node(node_id);
+             let do_expand = leaf.kind == NodeKind::Decision
+                 && !leaf.is_terminal
++                && !leaf.realized.as_deref().is_some_and(belief_cutoff)
+                 && !leaf.untried_actions.is_empty();
+             if do_expand {
+                 let edge = self.tree.node_mut(node_id).untried_actions.remove(0);
+@@ -5084,6 +5129,8 @@ impl<P: Policy> Mcts<P> {
+         if self.config.use_lethal_detector {
+             let leaf = self.tree.node(node_id);
+             if !leaf.is_terminal
++                && !belief_cutoff(&realized)
++                && realized.player.draw_knowledge.is_none()
+                 && !leaf.proven_win
+                 && !leaf.proven_loss
+                 && crate::detect_lethal(&realized)
+@@ -5125,10 +5172,14 @@ impl<P: Policy> Mcts<P> {
+                 self.config.use_quiescence,
+                 &self.config,
+             );
+-            let hit_terminal = is_terminal(&state);
++            let hit_terminal = is_terminal(&state) && !belief_cutoff(&state);
+             self.rollouts_total += 1;
+             self.rollout_leaves += 1;
+-            if !hit_terminal {
++            if let Some(reason) = sts2_core::draw_knowledge::unsupported_reason(&state.player)
++                .filter(|_| belief_cutoff(&state))
++            {
++                *self.belief_cut_reasons.entry(reason).or_default() += 1;
++            } else if !hit_terminal {
+                 // `rollout` returned via its depth-cap branch
+                 // (`depth_cut_value`) — see the mirrored condition
+                 // there.
+@@ -5254,7 +5305,11 @@ impl<P: Policy> Mcts<P> {
+             reseed_for_outcome(&mut state, sim_rng.next_u64(), i);
+             let v = values::search_playout(&mut state, sim_rng, &self.config, &self.leaf_eval);
+             self.rollouts_total += 1;
+-            if !is_terminal(&state) {
++            if let Some(reason) = sts2_core::draw_knowledge::unsupported_reason(&state.player)
++                .filter(|_| belief_cutoff(&state))
++            {
++                *self.belief_cut_reasons.entry(reason).or_default() += 1;
++            } else if !is_terminal(&state) {
+                 self.depth_cap_hits += 1;
+             }
+             sum += f64::from(v);
+@@ -5591,7 +5646,9 @@ impl<P: Policy> Mcts<P> {
+             .realized
+             .as_deref()
+             .expect("chance parent has realized state");
+-        if !self.endturn_prefix_cache || sts2_core::combat_loop::side_channel_recorders_armed(pre) {
++        if !self.endturn_prefix_cache || pre.player.draw_knowledge.is_some()
++            || !pre.player.pinned_top.is_empty() || !pre.player.pinned_bottom.is_empty()
++            || sts2_core::combat_loop::side_channel_recorders_armed(pre) {
+             return None;
+         }
+         match &self.tree.node(chance_id).endturn_prefix {
+@@ -6392,7 +6449,7 @@ fn rollout(
+     cfg: &MctsConfig,
+ ) -> f32 {
+     let mut depth = 0u32;
+-    while !is_terminal(state) && depth < max_depth {
++    while !is_terminal(state) && !belief_cutoff(state) && depth < max_depth {
+         let acts = legal_actions(state);
+         if acts.is_empty() {
+             break;
+@@ -6442,7 +6499,7 @@ fn rollout(
+         let _ = core_apply(state, action);
+         depth += 1;
+     }
+-    if use_quiescence {
++    if use_quiescence && !belief_cutoff(state) {
+         // Bead `sts2-rs-8hs96` integration. Drive the rollout-local
+         // scratch state through any sole-legal-action transitions so
+         // the leaf eval observes a "quiet" position. Cap of 32 matches
+@@ -6458,6 +6515,12 @@ fn rollout(
+ /// depth-cut leaf. Shared with [`playout_return`] so a playout scored
+ /// outside the search gets exactly the search's number.
+ fn rollout_end_value(state: &CombatState, leaf_eval: &LeafEval, cfg: &MctsConfig) -> f32 {
++    if belief_cutoff(state) && (is_terminal(state)
++        || sts2_core::draw_knowledge::unsupported_reason(&state.player)
++            ==Some("priority_cutoff_without_preaction_snapshot")) {
++        // This is explicitly unscored uncertainty, not a neural/terminal value.
++        return 0.0;
++    }
+     if is_terminal(state) {
+         // sts2-rs-vbzji: the historical Binary mode returns flat -1.0
+         // on losses, throwing away the rich state signal (enemy HP
+@@ -6489,7 +6552,7 @@ fn rollout_end_value(state: &CombatState, leaf_eval: &LeafEval, cfg: &MctsConfig
+ /// reward, so the net is trained on the number the search actually reads.
+ #[must_use]
+ pub fn playout_return(state: &CombatState, cfg: &MctsConfig, leaf_eval: &LeafEval) -> f32 {
+-    let v = if cfg.use_quiescence && !is_terminal(state) {
++    let v = if cfg.use_quiescence && !is_terminal(state) && !belief_cutoff(state) {
+         let mut s = state.clone();
+         let _ = quiescence::drive_to_quiescence(&mut s, 32);
+         rollout_end_value(&s, leaf_eval, cfg)
+@@ -6527,7 +6590,7 @@ pub fn sample_rollout_leaf_state(
+     mut observer: impl FnMut(&CombatState, u32),
+ ) {
+     let mut depth = 0u32;
+-    while !is_terminal(state) && depth < max_depth {
++    while !is_terminal(state) && !belief_cutoff(state) && depth < max_depth {
+         let acts = legal_actions(state);
+         if acts.is_empty() {
+             break;
+@@ -7838,6 +7901,7 @@ mod tests {
+                 pinned_top: smallvec::SmallVec::new(),
+                 pinned_bottom: SmallVec::new(),
+                 deferred_draw_order: false,
++                draw_knowledge: None,
+             };
+             let mut enemy_uids: smallvec::SmallVec<[CreatureUid; 8]> = smallvec::SmallVec::new();
+             enemy_uids.push(cultist_uid);
+@@ -8120,6 +8184,7 @@ mod tests {
+             pinned_top: SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+         let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+         enemy_uids.push(cultist_uid);
+@@ -8478,6 +8543,7 @@ mod tests {
+                 pinned_top: SmallVec::new(),
+                 pinned_bottom: SmallVec::new(),
+                 deferred_draw_order: false,
++                draw_knowledge: None,
+             };
+ 
+             let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+@@ -8676,6 +8742,7 @@ mod tests {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+         let mut enemy_uids: smallvec::SmallVec<[CreatureUid; 8]> = smallvec::SmallVec::new();
+         enemy_uids.push(cultist_uid);
+@@ -8852,6 +8919,7 @@ mod tests {
+             pinned_top: smallvec::SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+         let mut enemy_uids: smallvec::SmallVec<[CreatureUid; 8]> = smallvec::SmallVec::new();
+         enemy_uids.push(cultist_uid);
+@@ -12142,6 +12210,93 @@ mod tests {
+         }
+     }
+ 
++    /// A directed base-card removal after a hidden insertion needs a richer posterior.
++    fn priority_tutor_state() -> CombatState {
++        use sts2_core::{ChoiceKind,ChoiceOption,PendingChoice};
++        let mut state=make_smoke_state(12);
++        let draw:Vec<_>=state.player.draw.iter().copied().take(3).collect();
++        assert_eq!(draw.len(),3);
++        state.player.hand.clear();
++        state.player.draw=draw.iter().copied().collect();
++        // The smoke fixture intentionally omits card records; this choice
++        // needs real instances so both ordinary and belief paths can move them.
++        for n in 1..=draw.iter().map(|u|u.get()).max().unwrap() {
++            state.cards.push(sts2_core::cards::Card {
++                uid:sts2_core::CardUid::new(n).unwrap(),
++                card_id:sts2_core::cards::CardId::StrikeIronclad,
++                cost:1,..sts2_core::cards::Card::pod_defaults()
++            });
++        }
++        state.cards[draw[0].get() as usize-1]
++            .set_enchantment(sts2_core::cards::EnchantmentId::PerfectFit,1);
++        state.player.deferred_draw_order=true;
++        sts2_core::draw_knowledge::set_priority_groups(&mut state.player,vec![vec![draw[0]]]).unwrap();
++        sts2_core::draw_knowledge::set_random_insertions(&mut state.player,vec![draw[2]]).unwrap();
++        state.pending_choice=Some(PendingChoice {
++            kind:ChoiceKind::AddFromDrawToHand,
++            options:vec![ChoiceOption {
++                card_id:state.cards[draw[1].get() as usize-1].card_id,
++                upgraded:false,card_uid:Some(draw[1]),source_pile:Some(sts2_core::cards::PileKind::Draw),
++            }],min_select:1,max_select:1,..PendingChoice::default()
++        });
++        state
++    }
++
++    /// Search never scores a guessed post-tutor world; materialized rules still execute it.
++    #[test]
++    fn priority_nonclosed_action_rolls_back_only_in_belief_search() {
++        let state=priority_tutor_state();
++        let action=Action::ResolveChoice{selection:smallvec::smallvec![0]};
++        let mut belief=state.clone();
++        let _=apply_search_action(&mut belief,action.clone());
++        assert_eq!(belief.player.draw,state.player.draw);
++        assert_eq!(belief.player.hand,state.player.hand);
++        assert_eq!(belief.pending_choice,state.pending_choice);
++        assert!(belief_cutoff(&belief));
++        assert!(!is_terminal(&belief));
++        let mut actual=state;
++        actual.player.deferred_draw_order=false;
++        let _=sts2_core::apply(&mut actual,action);
++        assert_eq!(actual.player.hand.len(),1);
++        assert_eq!(actual.player.draw.len(),2);
++        assert!(actual.pending_choice.is_none());
++    }
++
++    /// Unsupported order cuts are neither terminal samples, depth caps, nor proofs.
++    #[test]
++    fn priority_unsupported_rollouts_have_separate_counts_and_no_final_hp() {
++        let state=priority_tutor_state();
++        let mut cfg=chance_cfg(90,32);
++        cfg.hidden_info=HiddenInfoMode::BeliefDraw;
++        cfg.use_lethal_detector=true;
++        let mut search=Mcts::new(state,cfg).with_terminal_rollouts(true);
++        let _=search.try_search_n(32).expect("the declared choice is still legal");
++        let rows=search.root_outcomes();
++        assert_eq!(rows.len(),1);
++        assert_eq!((rows[0].wins,rows[0].losses,rows[0].hp_n),(0,0,0));
++        assert_eq!(rows[0].ties,rows[0].visits);
++        assert_eq!(search.rollout_stats().1,0);
++        assert_eq!(search.belief_cut_stats().values().sum::<u64>(),search.rollout_stats().0);
++        assert!(search.belief_cut_stats().contains_key("priority_non_top_removal_after_insertion"));
++        assert!(!search.root_proven_win());
++        assert!(!search.root_proven_loss());
++    }
++
++    /// Unsupported scratch worlds cannot manufacture terminal values or solver proofs.
++    #[test]
++    fn priority_unsupported_terminal_scratch_is_neutral_and_unproven() {
++        let mut state = priority_tutor_state();
++        state.player.current_hp = 0;
++        sts2_core::draw_knowledge::mark_unsupported(&mut state.player,
++            sts2_core::draw_knowledge::UnsupportedDrawOrder::MissingPreactionSnapshot);
++        let cfg = chance_cfg(91, 1);
++        assert_eq!(rollout_end_value(&state, &LeafEval::default(), &cfg), 0.0);
++        let search = Mcts::new(state, cfg);
++        assert!(!search.tree.node(search.tree.root).is_terminal);
++        assert!(!search.root_proven_win());
++        assert!(!search.root_proven_loss());
++    }
++
+     /// An observed losing branch cannot collapse a mixed stochastic future into certain defeat.
+     #[test]
+     fn chance_mode_sampled_loss_does_not_prove_chance_loss() {
+@@ -12420,6 +12575,7 @@ mod tests {
+             pinned_top: SmallVec::new(),
+             pinned_bottom: SmallVec::new(),
+             deferred_draw_order: false,
++            draw_knowledge: None,
+         };
+ 
+         let mut enemy_uids: SmallVec<[CreatureUid; 8]> = SmallVec::new();
+diff --git a/sts2-rs/crates/sts2-mcts/src/quiescence.rs b/sts2-rs/crates/sts2-mcts/src/quiescence.rs
+index 141966e..661152c 100644
+--- a/sts2-rs/crates/sts2-mcts/src/quiescence.rs
++++ b/sts2-rs/crates/sts2-mcts/src/quiescence.rs
+@@ -14,13 +14,14 @@
+ //! [`crate::MctsConfig::use_quiescence`] (default `false`) so existing
+ //! fixtures remain byte-stable.
+ 
+-use sts2_core::{apply as core_apply, is_terminal, legal_actions, CombatState};
++use sts2_core::{is_terminal, legal_actions, CombatState};
++use crate::apply_search_action as core_apply;
+ 
+ /// Apply at most one forced action. Returns `true` if a transition
+ /// was applied (i.e. the state had exactly one legal action and it was
+ /// not already terminal), `false` otherwise.
+ pub fn quiescence_step(state: &mut CombatState) -> bool {
+-    if is_terminal(state) {
++    if is_terminal(state) || crate::belief_cutoff(state) {
+         return false;
+     }
+     let acts = legal_actions(state);
+diff --git a/sts2-rs/crates/sts2-mcts/src/turn_plan.rs b/sts2-rs/crates/sts2-mcts/src/turn_plan.rs
+index 9982ecb..14fc23c 100644
+--- a/sts2-rs/crates/sts2-mcts/src/turn_plan.rs
++++ b/sts2-rs/crates/sts2-mcts/src/turn_plan.rs
+@@ -67,7 +67,7 @@ impl Default for PlanCap {
+ #[derive(Clone, Debug, PartialEq, Eq)]
+ pub struct PlanSet {
+     pub plans: Vec<TurnPlan>,
+-    /// A cap stopped the enumeration; `plans` is a prefix of the full set.
++    /// A budget or belief-representation limit stopped enumeration; the set is incomplete.
+     pub cap_hit: bool,
+ }
+ 
+@@ -151,6 +151,12 @@ impl Enumerator {
+             if !self.seen.insert(tt_hash_v2(&work)) {
+                 continue;
+             }
++            if crate::belief_cutoff(&work) {
++                // A bounded plan scorer must fall back rather than silently
++                // claim it enumerated every legal turn through an unknown order.
++                self.cap_hit = true;
++                return;
++            }
+             if is_terminal(&work) {
+                 self.emit(prefix, action, PlanEnd::Terminal);
+                 continue;
+diff --git a/sts2-rs/crates/sts2-mcts/src/values.rs b/sts2-rs/crates/sts2-mcts/src/values.rs
+index da86913..a94d476 100644
+--- a/sts2-rs/crates/sts2-mcts/src/values.rs
++++ b/sts2-rs/crates/sts2-mcts/src/values.rs
+@@ -23,7 +23,8 @@
+ use rand::SeedableRng;
+ use rand_xoshiro::Xoshiro256PlusPlus;
+ use rayon::prelude::*;
+-use sts2_core::{apply as core_apply, is_terminal, legal_actions, Action, CombatState};
++use sts2_core::{is_terminal, legal_actions, Action, CombatState};
++use crate::apply_search_action as core_apply;
+ 
+ use crate::{effective_rollout_depth, rollout, LeafEval, MctsConfig, MAX_LEAF_VALUE_ABS};
+ 
+@@ -153,9 +154,9 @@ pub fn playout_value(
+     let value = search_playout(&mut s, &mut rng, &cfg, leaf_eval);
+     Ok(PlayoutValue {
+         value,
+-        won: s.player_won,
++        won: s.player_won && !crate::belief_cutoff(&s),
+         hp: s.player.current_hp.max(0),
+-        terminal: is_terminal(&s),
++        terminal: is_terminal(&s) && !crate::belief_cutoff(&s),
+     })
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-mcts/tests/common/mod.rs b/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
+index a8e66b4..8988814 100644
+--- a/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
++++ b/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
+@@ -130,6 +130,7 @@ pub fn build_handful(
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let cultist_uid = CreatureUid::new(1).expect("non-zero");
+@@ -285,6 +286,7 @@ pub fn build_vertical_slice_hp(seed: u64, player_hp: i32, cultist_hp: i32) -> Co
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let cultist_uid = CreatureUid::new(1).expect("non-zero");
+diff --git a/sts2-rs/crates/sts2-py/src/lib.rs b/sts2-rs/crates/sts2-py/src/lib.rs
+index 2f86420..fbe3c12 100644
+--- a/sts2-rs/crates/sts2-py/src/lib.rs
++++ b/sts2-rs/crates/sts2-py/src/lib.rs
+@@ -269,6 +269,7 @@ fn build_encounter_state(
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let rng = sts2_core::dotnet_rng::Rng::new((seed) as i32);
+diff --git a/sts2-rs/crates/sts2-wire/src/emit/combat.rs b/sts2-rs/crates/sts2-wire/src/emit/combat.rs
+index 93cf6c7..d7a4142 100644
+--- a/sts2-rs/crates/sts2-wire/src/emit/combat.rs
++++ b/sts2-rs/crates/sts2-wire/src/emit/combat.rs
+@@ -891,6 +891,19 @@ pub fn combat_state_to_value(state: &CombatState) -> Result<Value, EmitError> {
+     if state.player.deferred_draw_order {
+         set(&mut deck, "deferred_draw_order", true);
+     }
++    if let Some(k) = &state.player.draw_knowledge {
++        let discard_indices = |uids: &[CardUid]| -> Vec<usize> {
++            uids.iter().filter_map(|u| state.player.discard.iter().position(|d| d == u)).collect()
++        };
++        let groups: Vec<Vec<usize>> = k.groups.iter().map(|g| pin_indices(g)).collect();
++        let discard_groups:Vec<Vec<usize>>=k.discard_groups.iter().map(|g|discard_indices(g)).collect();
++        set(&mut deck, "draw_knowledge", serde_json::json!({
++            "observed":k.observed,
++            "groups":groups, "inserted":pin_indices(&k.inserted),
++            "base":pin_indices(&k.base), "discard_groups":discard_groups,
++            "unsupported":k.unsupported.map(|r| r.code()),
++        }));
++    }
+ 
+     d.insert("deck".to_owned(), Value::Object(deck));
+ 
+diff --git a/sts2-rs/crates/sts2-wire/src/scenario.rs b/sts2-rs/crates/sts2-wire/src/scenario.rs
+index 4e49497..8f031ad 100644
+--- a/sts2-rs/crates/sts2-wire/src/scenario.rs
++++ b/sts2-rs/crates/sts2-wire/src/scenario.rs
+@@ -509,6 +509,7 @@ pub fn build_scenario_state_with_run_rng(
+         pinned_top: smallvec::SmallVec::new(),
+         pinned_bottom: SmallVec::new(),
+         deferred_draw_order: false,
++        draw_knowledge: None,
+     };
+ 
+     let rng = sts2_core::dotnet_rng::Rng::new((seed) as i32);
+diff --git a/sts2-rs/crates/sts2-wire/src/state_dict.rs b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+index efb4cc4..e41fef7 100644
+--- a/sts2-rs/crates/sts2-wire/src/state_dict.rs
++++ b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+@@ -451,6 +451,19 @@ pub struct ParsedDeck {
+     /// belief multiset rather than a materialized order. Defaults to
+     /// `false` (every non-search producer).
+     pub deferred_draw_order: bool,
++    /// Optional priority bands, expressed by pile indices rather than unstable UIDs.
++    pub draw_knowledge: Option<ParsedDrawKnowledge>,
++}
++
++/// Search knowledge survives wire reconstruction without exposing hidden physical ranks.
++#[derive(Debug, Clone)]
++pub struct ParsedDrawKnowledge {
++    pub observed: bool,
++    pub groups: Vec<Vec<usize>>,
++    pub inserted: Vec<usize>,
++    pub base: Vec<usize>,
++    pub discard_groups: Vec<Vec<usize>>,
++    pub unsupported: Option<sts2_core::draw_knowledge::UnsupportedDrawOrder>,
+ }
+ 
+ #[derive(Debug, Clone)]
+@@ -1270,6 +1283,9 @@ fn parse_deck<V: WireValue>(d: &V) -> WireResult<ParsedDeck> {
+             .ok_or_else(|| schema_err("$.deck.deferred_draw_order", "must be a boolean or null"))?,
+         None => false,
+     };
++    let draw_knowledge = extract_optional(d, "draw_knowledge")
++        .map(|value| parse_draw_knowledge(&value, draw_pile.len(), discard_pile.len()))
++        .transpose()?;
+ 
+     Ok(ParsedDeck {
+         draw_pile,
+@@ -1281,6 +1297,7 @@ fn parse_deck<V: WireValue>(d: &V) -> WireResult<ParsedDeck> {
+         pinned_top,
+         pinned_bottom,
+         deferred_draw_order,
++        draw_knowledge,
+     })
+ }
+ 
+@@ -1297,7 +1314,12 @@ fn parse_pin_indices<V: WireValue>(d: &V, key: &str, draw_len: usize) -> WireRes
+     let Some(v) = extract_optional(d, key) else {
+         return Ok(Vec::new());
+     };
+-    let list = as_list(&v, &path)?;
++    parse_index_list(&v, &path, draw_len)
++}
++
++/// Parse a checked, duplicate-free membership list for one known pile.
++fn parse_index_list<V: WireValue>(v: &V, path: &str, draw_len: usize) -> WireResult<Vec<usize>> {
++    let list = as_list(v, path)?;
+     let mut out: Vec<usize> = Vec::with_capacity(list.len());
+     for (i, item) in list.iter().enumerate() {
+         let ip = format!("{path}[{i}]");
+@@ -1320,6 +1342,60 @@ fn parse_pin_indices<V: WireValue>(d: &V, key: &str, draw_len: usize) -> WireRes
+     Ok(out)
+ }
+ 
++/// Reconstruct only explicitly supplied knowledge, never infer priority from round number.
++fn parse_draw_knowledge<V: WireValue>(v: &V, draw_len: usize, discard_len: usize)
++    -> WireResult<ParsedDrawKnowledge>
++{
++    let path = "$.deck.draw_knowledge";
++    let object = as_dict(v, path)?;
++    let mut groups = Vec::new();
++    let mut seen = Vec::new();
++    if let Some(value) = extract_optional(&object, "groups") {
++        for (i, group) in as_list(&value, &format!("{path}.groups"))?.iter().enumerate() {
++            let members = parse_index_list(group, &format!("{path}.groups[{i}]"), draw_len)?;
++            if members.iter().any(|i| seen.contains(i)) {
++                return Err(schema_err(path, "priority bands must not overlap"));
++            }
++            seen.extend(members.iter().copied());
++            if !members.is_empty() { groups.push(members); }
++        }
++    }
++    let list = |key: &str, len: usize| -> WireResult<Vec<usize>> {
++        extract_optional(&object, key).map(|value| {
++            parse_index_list(&value, &format!("{path}.{key}"), len)
++        }).transpose().map(Option::unwrap_or_default)
++    };
++    let inserted = list("inserted", draw_len)?;
++    if inserted.iter().any(|i| seen.contains(i)) {
++        return Err(schema_err(path, "random insertions must not overlap priority bands"));
++    }
++    let base = match extract_optional(&object, "base") {
++        Some(value) => parse_index_list(&value, &format!("{path}.base"), draw_len)?,
++        None => (0..draw_len).filter(|i| !inserted.contains(i)).collect(),
++    };
++    if base.iter().any(|i| inserted.contains(i)) {
++        return Err(schema_err(path, "base and random insertions must not overlap"));
++    }
++    let unsupported = extract_optional(&object, "unsupported").map(|value| {
++        let code = value.as_str().ok_or_else(|| schema_err(path, "unsupported must be a code string"))?;
++        sts2_core::draw_knowledge::UnsupportedDrawOrder::from_code(&code)
++            .ok_or_else(|| schema_err(path, "unknown draw-knowledge cutoff code"))
++    }).transpose()?;
++    let mut discard_groups=Vec::new();
++    let mut discard_seen=Vec::new();
++    if let Some(value)=extract_optional(&object,"discard_groups") {
++        for (i,group) in as_list(&value,&format!("{path}.discard_groups"))?.iter().enumerate() {
++            let members=parse_index_list(group,&format!("{path}.discard_groups[{i}]"),discard_len)?;
++            if members.iter().any(|i|discard_seen.contains(i)){return Err(schema_err(path,"discard bands must not overlap"));}
++            discard_seen.extend(members.iter().copied());
++            if !members.is_empty(){discard_groups.push(members);}
++        }
++    }
++    let observed=extract_optional(&object,"observed").map(|v|v.as_bool()
++        .ok_or_else(||schema_err(path,"observed must be boolean"))).transpose()?.unwrap_or(true);
++    Ok(ParsedDrawKnowledge {observed,groups,inserted,base,discard_groups,unsupported})
++}
++
+ fn parse_pile<V: WireValue>(value: &V, path: &str) -> WireResult<Vec<ParsedCard>> {
+     let list = as_list(value, path)?;
+     let mut out = Vec::with_capacity(list.len());
+@@ -3506,6 +3582,18 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+         .map(|&i| draw_uids[i])
+         .collect();
+     state.player.deferred_draw_order = parsed.deck.deferred_draw_order;
++    if let Some(k) = &parsed.deck.draw_knowledge {
++        state.player.draw_knowledge = Some(Box::new(sts2_core::draw_knowledge::DrawKnowledge {
++            observed:k.observed,
++            groups: k.groups.iter().map(|g| g.iter().map(|&i| draw_uids[i]).collect()).collect(),
++            inserted: k.inserted.iter().map(|&i| draw_uids[i]).collect(),
++            base: k.base.iter().map(|&i| draw_uids[i]).collect(),
++            discard_groups: k.discard_groups.iter().map(|g|
++                g.iter().map(|&i|discard_uids[i]).collect()).collect(),
++            prepared: false,
++            unsupported: k.unsupported,
++        }));
++    }
+ 
+     // GH #370. Sly / Retain reach the engine through three per-instance uid
+     // lists with three different lifetimes, and a rebuilt mirror re-created
+@@ -4320,6 +4408,40 @@ mod tests {
+             assert_eq!(var_key_from_wire(var_key_wire_name(key)), Some(key));
+         }
+     }
++
++    /// Unknown bands and cutoff markers round-trip as pile positions, never physical UIDs.
++    #[test]
++    fn priority_knowledge_wire_round_trip_and_schema_validation() {
++        let mut state=CoreCombatState::default();
++        state.player.current_hp=50;
++        state.player.max_hp=80;
++        for n in 1..=6 {
++            let mut card=Card {uid:CardUid::new(n).unwrap(),card_id:CardId::StrikeIronclad,
++                cost:1,..Card::pod_defaults()};
++            if n!=3 && n!=4 {card.set_enchantment(EnchantmentId::PerfectFit,1);}
++            state.cards.push(card);
++        }
++        state.player.draw=(1..=4).map(|n|CardUid::new(n).unwrap()).collect();
++        state.player.discard=(5..=6).map(|n|CardUid::new(n).unwrap()).collect();
++        sts2_core::draw_knowledge::set_root_knowledge(&mut state.player,
++            vec![vec![CardUid::new(1).unwrap(),CardUid::new(2).unwrap()]],
++            vec![CardUid::new(4).unwrap()],
++            vec![vec![CardUid::new(5).unwrap()],vec![CardUid::new(6).unwrap()]]).unwrap();
++        let emitted=crate::emit::combat_state_to_value(&state).unwrap();
++        let parsed=parse_state_dict(&&emitted).unwrap();
++        let knowledge=parsed.deck.draw_knowledge.as_ref().unwrap();
++        assert_eq!(knowledge.groups,vec![vec![0,1]]);
++        assert_eq!(knowledge.inserted,vec![3]);
++        assert_eq!(knowledge.discard_groups,vec![vec![0],vec![1]]);
++        let restored=state_from_dict_impl(&parsed).unwrap();
++        let reemitted=crate::emit::combat_state_to_value(&restored).unwrap();
++        assert_eq!(emitted["deck"]["draw_knowledge"],reemitted["deck"]["draw_knowledge"]);
++        let mut invalid=emitted.clone();
++        invalid["deck"]["draw_knowledge"]["groups"]=serde_json::json!([[0],[0]]);
++        assert!(parse_state_dict(&&invalid).is_err());
++        invalid["deck"]["draw_knowledge"]["groups"]=serde_json::json!([[99]]);
++        assert!(parse_state_dict(&&invalid).is_err());
++    }
+     /// Every [`WIRE_MOVE_STATE_ALIASES`] target must exist as a move
+     /// state on the freshly-built AI of its monster — a content-side
+     /// state rename would otherwise silently revive the inert-enemy
+

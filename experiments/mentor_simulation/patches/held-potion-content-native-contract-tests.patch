@@ -1,0 +1,83 @@
+diff --git a/sts2-rs/crates/sts2-content/src/potions/dispatch/tests.rs b/sts2-rs/crates/sts2-content/src/potions/dispatch/tests.rs
+index c6506d2..bce9bf0 100644
+--- a/sts2-rs/crates/sts2-content/src/potions/dispatch/tests.rs
++++ b/sts2-rs/crates/sts2-content/src/potions/dispatch/tests.rs
+@@ -74,42 +74,30 @@ fn potion_target_types_registered_into_core() {
+     );
+ }
+ 
+-/// `legal_actions` rejects character-locked potions (Defect's
+-/// `FocusPotion` held by an Ironclad).
++/// Native Ironclad can drink a held FocusPotion: two Focus and the belt slot is consumed.
+ #[test]
+-fn drink_potion_rejected_for_wrong_character() {
++fn drink_held_focus_potion_on_ironclad_applies_effect_and_consumes_slot() {
+     ensure_installed();
+-    let mut state = CombatState {
+-        phase: CombatPhase::PlayerPlayPhase,
+-        ..CombatState::default()
+-    };
+-    state.player.character = Some(CharacterId::Ironclad);
++    let mut state = fresh_state_for_character(CharacterId::Ironclad);
++    state.phase = CombatPhase::PlayerPlayPhase;
+     state.player.potions.push(PotionKind::FocusPotion);
+-    state.player.potions.push(PotionKind::CunningPotion);
+-    let acts = sts2_core::legal_actions(&state);
+-    let drinkable = acts
+-        .iter()
+-        .filter(|a| matches!(a, sts2_core::Action::DrinkPotion { .. }))
+-        .count();
+-    assert_eq!(
+-        drinkable, 0,
+-        "Defect/Silent-locked potions must not be drinkable by Ironclad",
+-    );
++    let action = sts2_core::Action::DrinkPotion { potion_slot: 0, target: None };
++    assert!(sts2_core::legal_actions(&state).contains(&action));
++    let _ = sts2_core::apply(&mut state, action);
++    assert_eq!(state.player_power_amount(sts2_core::PowerKind::Focus), 2);
++    assert!(state.player.potions.is_empty());
+ }
+ 
+-/// Conversely, a Defect player can drink `FocusPotion` but not
+-/// Silent's `CunningPotion`.
++/// Native-observed held Focus and Poison remain usable on Ironclad, at their real belt slots.
+ #[test]
+-fn drink_potion_accepted_for_matching_character() {
++fn held_observed_character_potions_keep_their_physical_belt_slots() {
+     ensure_installed();
+-    let mut state = CombatState {
+-        phase: CombatPhase::PlayerPlayPhase,
+-        ..CombatState::default()
+-    };
+-    state.player.character = Some(CharacterId::Defect);
+-    state.player.potions.push(PotionKind::FocusPotion); // OK
+-    state.player.potions.push(PotionKind::CunningPotion); // blocked
+-    state.player.potions.push(PotionKind::BlockPotion); // OK (unlocked)
++    let mut state = fresh_state_for_character(CharacterId::Ironclad);
++    state.phase = CombatPhase::PlayerPlayPhase;
++    push_enemy(&mut state, 2, 30);
++    state.player.potions.push(PotionKind::FocusPotion);
++    state.player.potions.push(PotionKind::PoisonPotion);
++    state.player.potions.push(PotionKind::BlockPotion);
+     let acts = sts2_core::legal_actions(&state);
+     let slots: Vec<u8> = acts
+         .iter()
+@@ -118,7 +106,7 @@ fn drink_potion_accepted_for_matching_character() {
+             _ => None,
+         })
+         .collect();
+-    assert_eq!(slots, vec![0, 2]);
++    assert_eq!(slots, vec![0, 1, 2]);
+ }
+ 
+ // ── sts2-rs-jofa wave-0 body tests ───────────────────────────────
+@@ -1355,6 +1343,8 @@ fn entropic_brew_respects_three_slot_cap() {
+     use sts2_core::potions::{CharacterId, PotionKind};
+     ensure_installed();
+     let mut state = fresh_state_for_character(CharacterId::Ironclad);
++    // The held FirePotion needs a living target for its legal action.
++    push_enemy(&mut state, 2, 30);
+     state.player.potion_slots = 3;
+     state.player.potions.clear();
+     state.player.potions.push(PotionKind::FirePotion);
+

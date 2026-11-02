@@ -1,0 +1,22 @@
+# Public simulation service using pinned, locally checked out Mentor rule crates.
+[package]
+name = "mentor-simulation"
+version = "0.1.0"
+edition = "2021"
+
+# Keep the service independent of the parent repository and upstream workspace.
+[workspace]
+
+[dependencies]
+sts2-core = { path = "../../../vendor/spire-mentor/sts2-rs/crates/sts2-core" }
+sts2-content = { path = "../../../vendor/spire-mentor/sts2-rs/crates/sts2-content" }
+sts2-mcts = { path = "../../../vendor/spire-mentor/sts2-rs/crates/sts2-mcts" }
+sts2-runai = { path = "../../../vendor/spire-mentor/sts2-rs/crates/sts2-runai", features = ["ppo", "sweeps"] }
+sts2-wire = { path = "../../../vendor/spire-mentor/sts2-rs/crates/sts2-wire" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+smallvec = "1.13"
+sha2 = "0.10"
+
+[profile.release]
+opt-level = 2

@@ -1,0 +1,24 @@
+{
+  "repository": "https://github.com/wuhao21/sts2-cli",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 Hao Wu",
+  "commit": "d11aa883b582dd68bd39b331f3370746b30d447e",
+  "inspected_default_head": "c9083faae643e7955ba6663de561dee84aa9abb0",
+  "local_game_version": "v0.107.1",
+  "local_game_commit": "59260271",
+  "source_adaptations": [
+    "SetUpSavedSingleplayer API spelling and asynchronous return handling",
+    "Initialize ModManager in TestMode before model enumeration",
+    "Partial RunSimulator plus synthetic setup/step/public snapshot commands",
+    "Disable Neutralize replacement in oracle mode",
+    "Fail explicitly instead of manually discarding an unconsumed/failed potion",
+    "Detach a completed selector prompt before synchronous native continuations open the next prompt",
+    "Set the public Owner property when inserting synthetic mutable relic instances",
+    "Allocate exact fixture piles once from unique registered native instances; omitted piles are empty",
+    "Export schema2 public descriptors, native completed play history, and stable enemy target slots",
+    "Fail oracle end-turn diagnostics before upstream cancellation, retry, or forced-terminal recovery"
+  ],
+  "game_dll_il_modified": false,
+  "runtime_changes": "Upstream Godot stubs and scheduling/localization Harmony patches remain",
+  "native_assets": "User-owned local copies only, stored outside this directory and not distributed"
+}

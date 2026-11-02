@@ -1,0 +1,6 @@
+{
+  "game_root": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Slay the Spire 2",
+  "api_port": 18765,
+  "client_id": "YOUR_STEAM_CLIENT_ID",
+  "upstream_commit": "7b3cb83ff97e05477db7688a37a3e622b12ef074"
+}

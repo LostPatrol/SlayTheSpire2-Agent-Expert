@@ -1,0 +1,5 @@
+# Managed build products stay inside this isolated experiment.
+host/bin/
+host/obj/
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,50 @@
+{
+  "endpoints": [
+    {
+      "id": "default",
+      "name": "OpenAI Compatible",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKey": "",
+      "enabled": true
+    }
+  ],
+  "models": [
+    {
+      "id": "default-model",
+      "endpointId": "default",
+      "model": "gpt-4o",
+      "displayName": "gpt-4o",
+      "supportsVision": false,
+      "supportsTools": true,
+      "thinkingMode": "auto",
+      "thinkingIntensity": "medium",
+      "label": "gpt-4o"
+    }
+  ],
+  "conversationModelId": "default-model",
+  "thinkingIntensity": "medium",
+  "hotkey": "F8",
+  "overlayTheme": "slate",
+  "attachStateInChat": true,
+  "attachScreenshotInChat": false,
+  "overlayVisibleOnStart": false,
+  "hasSeenFirstRunGuide": true,
+  "companionAutoSelectCharacter": true,
+  "roleTests": [],
+  "modelTests": [],
+  "mcpServerPath": "",
+  "mcpPort": 8765,
+  "mcpEnabled": false,
+  "maxSessionRequests": 1,
+  "proactiveChatEnabled": false,
+  "proactiveChatTone": "friendly",
+  "overlayPlayMode": "solo",
+  "showThinkingInChat": false,
+  "replyLanguage": "auto",
+  "dualLayerSoloEnabled": false,
+  "dualLayerCoopEnabled": false,
+  "jevBaseUrl": "https://api.typesafe.ai",
+  "jevApiKey": "",
+  "jevModel": "jev-latest",
+  "jevConfidenceThreshold": 0.35
+}

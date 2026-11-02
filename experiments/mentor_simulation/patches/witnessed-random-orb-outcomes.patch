@@ -1,0 +1,395 @@
+diff --git a/sts2-rs/crates/sts2-content/tests/witnessed_random_orbs.rs b/sts2-rs/crates/sts2-content/tests/witnessed_random_orbs.rs
+new file mode 100644
+index 0000000..a78ff67
+--- /dev/null
++++ b/sts2-rs/crates/sts2-content/tests/witnessed_random_orbs.rs
+@@ -0,0 +1,212 @@
++//! Past random-orb observations through real Boost Away, Echo Form and Trash to Treasure.
++//! The original channel and overflow-evoke effects remain responsible for all state changes.
++
++use sts2_content::{cards::dispatch, monster_dispatch::MonsterSpawnArgs};
++use sts2_core::cards::CardId;
++use sts2_core::orbs::{Orb, OrbKind, OrbSlots};
++use sts2_core::potions::CharacterId;
++use sts2_core::runstate::{RoomType, RunState};
++use sts2_core::{Action, CardUid, CombatState, MonsterKind, PowerKind};
++
++/// Build the actual two-generation card chain with six full slots and one live target.
++fn fixture() -> CombatState {
++    dispatch::ensure_installed();
++    let mut run = RunState {
++        character_id: CharacterId::Defect,
++        current_hp: 80,
++        max_hp: 80,
++        ..RunState::default()
++    };
++    sts2_content::run_callbacks::populate_starter_deck(&mut run, CharacterId::Defect);
++    let mut state = sts2_content::run_bridge::enter_combat_from_roster(
++        &run,
++        &[(MonsterKind::Nibbit, MonsterSpawnArgs::None, 64)],
++        RoomType::Monster,
++    );
++    state.player.hand.clear();
++    state.player.draw.clear();
++    state.player.discard.clear();
++    let mut card =
++        sts2_content::cards::spec_index::card_pod_from_id(CardId::BoostAway, false).unwrap();
++    card.uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++    state.player.hand.push(card.uid);
++    state.cards.push(card);
++    state.player.orbs = OrbSlots::with_capacity(6);
++    state.player.orbs.slots = [
++        Orb::lightning(),
++        Orb::lightning(),
++        Orb::glass(),
++        Orb::glass(),
++        Orb::glass(),
++        Orb::lightning(),
++    ]
++    .into_iter()
++    .collect();
++    let owner = state.player.creature_uid.unwrap();
++    for (kind, amount) in [
++        (PowerKind::Focus, 1),
++        (PowerKind::EchoForm, 1),
++        (PowerKind::TrashToTreasure, 1),
++    ] {
++        sts2_core::card_effects::apply_power_to_creature(&mut state, owner, kind, amount);
++    }
++    let enemy = state.enemy_uids[0];
++    let creature = state
++        .creatures
++        .iter_mut()
++        .find(|c| c.id == enemy.0)
++        .unwrap();
++    creature.block = 6;
++    creature.current_hp = 64;
++    creature.max_hp = 64;
++    state
++}
++
++/// Each generation consumes one original roll and keeps the real FIFO evoke damage and fresh payloads.
++#[test]
++fn observed_random_orbs_drive_original_boost_echo_generation_and_overflow() {
++    let mut state = fixture();
++    let before = state.clone();
++    sts2_core::witnessed_outcomes::with_observed_random_orbs(
++        &mut state,
++        &[OrbKind::Plasma, OrbKind::Glass],
++        |state| {
++            Ok(sts2_core::apply(
++                state,
++                Action::PlayCard {
++                    hand_index: 0,
++                    target: None,
++                },
++            ))
++        },
++    )
++    .unwrap();
++    assert_eq!(
++        state.run_rng.combat_orbs.counter() - before.run_rng.combat_orbs.counter(),
++        2
++    );
++    assert_eq!(
++        state.player.orbs.slots.as_slice(),
++        &[
++            Orb::glass(),
++            Orb::glass(),
++            Orb::glass(),
++            Orb::lightning(),
++            Orb::plasma(),
++            Orb::glass()
++        ]
++    );
++    let enemy = state
++        .creatures
++        .iter()
++        .find(|c| c.id == state.enemy_uids[0].0)
++        .unwrap();
++    assert_eq!(
++        (enemy.current_hp, enemy.block),
++        (52, 0),
++        "two original Lightning evokes deal 18 through six block"
++    );
++    assert_eq!(
++        state
++            .player
++            .discard
++            .iter()
++            .filter(|uid| state.cards[uid.get() as usize - 1].card_id == CardId::Dazed)
++            .count(),
++        2
++    );
++    assert_eq!(
++        state.combat_log.player_card_plays_this_combat
++            - before.combat_log.player_card_plays_this_combat,
++        2
++    );
++    assert!(state.replay_observations.is_none());
++}
++
++/// Empty, extra and incomplete evidence restore belt, generated cards, damage and every RNG cursor.
++#[test]
++fn observed_random_orbs_reject_bad_or_incomplete_evidence_atomically() {
++    for (evidence, reason) in [
++        (
++            vec![OrbKind::Empty, OrbKind::Glass],
++            "observed_random_orb_outside_positive_support",
++        ),
++        (
++            vec![OrbKind::Plasma],
++            "observed_random_orb_unwitnessed_extra_event",
++        ),
++        (
++            vec![OrbKind::Plasma, OrbKind::Glass, OrbKind::Frost],
++            "observed_random_orb_queue_not_consumed",
++        ),
++    ] {
++        let mut state = fixture();
++        let before = state.clone();
++        assert_eq!(
++            sts2_core::witnessed_outcomes::with_observed_random_orbs(
++                &mut state,
++                &evidence,
++                |state| {
++                    Ok(sts2_core::apply(
++                        state,
++                        Action::PlayCard {
++                            hand_index: 0,
++                            target: None,
++                        },
++                    ))
++                }
++            ),
++            Err(reason)
++        );
++        assert_eq!(state, before);
++        assert!(state.replay_observations.is_none());
++    }
++}
++
++/// Conditioning on the original rolls is exactly the unarmed world, including RNG and all five kinds.
++#[test]
++fn observed_random_orbs_preserve_unarmed_sampling_and_original_support() {
++    let before = fixture();
++    let mut stream = before.run_rng.combat_orbs.clone();
++    let natural: Vec<_> = (0..2)
++        .map(|_| sts2_core::orbs::RANDOM_COMBAT_ORB_KINDS[stream.next_int_exclusive(0, 5) as usize])
++        .collect();
++    let mut raw = before.clone();
++    let _ = sts2_core::apply(
++        &mut raw,
++        Action::PlayCard {
++            hand_index: 0,
++            target: None,
++        },
++    );
++    let mut observed = before.clone();
++    sts2_core::witnessed_outcomes::with_observed_random_orbs(&mut observed, &natural, |state| {
++        Ok(sts2_core::apply(
++            state,
++            Action::PlayCard {
++                hand_index: 0,
++                target: None,
++            },
++        ))
++    })
++    .unwrap();
++    assert_eq!(observed, raw);
++    for kind in sts2_core::orbs::RANDOM_COMBAT_ORB_KINDS {
++        let mut state = before.clone();
++        sts2_core::witnessed_outcomes::with_observed_random_orbs(
++            &mut state,
++            &[kind, kind],
++            |state| {
++                Ok(sts2_core::apply(
++                    state,
++                    Action::PlayCard {
++                        hand_index: 0,
++                        target: None,
++                    },
++                ))
++            },
++        )
++        .unwrap();
++        assert_eq!(OrbKind::of(state.player.orbs.slots.last().unwrap()), kind);
++    }
++}
+diff --git a/sts2-rs/crates/sts2-core/src/orbs.rs b/sts2-rs/crates/sts2-core/src/orbs.rs
+index f33eefb..a29f421 100644
+--- a/sts2-rs/crates/sts2-core/src/orbs.rs
++++ b/sts2-rs/crates/sts2-core/src/orbs.rs
+@@ -357,14 +357,23 @@ fn lightning_orb_bonus(state: &CombatState) -> i32 {
+ /// bead `sts2-rs-dh30e` records a prior 4-roll here that dropped Glass.
+ #[must_use]
+ pub fn random_combat_orb(state: &mut CombatState) -> Orb {
+-    match state.run_rng.combat_orbs.next_int_exclusive(0, 5) {
+-        0 => Orb::lightning(),
+-        1 => Orb::frost(),
+-        2 => Orb::dark(),
+-        3 => Orb::plasma(),
+-        _ => Orb::glass(),
++    let index = state.run_rng.combat_orbs.next_int_exclusive(0, 5) as usize;
++    let sampled = RANDOM_COMBAT_ORB_KINDS[index];
++    // A past observation replaces only this sampled kind; channel/evoke effects remain original.
++    match crate::witnessed_outcomes::condition_random_orb_kind(state, sampled, &RANDOM_COMBAT_ORB_KINDS) {
++        OrbKind::Lightning => Orb::lightning(),
++        OrbKind::Frost => Orb::frost(),
++        OrbKind::Dark => Orb::dark(),
++        OrbKind::Plasma => Orb::plasma(),
++        OrbKind::Glass => Orb::glass(),
++        OrbKind::Empty => unreachable!("Empty is outside the random combat orb support"),
+     }
+ }
++
++/// Original five-way sampling order, shared by the sampler and past-outcome support checks.
++pub const RANDOM_COMBAT_ORB_KINDS: [OrbKind; 5] = [
++    OrbKind::Lightning, OrbKind::Frost, OrbKind::Dark, OrbKind::Plasma, OrbKind::Glass,
++];
+ /// Channel a fresh orb onto the player.
+ pub fn channel_orb(state: &mut CombatState, orb: Orb) {
+     // C# `OrbCmd.Channel` (`OrbCmd.cs:51-62`): a character with
+diff --git a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+index cc66b1d..6dab1a7 100644
+--- a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
++++ b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+@@ -1,6 +1,7 @@
+ //! Ephemeral public observations of already executed chance effects.
+ //! Rule handlers still sample their original RNG before conditioning that result.
+ 
++use crate::orbs::OrbKind;
+ use crate::{CombatState, CreatureUid, StepResult};
+ 
+ /// Typed outcomes keep unrelated random effects from consuming each other's evidence.
+@@ -14,6 +15,8 @@ enum ObservedOutcome {
+ pub struct ReplayObservations {
+     expected: Vec<ObservedOutcome>,
+     consumed: usize,
++    random_orbs: Vec<OrbKind>,
++    orbs_consumed: usize,
+     error: Option<&'static str>,
+ }
+ 
+@@ -22,24 +25,45 @@ pub fn with_observed_hatch_hp(
+     state: &mut CombatState,
+     expected: &[(CreatureUid, i32)],
+     apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> Result<StepResult, &'static str> {
++    with_observed_outcomes(state, expected, &[], apply)
++}
++
++/// Condition a complete witnessed sequence of random-orb events through original rule dispatch.
++pub fn with_observed_random_orbs(
++    state: &mut CombatState,
++    expected: &[OrbKind],
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> Result<StepResult, &'static str> {
++    with_observed_outcomes(state, &[], expected, apply)
++}
++
++/// Compose typed past outcomes with a draw-observation closure in one atomic prefix.
++pub fn with_observed_outcomes(
++    state: &mut CombatState,
++    hatch_hp: &[(CreatureUid, i32)],
++    random_orbs: &[OrbKind],
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
+ ) -> Result<StepResult, &'static str> {
+     if state.replay_observations.is_some() {
+         return Err("observed_hatch_hp_nested_scope");
+     }
+-    if expected
++    if hatch_hp
+         .iter()
+         .enumerate()
+-        .any(|(index, (owner, _))| expected[..index].iter().any(|(prior, _)| prior == owner))
++        .any(|(index, (owner, _))| hatch_hp[..index].iter().any(|(prior, _)| prior == owner))
+     {
+         return Err("observed_hatch_hp_duplicate_owner");
+     }
+     let before = state.clone();
+     state.replay_observations = Some(Box::new(ReplayObservations {
+-        expected: expected
++        expected: hatch_hp
+             .iter()
+             .map(|&(owner, hp)| ObservedOutcome::HatchHp { owner, hp })
+             .collect(),
+         consumed: 0,
++        random_orbs: random_orbs.to_vec(),
++        orbs_consumed: 0,
+         error: None,
+     }));
+     let result = apply(state);
+@@ -49,6 +73,10 @@ pub fn with_observed_hatch_hp(
+         Some(observations) => observations.error.or_else(|| {
+             (observations.consumed != observations.expected.len())
+                 .then_some("observed_hatch_hp_queue_not_consumed")
++                .or_else(|| {
++                    (observations.orbs_consumed != observations.random_orbs.len())
++                        .then_some("observed_random_orb_queue_not_consumed")
++                })
+         }),
+     };
+     let result = result.and_then(|step| {
+@@ -100,10 +128,61 @@ pub fn condition_hatch_hp(
+     *hp
+ }
+ 
++/// Condition only the original random-orb kind draw, after its original RNG read.
++pub fn condition_random_orb_kind(
++    state: &mut CombatState,
++    sampled: OrbKind,
++    support: &[OrbKind],
++) -> OrbKind {
++    let Some(observations) = state.replay_observations.as_mut() else {
++        return sampled;
++    };
++    if observations.error.is_some() {
++        return sampled;
++    }
++    let Some(&kind) = observations.random_orbs.get(observations.orbs_consumed) else {
++        observations.error = Some("observed_random_orb_unwitnessed_extra_event");
++        return sampled;
++    };
++    if !support.contains(&kind) {
++        observations.error = Some("observed_random_orb_outside_positive_support");
++        return sampled;
++    }
++    observations.orbs_consumed += 1;
++    kind
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+ 
++    /// Different typed event channels cannot consume each other's evidence when interleaved.
++    #[test]
++    fn observed_typed_outcomes_keep_hatch_and_orb_sequences_separate() {
++        let mut state = CombatState::default();
++        let owner = CreatureUid::new(2).unwrap();
++        with_observed_outcomes(
++            &mut state,
++            &[(owner, 20)],
++            &[OrbKind::Plasma, OrbKind::Glass],
++            |state| {
++                assert_eq!(
++                    crate::orbs::random_combat_orb(state),
++                    crate::orbs::Orb::plasma()
++                );
++                assert_eq!(condition_hatch_hp(state, owner, 19, 22, 21), 20);
++                assert_eq!(
++                    crate::orbs::random_combat_orb(state),
++                    crate::orbs::Orb::glass()
++                );
++                Ok(StepResult::Advanced)
++            },
++        )
++        .unwrap();
++        assert_eq!(state.run_rng.combat_orbs.counter(), 2);
++        assert!(state.replay_observations.is_none());
++    }
++
+     /// A replay scope cannot affect semantic identity, nest, or retain scratch after success.
+     #[test]
+     fn hatch_observation_scope_ignores_hashes_and_cleans_up() {

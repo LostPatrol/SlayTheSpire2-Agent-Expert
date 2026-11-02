@@ -1,0 +1,4 @@
+{"fact_id": "monsters.CALCIFIED_CULTIST.attack_pattern", "reason": "attack_pattern description says always Incantation, but the state list also includes Dark Strike and omits transitions.", "status": "conflicting", "action": "excluded_field"}
+{"fact_id": "intents.ATTACK", "status": "incomplete", "reason": "Unresolved placeholder retained, never filled with zero."}
+{"fact_id": "intents.DEATH_BLOW", "status": "incomplete", "reason": "Unresolved placeholder retained, never filled with zero."}
+{"fact_id": "intents.STATUS", "status": "incomplete", "reason": "Unresolved placeholder retained, never filled with zero."}

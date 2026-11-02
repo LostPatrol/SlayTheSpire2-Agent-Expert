@@ -1,0 +1,174 @@
+diff --git a/sts2-rs/crates/sts2-runai/src/policy/mod.rs b/sts2-rs/crates/sts2-runai/src/policy/mod.rs
+index 6284574..df5017e 100644
+--- a/sts2-rs/crates/sts2-runai/src/policy/mod.rs
++++ b/sts2-rs/crates/sts2-runai/src/policy/mod.rs
+@@ -603,6 +603,34 @@ pub(crate) fn splitmix64(mut x: u64) -> u64 {
+     x ^ (x >> 31)
+ }
+ 
++/// Derive the original per-run combat decision seed from an explicit policy seed and counter.
++#[must_use]
++pub fn combat_search_seed(run_seed: i32, counter: u64) -> u64 {
++    let bits = u64::from(u32::from_ne_bytes(run_seed.to_ne_bytes()));
++    splitmix64(bits ^ counter.wrapping_add(1).wrapping_mul(0x9E37_79B9_7F4A_7C15))
++}
++
++/// Explicit serving controls; native wrapper calls keep their original unbatched execution.
++#[derive(Clone, Copy, Debug)]
++pub struct CombatSearchExecution {
++    pub counter: u64,
++    pub seed_override: Option<u64>,
++    pub deadline: Option<std::time::Instant>,
++    pub batch_size: u32,
++    pub search_forced_roots: bool,
++}
++
++/// The original wrapper's final action and complete searched tree, without a meta fallback.
++#[derive(Debug)]
++pub struct CombatSearchDecision {
++    pub tree: Mcts<sts2_mcts::SharedPolicy>,
++    pub action: Action,
++    pub simulations: u32,
++    pub counter: u64,
++    pub search_seed: u64,
++    pub forced: bool,
++}
++
+ /// Components selected by the original combat wrapper before constructing one tree.
+ pub type CombatSearchSetup = (MctsConfig, LeafEval, sts2_mcts::SharedPolicy);
+ 
+@@ -649,6 +677,12 @@ pub struct MctsCombatPolicy<M> {
+     run_seed: i32,
+     /// Explicit embedding controls; fresh trees avoid applying initialization hooks on reused nodes.
+     search_transforms: Option<CombatSearchTransforms>,
++    /// Serving requests retain the real wrapper pipeline while exposing its tree and deadline work.
++    embedded_execution: Option<CombatSearchExecution>,
++    embedded_tree: Option<Mcts<sts2_mcts::SharedPolicy>>,
++    embedded_simulations: u32,
++    embedded_seed: u64,
++    embedded_error: Option<String>,
+     /// Per-run combat-decision counter (seeds decision `k`'s search).
+     decisions: u64,
+     /// Of [`Self::decisions`], how many were made in elite / boss combats,
+@@ -1686,6 +1720,11 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+             budget,
+             run_seed,
+             search_transforms: None,
++            embedded_execution: None,
++            embedded_tree: None,
++            embedded_simulations: 0,
++            embedded_seed: 0,
++            embedded_error: None,
+             decisions: 0,
+             decisions_elite: 0,
+             decisions_boss: 0,
+@@ -1768,7 +1807,7 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+     }
+ 
+     fn tree_reuse_on(&self) -> bool {
+-        if self.search_transforms.is_some() { return false; }
++        if self.search_transforms.is_some() || self.embedded_execution.is_some() { return false; }
+         self.overrides.tree_reuse == Some(true)
+     }
+ 
+@@ -2044,8 +2083,9 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+             }
+         }
+ 
+-        let seed_bits = u64::from(u32::from_ne_bytes(self.run_seed.to_ne_bytes()));
+-        let seed = splitmix64(seed_bits ^ (counter + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15));
++        let seed = self.embedded_execution.and_then(|execution|execution.seed_override)
++            .unwrap_or_else(||combat_search_seed(self.run_seed,counter));
++        if self.embedded_execution.is_some() {self.embedded_seed=seed;}
+         // `tree_reuse` (GH #830): the tree the decision before kept, if any.
+         // Taken here unconditionally, so it serves this decision or none.
+         let retained = self.retained.take();
+@@ -2054,7 +2094,9 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+         // so skip it (a forced EndTurn used to pay the full budget). The
+         // counter above has already advanced, so every later decision keeps
+         // its seed.
+-        if let Some(only) = self.forced_root_action(combat, sims) {
++        if let Some(only) = if self.embedded_execution.is_none_or(|execution|!execution.search_forced_roots) {
++            self.forced_root_action(combat, sims)
++        }else{None} {
+             if self.root_filter.is_some() {
+                 self.last_root_filter = Some(RootFilterRecord {
+                     applied: false,
+@@ -2082,6 +2124,11 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+                     });
+                 }
+             }
++            if self.embedded_execution.is_some() {
++                // Preserve the native zero-search decision; an empty tree contains no fabricated outcomes.
++                self.embedded_tree=Some(self.build_search(rm,combat,sims,seed));
++                return self.surface_pick(only,Vec::new(),sts2_mcts::ExpandOrderStats::default(),actions);
++            }
+             let stub = sts2_mcts::RootOutcome {
+                 action: only.clone(),
+                 visits: 0,
+@@ -2153,7 +2200,7 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+         // argmax, which dead-coded the shipped #403 fix on the deployed
+         // agent and diverged from the engine pick on exact ties; do NOT
+         // reintroduce a local argmax here.
+-        let chosen = mcts.try_search_n(sims).ok();
++        let chosen = self.execute_combat_search(&mut mcts,sims);
+         let root_outcomes = mcts.root_outcomes();
+         // Per decision: a rerooted tree restarts this counter, like a fresh one.
+         let expand_order = mcts.expand_order_stats();
+@@ -2202,6 +2249,11 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+             }
+             None => chosen,
+         };
++        if self.embedded_execution.is_some() {
++            let picked=self.surface_pick(chosen,root_outcomes,expand_order,actions);
++            self.embedded_tree=Some(mcts);
++            return picked;
++        }
+         if !reuse {
+             return self.surface_pick(chosen, root_outcomes, expand_order, actions);
+         }
+@@ -2219,6 +2271,44 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+         picked
+     }
+ 
++    /// Run the original search, using small deadline-aware batches only for explicit serving calls.
++    fn execute_combat_search(&mut self,tree:&mut Mcts<sts2_mcts::SharedPolicy>,sims:u32)->Option<Action> {
++        let Some(execution)=self.embedded_execution else {return tree.try_search_n(sims).ok();};
++        let mut completed=0;
++        let mut chosen=None;
++        while completed<sims && (completed==0 || execution.deadline.is_none_or(|deadline|std::time::Instant::now()<deadline)) {
++            let batch=execution.batch_size.max(1).min(sims-completed);
++            match tree.try_search_n(batch) {
++                Ok(action)=>{chosen=Some(action);completed+=batch;},
++                Err(error)=>{self.embedded_error=Some(format!("mcts_search:{error:?}"));break;},
++            }
++        }
++        self.embedded_simulations=completed;
++        self.sims_spent-=u64::from(sims-completed);
++        chosen
++    }
++
++    /// Reuse the complete combat wrapper with no meta substitution and return its real tree.
++    /// Forced roots keep native zero-work behavior unless explicit terminal statistics were requested.
++    pub fn search_combat(&mut self,run:&RunManager,combat:&CombatState,execution:CombatSearchExecution)
++        ->Result<CombatSearchDecision,String> {
++        self.decisions=execution.counter;
++        self.embedded_execution=Some(execution);
++        self.embedded_tree=None;
++        self.embedded_simulations=0;
++        self.embedded_error=None;
++        self.retained=None;
++        let actions:Vec<_>=sts2_core::legal_actions(combat).iter().filter_map(translate_combat_action).collect();
++        let picked=self.mcts_pick(run,combat,&actions);
++        self.embedded_execution=None;
++        if let Some(error)=self.embedded_error.take() {return Err(error);}
++        if picked.is_none() {return Err("upstream_combat_action_not_surfaceable".into());}
++        let action=self.last_combat_search.as_ref().ok_or("upstream_combat_record_missing")?.chosen.clone();
++        let tree=self.embedded_tree.take().ok_or("upstream_combat_tree_missing")?;
++        Ok(CombatSearchDecision {tree,action,simulations:self.embedded_simulations,
++            counter:execution.counter,search_seed:self.embedded_seed,forced:self.embedded_simulations==0})
++    }
++
+     /// The deployed combat search for `combat`, unsearched and fresh (no
+     /// tree reuse): [`Self::pick_search_setup`]'s config, prior and leaf
+     /// evaluator, exactly as `mcts_pick` builds a fresh search. The

@@ -1,0 +1,55 @@
+diff --git a/sts2-pycli/python/realgame_adapter.py b/sts2-pycli/python/realgame_adapter.py
+--- a/sts2-pycli/python/realgame_adapter.py
++++ b/sts2-pycli/python/realgame_adapter.py
+@@ -23,15 +23,10 @@
+   ``sts2_rs.list_registry_names("card")`` directly, so
+   :mod:`sts2_hint.adapter`'s bare-id resolution path (``_resolve_card_id``)
+   accepts them verbatim. No re-mapping needed.
+-* **Relic / monster ids.** The bridge sends canonical relic ids
+-  (``"BURNING_BLOOD"``) that also match the ``sts2_rs`` registry directly,
+-  but :mod:`sts2_hint.adapter`'s relic translator only accepts a display
+-  **title** (looked up via ``RELIC_TITLE_TO_ID``) -- so relics are emitted
+-  keyed by the bridge's ``name`` field, not ``id``. Monsters are the same
+-  story: the bridge's ``id`` (``"SHRINKER_BEETLE"``) does NOT match the
+-  registry's CamelCase monster ids (``"ShrinkerBeetle"``), but the bridge's
+-  ``name`` (``"Shrinker Beetle"``) matches ``MONSTER_TITLE_TO_ID`` exactly,
+-  so enemies are also emitted keyed by ``name``.
++* **Relic / monster ids.** Keep the bridge's stable ids alongside localized
++  display names. The adapter validates relic ids directly and resolves
++  monster ids from SCREAMING_SNAKE to known CamelCase engine kinds, so a
++  non-English game does not depend on English display-title lookup.
+ * **Powers.** The bridge's power ``id`` is the C# ``Id.Entry``, which
+   keeps a ``_POWER`` suffix the Rust registry strips for most powers
+   (``VULNERABLE_POWER`` vs the engine's ``VULNERABLE``) -- exactly the
+@@ -476,6 +471,7 @@
+     """One bridge Creature (enemy) object -> a headless enemy dict."""
+     out = {
+         "index": index,
++        "id": enemy.get("id"),
+         "name": enemy.get("name"),
+         "hp": enemy.get("hp"),
+         "max_hp": enemy.get("max_hp"),
+diff --git a/sts2-pycli/python/sts2_hint/adapter.py b/sts2-pycli/python/sts2_hint/adapter.py
+--- a/sts2-pycli/python/sts2_hint/adapter.py
++++ b/sts2-pycli/python/sts2_hint/adapter.py
+@@ -940,8 +940,19 @@
+ def _translate_enemy(
+     raw: dict[str, Any], path: str, idx: int, *, is_dead: bool = False
+ ) -> dict[str, Any]:
++    """Prefer a stable bridge id; retain display-title fallback for older producers."""
+     name = _require(raw, "name", path)
+-    monster_id = MONSTER_TITLE_TO_ID.get(name)
++    raw_id = raw.get("id")
++    monster_id = None
++    if isinstance(raw_id, str):
++        # Never accept arbitrary kinds or collapse distinct segment variants.
++        candidate = "".join(part.capitalize() for part in raw_id.split("_"))
++        if raw_id in _KNOWN_MONSTER_KINDS:
++            monster_id = raw_id
++        elif candidate in _KNOWN_MONSTER_KINDS:
++            monster_id = candidate
++    if monster_id is None:
++        monster_id = MONSTER_TITLE_TO_ID.get(name)
+     if monster_id is None:
+         # Some titles embed a live-resolved localization variable — e.g. the
+         # Act-3 TestSubject boss renders as "Test Subject #C8" while the

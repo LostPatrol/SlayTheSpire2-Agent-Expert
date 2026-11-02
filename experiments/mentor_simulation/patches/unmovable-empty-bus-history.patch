@@ -1,0 +1,75 @@
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+index fe8db47..1158910 100644
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -12298,11 +12298,9 @@ const AFTER_BLOCK_GAINED_KINDS: crate::PowerKindSet =
+ /// **Empty-bus early-out (mirrors `sts2-rs-4lk9` pattern)**: when both
+ /// `state.powers` and `state.relics` are empty, no listener can react,
+ /// so the dispatcher skips the walks. Hot path for fresh
+-/// combats / random rollouts where no block-react powers are active. That
+-/// return also skips the Unmovable history tail, which C# records whatever
+-/// the listeners; the divergence is kept as it is (exactness). The walks no
+-/// longer visit relics, but the `relics.is_empty()` half stays: it still
+-/// decides whether that tail runs.
++/// combats / random rollouts where no block-react powers are active. The
++/// listener walks are skipped, but unconditional card-block history still
++/// records gains made before Unmovable is acquired.
+ ///
+ /// Between the two, the walks and the Juggernaut lane are skipped when no
+ /// Grapple or Juggernaut is live (`PowerHook::AfterBlockGained`). The
+@@ -12311,12 +12309,11 @@ const AFTER_BLOCK_GAINED_KINDS: crate::PowerKindSet =
+ #[allow(clippy::inline_always)]
+ #[inline(always)]
+ pub fn dispatch_after_block_gained(state: &mut CombatState, ctx: &BlockGainedCtx) {
+-    if state.powers.is_empty() && state.relics.is_empty() {
+-        return;
++    if !state.powers.is_empty() || !state.relics.is_empty() {
++        power_hook_dispatch(state, PowerHook::AfterBlockGained, |state| {
++            after_block_gained_listeners(state, ctx);
++        });
+     }
+-    power_hook_dispatch(state, PowerHook::AfterBlockGained, |state| {
+-        after_block_gained_listeners(state, ctx);
+-    });
+ 
+     // ── Unmovable block-gain history (bead `sts2-rs-xk9yo`) ──────────────
+     // Record the `card_source` of each card-sourced player block-gain this
+@@ -32207,26 +32204,27 @@ mod power_hook_liveness {
+         }
+     }
+ 
+-    /// Trap 4 (B5): with no power and no relic at all, the empty-bus return of
+-    /// `dispatch_after_block_gained` also skips the Unmovable history tail,
+-    /// which C# records unconditionally. J06 keeps that divergence (JIT study
+-    /// §6.7): the first Defend is NOT recorded, so the second one, after
+-    /// Unmovable lands, IS doubled.
++    /// Native: two Defends before acquiring Unmovable(2) exhaust its current-turn allowance.
+     #[test]
+-    fn empty_bus_block_gain_keeps_skipping_the_unmovable_history() {
++    fn empty_bus_block_history_precedes_late_unmovable_and_resets_next_turn() {
+         for armed in [false, true] {
+             let (mut state, player) = combat(armed);
+             assert!(state.powers.is_empty() && state.relics.is_empty());
+             defend(&mut state, 1, 5);
+-            assert!(state.combat_log.unmovable_card_block_plays.is_empty());
++            defend(&mut state, 2, 5);
++            assert_eq!(state.combat_log.unmovable_card_block_plays.len(), 2);
+             crate::card_effects::apply_power_to_creature(
+                 &mut state,
+                 player,
+                 PowerKind::Unmovable,
+-                1,
++                2,
+             );
+-            defend(&mut state, 2, 5);
+-            assert_eq!(state.player.block, 15, "the second Defend is doubled");
++            defend(&mut state, 3, 5);
++            assert_eq!(state.player.block, 15, "the third Defend gains five, not ten");
++            state.combat_log.reset_per_turn();
++            state.player.block = 0;
++            defend(&mut state, 4, 5);
++            assert_eq!(state.player.block, 10, "next turn's first Defend is doubled");
+         }
+     }
+ 
+

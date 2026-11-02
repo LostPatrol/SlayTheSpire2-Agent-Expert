@@ -1,0 +1,1002 @@
+diff --git a/spire-mentor-mod/NonCombatBridgeProtocol.cs b/spire-mentor-mod/NonCombatBridgeProtocol.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..d7602372647ed0d89e24f6eda553b9aebdd1851c
+--- /dev/null
++++ b/spire-mentor-mod/NonCombatBridgeProtocol.cs
+@@ -0,0 +1,60 @@
++// Shared Mentor protocol vocabulary, independent of UI and automation handlers.
++namespace SpireMentor;
++
++/// <summary>
++/// Wire vocabulary of the non-combat decision messages (PROTOCOL.md section 3/4).
++/// Names and values are fixed: handlers, the advisor and the Python drivers all
++/// key off these strings.
++/// </summary>
++internal static class NonCombatBridgeProtocol
++{
++    // Message fields
++    public const string TypeField = "type";
++    public const string ResultField = "result";
++    public const string MessageField = "message";
++
++    // Message types
++    public const string CardSelectState = "card_select";
++    public const string CardRewardState = "card_reward";
++    public const string GameOverState = "game_over";
++    public const string RunCompleteState = "run_complete";
++    public const string RestSiteState = "rest_site";
++    public const string RewardScreenState = "reward_screen";
++    public const string CardBundleState = "card_bundle";
++    public const string CrystalSphereState = "crystal_sphere";
++    public const string ShopState = "shop";
++    public const string EventState = "event";
++    public const string TreasureState = "treasure";
++    public const string BossRelicState = "boss_relic";
++    public const string RunConfigState = "run_config";
++    public const string ErrorState = "error";
++
++    // Inbound verbs
++    public const string ChooseAction = "choose";
++    public const string SkipAction = "skip";
++    public const string CancelAction = "cancel";
++    public const string StartRunAction = "start_run";
++
++    // Descriptive per-option actions
++    public const string RestOptionAction = "rest_option";
++    public const string LeaveShopAction = "leave_shop";
++    public const string BuyCardAction = "buy_card";
++    public const string BuyRelicAction = "buy_relic";
++    public const string BuyPotionAction = "buy_potion";
++    public const string RemoveCardAction = "remove_card";
++    public const string BuyItemAction = "buy_item";
++    public const string EventChoiceAction = "event_choice";
++    public const string CollectTreasureAction = "collect";
++    public const string PickRelicAction = "pick_relic";
++    public const string PickRewardAction = "pick_reward";
++    public const string PickCardBundleAction = "pick_card_bundle";
++    public const string DivineCellAction = "divine_cell";
++    public const string ProceedAction = "proceed";
++
++    // Terminal results
++    public const string VictoryResult = "victory";
++    public const string DefeatResult = "defeat";
++    public const string TerminatedResult = "terminated";
++    public const string GameOverMessage = "Game over";
++}
++
+diff --git a/spire-mentor-mod/SimAutoSlayer.cs b/spire-mentor-mod/SimAutoSlayer.cs
+index ae2e9c8207ddf5a3ef23c10a4704e0ada1212009..76d7a22d32663949aec40cb1744eae123ddc14dc 100644
+--- a/spire-mentor-mod/SimAutoSlayer.cs
++++ b/spire-mentor-mod/SimAutoSlayer.cs
+@@ -570,13 +570,8 @@ public class SimAutoSlayer
+     /// Keyed on the map shape rather than the ascension level, so it holds
+     /// for any act that carries a second boss point.
+     /// </summary>
+-    internal static bool IsFirstOfDoubleBoss(RunState? runState)
+-    {
+-        if (runState?.Map?.SecondBossMapPoint == null)
+-            return false;
+-        MapCoord? here = runState.CurrentMapCoord;
+-        return here.HasValue && here.Value == runState.Map.BossMapPoint.coord;
+-    }
++    internal static bool IsFirstOfDoubleBoss(RunState? runState) =>
++        SimStateExtractor.IsFirstOfDoubleBoss(runState);
+ 
+     /// <summary>
+     /// After a boss: either the final act's closing event (play it, report
+diff --git a/spire-mentor-mod/SimCombatHandler.cs b/spire-mentor-mod/SimCombatHandler.cs
+index 8b190e74ecbfe4b7f07fedceedeed9689222fc4b..2cc76c9bc186529ba32263b76bc57316780afe64 100644
+--- a/spire-mentor-mod/SimCombatHandler.cs
++++ b/spire-mentor-mod/SimCombatHandler.cs
+@@ -126,7 +126,7 @@ public class SimCombatHandler : IRoomHandler, IHandler
+     /// <summary>
+     /// The teammate an ally-target card or potion goes to (co-op only; such
+     /// cards are unplayable alone): the first living one in run order, the
+-    /// order <see cref="SerializeAllies"/> sends them in. The engine aims its
++    /// order the shared combat board sends them in. The engine aims its
+     /// simulated AnyAlly plays at that same teammate
+     /// (<c>CombatState::any_ally_card_target</c>), so the play autoplay makes
+     /// is the play the advisor valued.
+@@ -566,141 +566,6 @@ public class SimCombatHandler : IRoomHandler, IHandler
+     // now only assembles the combat-specific shape around that.
+     // ----------------------------------------------------------------
+ 
+-    /// <summary>
+-    /// Player card plays started this turn, bucketed by card type in the
+-    /// Rust engine's canonical order (Attack=0, Skill=1, Power=2, Curse=3,
+-    /// Status=4 — sts2-core cards.rs CardType::index). Mirrors the scan
+-    /// RingingPower.ShouldPlay does over CombatManager history.
+-    /// </summary>
+-    private static int[] CountCardsPlayedThisTurn(CombatState? combatState, Creature? playerCreature)
+-    {
+-        var buckets = new int[5];
+-        if (combatState == null || playerCreature == null)
+-            return buckets;
+-        foreach (var entry in CombatManager.Instance.History.CardPlaysStarted)
+-        {
+-            if (!entry.HappenedThisTurn(combatState))
+-                continue;
+-            if (entry.CardPlay.Card.Owner.Creature != playerCreature)
+-                continue;
+-            int idx = entry.CardPlay.Card.Type switch
+-            {
+-                CardType.Attack => 0,
+-                CardType.Skill => 1,
+-                CardType.Power => 2,
+-                CardType.Curse => 3,
+-                CardType.Status => 4,
+-                _ => -1,
+-            };
+-            if (idx >= 0)
+-                buckets[idx]++;
+-        }
+-        return buckets;
+-    }
+-
+-    /// <summary>
+-    /// ChainsOfBinding's once-per-turn gate, read from the POWER'S OWN FLAG.
+-    ///
+-    /// This field decides whether a second Bound card may be played
+-    /// (`ChainsOfBindingPower.ShouldPlay` returns `!boundCardPlayed`), and it
+-    /// is the single largest source of disagreement between the search and the
+-    /// live game: 22 of the 41 plays the game refused across the first 51
+-    /// ascension-climb runs were `BlockedByHook / CHAINS_OF_BINDING_POWER`,
+-    /// every one of them in a Queen fight. Each cost three refusals and then a
+-    /// thrown-away turn.
+-    ///
+-    /// It used to be RE-DERIVED here by walking `History.CardPlaysStarted` and
+-    /// re-testing each played card's affliction, on the reasoning that
+-    /// afflictions are only cleared at turn end so the scan reproduces the
+-    /// power exactly. Reproducing another object's private bookkeeping is a
+-    /// standing bet that every one of its edge cases was noticed --
+-    /// `BeforeCardPlayed`'s dupe/owner filters, `BeforeSideTurnEnd`'s reset
+-    /// point, and whatever the history collection does or does not record --
+-    /// and it is a bet with no upside, because the flag itself is reachable.
+-    /// Read the authority; do not model it. (Same lesson as every other
+-    /// SpireMentor-synthesized wire field.)
+-    ///
+-    /// The history scan survives as the fallback for a build whose internals
+-    /// moved, so a renamed field degrades to the old behavior instead of
+-    /// silently reporting `false` -- which is the answer that causes the
+-    /// refusals.
+-    /// </summary>
+-    private static bool BoundCardPlayedThisTurn(CombatState? combatState, Creature? playerCreature)
+-    {
+-        if (combatState == null || playerCreature == null)
+-            return false;
+-        bool? own = ReadChainsBoundFlag(playerCreature);
+-        if (own.HasValue)
+-            return own.Value;
+-        foreach (var entry in CombatManager.Instance.History.CardPlaysStarted)
+-        {
+-            if (!entry.HappenedThisTurn(combatState))
+-                continue;
+-            if (entry.CardPlay.Card.Owner.Creature != playerCreature)
+-                continue;
+-            if (entry.CardPlay.Card.IsDupe)
+-                continue;
+-            if (entry.CardPlay.Card.Affliction is Bound)
+-                return true;
+-        }
+-        return false;
+-    }
+-
+-    /// <summary>Logged once: a reflection failure repeats every poll.</summary>
+-    private static bool _chainsFlagUnreadable;
+-
+-    /// <summary>
+-    /// `ChainsOfBindingPower`'s private `boundCardPlayed`, or null when it
+-    /// cannot be read (caller falls back to the history scan).
+-    ///
+-    /// `PowerModel._internalData` holds an instance of the power's private
+-    /// nested `Data` class (`PowerModel.cs:45`, v0.107.1); the power itself
+-    /// reaches it through `GetInternalData&lt;T&gt;()`, which is `protected`.
+-    /// Both hops are by name so a build that renames either one falls back
+-    /// rather than throwing.
+-    ///
+-    /// No power on the creature means no card is Bound and nothing is gated,
+-    /// which is `false` -- not "unreadable".
+-    /// </summary>
+-    private static bool? ReadChainsBoundFlag(Creature playerCreature)
+-    {
+-        try
+-        {
+-            PowerModel? chains = playerCreature.Powers
+-                .FirstOrDefault(p => p is ChainsOfBindingPower);
+-            if (chains == null)
+-                return false;
+-            object? data = typeof(PowerModel)
+-                .GetField("_internalData", BindingFlags.NonPublic | BindingFlags.Instance)
+-                ?.GetValue(chains);
+-            object? flag = data?.GetType()
+-                .GetField("boundCardPlayed",
+-                          BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+-                ?.GetValue(data);
+-            if (flag is bool value)
+-                return value;
+-        }
+-        catch (Exception ex)
+-        {
+-            if (!_chainsFlagUnreadable)
+-            {
+-                _chainsFlagUnreadable = true;
+-                Logger.Log(
+-                    "[SimCombat] Could not read ChainsOfBindingPower.boundCardPlayed " +
+-                    $"({ex.Message}); falling back to the history scan.");
+-            }
+-            return null;
+-        }
+-        if (!_chainsFlagUnreadable)
+-        {
+-            _chainsFlagUnreadable = true;
+-            Logger.Log(
+-                "[SimCombat] ChainsOfBindingPower.boundCardPlayed not found on this build; " +
+-                "falling back to the history scan.");
+-        }
+-        return null;
+-    }
+-
+     private const string SerializationFailedJson = "{\"type\":\"combat_action\",\"error\":\"serialization_failed\"}";
+ 
+     /// <summary>The combat_action message for the agent, and its state_id (-1 on failure).</summary>
+@@ -720,188 +585,11 @@ public class SimCombatHandler : IRoomHandler, IHandler
+         }
+     }
+ 
+-    /// <summary>
+-    /// The one builder of the combat board (<c>combat_action</c>), envelope
+-    /// applied. The advisor and the board embedded in card_select reuse it,
+-    /// so there is a single shape. Null (logged) on failure.
+-    /// </summary>
+-    internal static Dictionary<string, object>? BuildCombatState(Player player)
+-    {
+-        try
+-        {
+-            CombatState? combatState = CombatManager.Instance.DebugOnlyGetState();
+-            Creature? creature = player.Creature;
+-            PlayerCombatState? pcs = player.PlayerCombatState;
+-            RunState? runState = RunManager.Instance.DebugOnlyGetState();
++    /// <summary>Build the shared native board without duplicating its field and history extraction.</summary>
++    internal static Dictionary<string, object>? BuildCombatState(Player player) =>
++        SimCombatStateBuilder.BuildCombatState(player);
+ 
+-            var playerInfo = new Dictionary<string, object>
+-            {
+-                ["hp"] = creature?.CurrentHp ?? 0,
+-                ["max_hp"] = creature?.MaxHp ?? 0,
+-                ["block"] = creature?.Block ?? 0,
+-                ["energy"] = pcs?.Energy ?? 0,
+-                ["max_energy"] = pcs?.MaxEnergy ?? 3,
+-                ["powers"] = creature?.Powers.Select(SimStateExtractor.SerializePower).ToList()
+-                             ?? new List<Dictionary<string, object?>>(),
+-                ["cards_played_this_turn"] = CountCardsPlayedThisTurn(combatState, creature),
+-                ["bound_card_played_this_turn"] = BoundCardPlayedThisTurn(combatState, creature),
+-            };
+-            try
+-            {
+-                if (pcs != null && pcs.Stars >= 0 && player.Character?.Id.Entry == "REGENT")
+-                    playerInfo["stars"] = pcs.Stars;
+-            }
+-            catch (Exception ex)
+-            {
+-                Logger.Log($"[SimCombat] Could not read stars: {ex.Message}");
+-            }
+-
+-            List<Dictionary<string, object?>> hand = combatState != null && pcs != null
+-                ? PileType.Hand.GetPile(player).Cards
+-                    .Select(c => SimStateExtractor.SerializeCard(c, includeLegality: true))
+-                    .ToList()
+-                : new List<Dictionary<string, object?>>();
+-
+-            List<Dictionary<string, object?>> enemies = combatState?.Enemies
+-                .Select(e => SimStateExtractor.SerializeCreature(e))
+-                .ToList() ?? new List<Dictionary<string, object?>>();
+-
+-            List<Dictionary<string, object?>> orbs = SimStateExtractor.SerializeOrbs(player, out int orbCapacity);
+-
+-            List<Dictionary<string, object?>> potions = player.PotionSlots
+-                .Select((potion, slot) => SimStateExtractor.SerializePotionSlot(potion, slot))
+-                .ToList();
+-
+-            var state = new Dictionary<string, object>
+-            {
+-                ["type"] = "combat_action",
+-                ["player"] = playerInfo,
+-                ["hand"] = hand,
+-                ["draw_pile"] = SimStateExtractor.SerializePile(pcs?.DrawPile),
+-                ["discard_pile"] = SimStateExtractor.SerializePile(pcs?.DiscardPile),
+-                ["exhaust_pile"] = SimStateExtractor.SerializePile(pcs?.ExhaustPile),
+-                // A card whose OnPlay awaits a selection sits in the play pile
+-                // until the pick resolves; a board serialized during that
+-                // screen must still show it.
+-                ["play_pile"] = SimStateExtractor.SerializePile(pcs?.PlayPile),
+-                ["enemies"] = enemies,
+-                ["orbs"] = orbs,
+-                ["orb_capacity"] = orbCapacity,
+-                ["pets"] = SimStateExtractor.SerializePets(player),
+-                ["potions"] = potions,
+-                ["available_actions"] = GetAvailableActions(potions),
+-                ["draw_pile_count"] = pcs?.DrawPile?.Cards.Count ?? 0,
+-                ["discard_pile_count"] = pcs?.DiscardPile?.Cards.Count ?? 0,
+-                ["exhaust_pile_count"] = pcs?.ExhaustPile?.Cards.Count ?? 0,
+-                ["round"] = combatState?.RoundNumber ?? 0,
+-                ["room_type"] = runState?.CurrentRoom?.RoomType.ToString() ?? "Combat",
+-                ["allies"] = SerializeAllies(player, runState),
+-            };
+-
+-            SimStateExtractor.ApplyEnvelope(state, runState, player);
+-            return state;
+-        }
+-        catch (Exception ex)
+-        {
+-            Logger.Log($"[SimCombat] Could not build combat state: {ex}");
+-            return null;
+-        }
+-    }
+-
+-    /// <summary>
+-    /// Co-op (PROTOCOL.md "allies"): every other player in the run, as this
+-    /// peer simulates them. Every peer runs every player's draws and plays,
+-    /// so a teammate's hand is known here even though the game's own UI only
+-    /// shows its size. Empty in single-player. One unreadable teammate is
+-    /// logged and left out rather than failing the board.
+-    /// </summary>
+-    private static List<Dictionary<string, object?>> SerializeAllies(Player me, RunState? runState)
+-    {
+-        var allies = new List<Dictionary<string, object?>>();
+-        if (runState == null)
+-            return allies;
+-        foreach (Player other in runState.Players)
+-        {
+-            if (ReferenceEquals(other, me))
+-                continue;
+-            try
+-            {
+-                Creature? c = other.Creature;
+-                PlayerCombatState? pcs = other.PlayerCombatState;
+-                allies.Add(new Dictionary<string, object?>
+-                {
+-                    ["character"] = other.Character?.Id.Entry ?? "",
+-                    ["hp"] = c?.CurrentHp ?? 0,
+-                    ["max_hp"] = c?.MaxHp ?? 0,
+-                    ["block"] = c?.Block ?? 0,
+-                    ["is_dead"] = c?.IsDead ?? true,
+-                    ["energy"] = pcs?.Energy ?? 0,
+-                    ["max_energy"] = pcs?.MaxEnergy ?? 0,
+-                    ["powers"] = c?.Powers.Select(SimStateExtractor.SerializePower).ToList()
+-                                 ?? new List<Dictionary<string, object?>>(),
+-                    ["hand"] = pcs != null
+-                        ? PileType.Hand.GetPile(other).Cards
+-                            .Select(card => SimStateExtractor.SerializeCard(card))
+-                            .ToList()
+-                        : new List<Dictionary<string, object?>>(),
+-                    ["ended_turn"] = SafeEndedTurn(other),
+-                });
+-            }
+-            catch (Exception ex)
+-            {
+-                Logger.Log($"[SimCombat] Could not serialize a teammate: {ex.Message}");
+-            }
+-        }
+-        return allies;
+-    }
+-
+-    private static bool SafeEndedTurn(Player player)
+-    {
+-        try
+-        {
+-            return CombatManager.Instance.IsInProgress
+-                && CombatManager.Instance.IsPlayerReadyToEndTurn(player);
+-        }
+-        catch (Exception)
+-        {
+-            return false;
+-        }
+-    }
+-
+-    /// <summary>
+-    /// <see cref="BuildCombatState"/> for EMBEDDING inside another decision
+-    /// message, or null when no fight is in progress.
+-    ///
+-    /// Drops <c>state_id</c>: the agent gate keys a response to the top-level
+-    /// decision it answers, and a second id nested inside it is a trap for
+-    /// anyone who reaches for the wrong one. A failure is logged and reported
+-    /// as "no board" rather than thrown — the consumer decides how serious
+-    /// that is, and the combat mirror treats a missing board on an in-combat
+-    /// selection as a divergence rather than guessing.
+-    /// </summary>
+-    internal static Dictionary<string, object>? BuildEmbeddedCombatState(Player? player)
+-    {
+-        try
+-        {
+-            if (player == null || !CombatManager.Instance.IsInProgress)
+-                return null;
+-            Dictionary<string, object>? state = BuildCombatState(player);
+-            state?.Remove("state_id");
+-            return state;
+-        }
+-        catch (Exception ex)
+-        {
+-            Logger.Log($"[SimCombat] Could not embed the combat board: {ex.Message}");
+-            return null;
+-        }
+-    }
+-
+-    /// <summary>PLAY and END_TURN always; POTION when any slot reports can_use=true.</summary>
+-    private static List<string> GetAvailableActions(IEnumerable<Dictionary<string, object?>> potions)
+-    {
+-        var actions = new List<string> { "PLAY", "END_TURN" };
+-        if (potions.Any(p => p.TryGetValue("can_use", out object? canUse) && canUse is true))
+-            actions.Add("POTION");
+-        return actions;
+-    }
++    /// <summary>Embed the same board without a competing decision identifier.</summary>
++    internal static Dictionary<string, object>? BuildEmbeddedCombatState(Player? player) =>
++        SimCombatStateBuilder.BuildEmbeddedCombatState(player);
+ }
+diff --git a/spire-mentor-mod/SimCombatStateBuilder.cs b/spire-mentor-mod/SimCombatStateBuilder.cs
+new file mode 100644
+index 0000000000000000000000000000000000000000..80bb121a70029523196ce976ba3517bc7a01dfbf
+--- /dev/null
++++ b/spire-mentor-mod/SimCombatStateBuilder.cs
+@@ -0,0 +1,339 @@
++// Shared native combat snapshot builder used by both the Mentor mod and external bridge hosts.
++// Extracted from SimCombatHandler without changing state or rule semantics.
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Reflection;
++using MegaCrit.Sts2.Core.Combat;
++using MegaCrit.Sts2.Core.Entities.Cards;
++using MegaCrit.Sts2.Core.Entities.Creatures;
++using MegaCrit.Sts2.Core.Entities.Players;
++using MegaCrit.Sts2.Core.Models;
++using MegaCrit.Sts2.Core.Models.Afflictions;
++using MegaCrit.Sts2.Core.Models.Powers;
++using MegaCrit.Sts2.Core.Runs;
++
++namespace SpireMentor;
++
++internal static class SimCombatStateBuilder
++{
++    /// <summary>
++    /// Player card plays started this turn, bucketed by card type in the
++    /// Rust engine's canonical order (Attack=0, Skill=1, Power=2, Curse=3,
++    /// Status=4 — sts2-core cards.rs CardType::index). Mirrors the scan
++    /// RingingPower.ShouldPlay does over CombatManager history.
++    /// </summary>
++    private static int[] CountCardsPlayedThisTurn(CombatState? combatState, Creature? playerCreature)
++    {
++        var buckets = new int[5];
++        if (combatState == null || playerCreature == null)
++            return buckets;
++        foreach (var entry in CombatManager.Instance.History.CardPlaysStarted)
++        {
++            if (!entry.HappenedThisTurn(combatState))
++                continue;
++            if (entry.CardPlay.Card.Owner.Creature != playerCreature)
++                continue;
++            int idx = entry.CardPlay.Card.Type switch
++            {
++                CardType.Attack => 0,
++                CardType.Skill => 1,
++                CardType.Power => 2,
++                CardType.Curse => 3,
++                CardType.Status => 4,
++                _ => -1,
++            };
++            if (idx >= 0)
++                buckets[idx]++;
++        }
++        return buckets;
++    }
++
++    /// <summary>
++    /// ChainsOfBinding's once-per-turn gate, read from the POWER'S OWN FLAG.
++    ///
++    /// This field decides whether a second Bound card may be played
++    /// (`ChainsOfBindingPower.ShouldPlay` returns `!boundCardPlayed`), and it
++    /// is the single largest source of disagreement between the search and the
++    /// live game: 22 of the 41 plays the game refused across the first 51
++    /// ascension-climb runs were `BlockedByHook / CHAINS_OF_BINDING_POWER`,
++    /// every one of them in a Queen fight. Each cost three refusals and then a
++    /// thrown-away turn.
++    ///
++    /// It used to be RE-DERIVED here by walking `History.CardPlaysStarted` and
++    /// re-testing each played card's affliction, on the reasoning that
++    /// afflictions are only cleared at turn end so the scan reproduces the
++    /// power exactly. Reproducing another object's private bookkeeping is a
++    /// standing bet that every one of its edge cases was noticed --
++    /// `BeforeCardPlayed`'s dupe/owner filters, `BeforeSideTurnEnd`'s reset
++    /// point, and whatever the history collection does or does not record --
++    /// and it is a bet with no upside, because the flag itself is reachable.
++    /// Read the authority; do not model it. (Same lesson as every other
++    /// SpireMentor-synthesized wire field.)
++    ///
++    /// The history scan survives as the fallback for a build whose internals
++    /// moved, so a renamed field degrades to the old behavior instead of
++    /// silently reporting `false` -- which is the answer that causes the
++    /// refusals.
++    /// </summary>
++    private static bool BoundCardPlayedThisTurn(CombatState? combatState, Creature? playerCreature)
++    {
++        if (combatState == null || playerCreature == null)
++            return false;
++        bool? own = ReadChainsBoundFlag(playerCreature);
++        if (own.HasValue)
++            return own.Value;
++        foreach (var entry in CombatManager.Instance.History.CardPlaysStarted)
++        {
++            if (!entry.HappenedThisTurn(combatState))
++                continue;
++            if (entry.CardPlay.Card.Owner.Creature != playerCreature)
++                continue;
++            if (entry.CardPlay.Card.IsDupe)
++                continue;
++            if (entry.CardPlay.Card.Affliction is Bound)
++                return true;
++        }
++        return false;
++    }
++
++    /// <summary>Logged once: a reflection failure repeats every poll.</summary>
++    private static bool _chainsFlagUnreadable;
++
++    /// <summary>
++    /// `ChainsOfBindingPower`'s private `boundCardPlayed`, or null when it
++    /// cannot be read (caller falls back to the history scan).
++    ///
++    /// `PowerModel._internalData` holds an instance of the power's private
++    /// nested `Data` class (`PowerModel.cs:45`, v0.107.1); the power itself
++    /// reaches it through `GetInternalData&lt;T&gt;()`, which is `protected`.
++    /// Both hops are by name so a build that renames either one falls back
++    /// rather than throwing.
++    ///
++    /// No power on the creature means no card is Bound and nothing is gated,
++    /// which is `false` -- not "unreadable".
++    /// </summary>
++    private static bool? ReadChainsBoundFlag(Creature playerCreature)
++    {
++        try
++        {
++            PowerModel? chains = playerCreature.Powers
++                .FirstOrDefault(p => p is ChainsOfBindingPower);
++            if (chains == null)
++                return false;
++            object? data = typeof(PowerModel)
++                .GetField("_internalData", BindingFlags.NonPublic | BindingFlags.Instance)
++                ?.GetValue(chains);
++            object? flag = data?.GetType()
++                .GetField("boundCardPlayed",
++                          BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
++                ?.GetValue(data);
++            if (flag is bool value)
++                return value;
++        }
++        catch (Exception ex)
++        {
++            if (!_chainsFlagUnreadable)
++            {
++                _chainsFlagUnreadable = true;
++                Logger.Log(
++                    "[SimCombat] Could not read ChainsOfBindingPower.boundCardPlayed " +
++                    $"({ex.Message}); falling back to the history scan.");
++            }
++            return null;
++        }
++        if (!_chainsFlagUnreadable)
++        {
++            _chainsFlagUnreadable = true;
++            Logger.Log(
++                "[SimCombat] ChainsOfBindingPower.boundCardPlayed not found on this build; " +
++                "falling back to the history scan.");
++        }
++        return null;
++    }
++
++    /// <summary>
++    /// The one builder of the combat board (<c>combat_action</c>), envelope
++    /// applied. The advisor and the board embedded in card_select reuse it,
++    /// so there is a single shape. Null (logged) on failure.
++    /// </summary>
++    internal static Dictionary<string, object>? BuildCombatState(Player player)
++    {
++        try
++        {
++            CombatState? combatState = CombatManager.Instance.DebugOnlyGetState();
++            Creature? creature = player.Creature;
++            PlayerCombatState? pcs = player.PlayerCombatState;
++            RunState? runState = RunManager.Instance.DebugOnlyGetState();
++
++            var playerInfo = new Dictionary<string, object>
++            {
++                ["hp"] = creature?.CurrentHp ?? 0,
++                ["max_hp"] = creature?.MaxHp ?? 0,
++                ["block"] = creature?.Block ?? 0,
++                ["energy"] = pcs?.Energy ?? 0,
++                ["max_energy"] = pcs?.MaxEnergy ?? 3,
++                ["powers"] = creature?.Powers.Select(SimStateExtractor.SerializePower).ToList()
++                             ?? new List<Dictionary<string, object?>>(),
++                ["cards_played_this_turn"] = CountCardsPlayedThisTurn(combatState, creature),
++                ["bound_card_played_this_turn"] = BoundCardPlayedThisTurn(combatState, creature),
++            };
++            try
++            {
++                if (pcs != null && pcs.Stars >= 0 && player.Character?.Id.Entry == "REGENT")
++                    playerInfo["stars"] = pcs.Stars;
++            }
++            catch (Exception ex)
++            {
++                Logger.Log($"[SimCombat] Could not read stars: {ex.Message}");
++            }
++
++            List<Dictionary<string, object?>> hand = combatState != null && pcs != null
++                ? PileType.Hand.GetPile(player).Cards
++                    .Select(c => SimStateExtractor.SerializeCard(c, includeLegality: true))
++                    .ToList()
++                : new List<Dictionary<string, object?>>();
++
++            List<Dictionary<string, object?>> enemies = combatState?.Enemies
++                .Select(e => SimStateExtractor.SerializeCreature(e))
++                .ToList() ?? new List<Dictionary<string, object?>>();
++
++            List<Dictionary<string, object?>> orbs = SimStateExtractor.SerializeOrbs(player, out int orbCapacity);
++
++            List<Dictionary<string, object?>> potions = player.PotionSlots
++                .Select((potion, slot) => SimStateExtractor.SerializePotionSlot(potion, slot))
++                .ToList();
++
++            var state = new Dictionary<string, object>
++            {
++                ["type"] = "combat_action",
++                ["player"] = playerInfo,
++                ["hand"] = hand,
++                ["draw_pile"] = SimStateExtractor.SerializePile(pcs?.DrawPile),
++                ["discard_pile"] = SimStateExtractor.SerializePile(pcs?.DiscardPile),
++                ["exhaust_pile"] = SimStateExtractor.SerializePile(pcs?.ExhaustPile),
++                // A card whose OnPlay awaits a selection sits in the play pile
++                // until the pick resolves; a board serialized during that
++                // screen must still show it.
++                ["play_pile"] = SimStateExtractor.SerializePile(pcs?.PlayPile),
++                ["enemies"] = enemies,
++                ["orbs"] = orbs,
++                ["orb_capacity"] = orbCapacity,
++                ["pets"] = SimStateExtractor.SerializePets(player),
++                ["potions"] = potions,
++                ["available_actions"] = GetAvailableActions(potions),
++                ["draw_pile_count"] = pcs?.DrawPile?.Cards.Count ?? 0,
++                ["discard_pile_count"] = pcs?.DiscardPile?.Cards.Count ?? 0,
++                ["exhaust_pile_count"] = pcs?.ExhaustPile?.Cards.Count ?? 0,
++                ["round"] = combatState?.RoundNumber ?? 0,
++                ["room_type"] = runState?.CurrentRoom?.RoomType.ToString() ?? "Combat",
++                ["allies"] = SerializeAllies(player, runState),
++            };
++
++            SimStateExtractor.ApplyEnvelope(state, runState, player);
++            return state;
++        }
++        catch (Exception ex)
++        {
++            Logger.Log($"[SimCombat] Could not build combat state: {ex}");
++            return null;
++        }
++    }
++
++    /// <summary>
++    /// Co-op (PROTOCOL.md "allies"): every other player in the run, as this
++    /// peer simulates them. Every peer runs every player's draws and plays,
++    /// so a teammate's hand is known here even though the game's own UI only
++    /// shows its size. Empty in single-player. One unreadable teammate is
++    /// logged and left out rather than failing the board.
++    /// </summary>
++    private static List<Dictionary<string, object?>> SerializeAllies(Player me, RunState? runState)
++    {
++        var allies = new List<Dictionary<string, object?>>();
++        if (runState == null)
++            return allies;
++        foreach (Player other in runState.Players)
++        {
++            if (ReferenceEquals(other, me))
++                continue;
++            try
++            {
++                Creature? c = other.Creature;
++                PlayerCombatState? pcs = other.PlayerCombatState;
++                allies.Add(new Dictionary<string, object?>
++                {
++                    ["character"] = other.Character?.Id.Entry ?? "",
++                    ["hp"] = c?.CurrentHp ?? 0,
++                    ["max_hp"] = c?.MaxHp ?? 0,
++                    ["block"] = c?.Block ?? 0,
++                    ["is_dead"] = c?.IsDead ?? true,
++                    ["energy"] = pcs?.Energy ?? 0,
++                    ["max_energy"] = pcs?.MaxEnergy ?? 0,
++                    ["powers"] = c?.Powers.Select(SimStateExtractor.SerializePower).ToList()
++                                 ?? new List<Dictionary<string, object?>>(),
++                    ["hand"] = pcs != null
++                        ? PileType.Hand.GetPile(other).Cards
++                            .Select(card => SimStateExtractor.SerializeCard(card))
++                            .ToList()
++                        : new List<Dictionary<string, object?>>(),
++                    ["ended_turn"] = SafeEndedTurn(other),
++                });
++            }
++            catch (Exception ex)
++            {
++                Logger.Log($"[SimCombat] Could not serialize a teammate: {ex.Message}");
++            }
++        }
++        return allies;
++    }
++
++    private static bool SafeEndedTurn(Player player)
++    {
++        try
++        {
++            return CombatManager.Instance.IsInProgress
++                && CombatManager.Instance.IsPlayerReadyToEndTurn(player);
++        }
++        catch (Exception)
++        {
++            return false;
++        }
++    }
++
++    /// <summary>
++    /// <see cref="BuildCombatState"/> for EMBEDDING inside another decision
++    /// message, or null when no fight is in progress.
++    ///
++    /// Drops <c>state_id</c>: the agent gate keys a response to the top-level
++    /// decision it answers, and a second id nested inside it is a trap for
++    /// anyone who reaches for the wrong one. A failure is logged and reported
++    /// as "no board" rather than thrown — the consumer decides how serious
++    /// that is, and the combat mirror treats a missing board on an in-combat
++    /// selection as a divergence rather than guessing.
++    /// </summary>
++    internal static Dictionary<string, object>? BuildEmbeddedCombatState(Player? player)
++    {
++        try
++        {
++            if (player == null || !CombatManager.Instance.IsInProgress)
++                return null;
++            Dictionary<string, object>? state = BuildCombatState(player);
++            state?.Remove("state_id");
++            return state;
++        }
++        catch (Exception ex)
++        {
++            Logger.Log($"[SimCombat] Could not embed the combat board: {ex.Message}");
++            return null;
++        }
++    }
++
++    /// <summary>PLAY and END_TURN always; POTION when any slot reports can_use=true.</summary>
++    private static List<string> GetAvailableActions(IEnumerable<Dictionary<string, object?>> potions)
++    {
++        var actions = new List<string> { "PLAY", "END_TURN" };
++        if (potions.Any(p => p.TryGetValue("can_use", out object? canUse) && canUse is true))
++            actions.Add("POTION");
++        return actions;
++    }
++}
+diff --git a/spire-mentor-mod/SimNonCombatRoomHandlers.cs b/spire-mentor-mod/SimNonCombatRoomHandlers.cs
+index 95012d364d2cbf51ea8d306fb22055c2c4cccde5..e42090ce52a83e77191779b9a89ea59f6740a6ee 100644
+--- a/spire-mentor-mod/SimNonCombatRoomHandlers.cs
++++ b/spire-mentor-mod/SimNonCombatRoomHandlers.cs
+@@ -64,63 +64,6 @@ internal static class SimRoomNodes
+         UiHelper.FindAll<NEventOptionButton>(room).Where(b => !b.Option.IsLocked).ToList();
+ }
+ 
+-/// <summary>
+-/// Wire vocabulary of the non-combat decision messages (PROTOCOL.md section 3/4).
+-/// Names and values are fixed: handlers, the advisor and the Python drivers all
+-/// key off these strings.
+-/// </summary>
+-internal static class NonCombatBridgeProtocol
+-{
+-    // Message fields
+-    public const string TypeField = "type";
+-    public const string ResultField = "result";
+-    public const string MessageField = "message";
+-
+-    // Message types
+-    public const string CardSelectState = "card_select";
+-    public const string CardRewardState = "card_reward";
+-    public const string GameOverState = "game_over";
+-    public const string RunCompleteState = "run_complete";
+-    public const string RestSiteState = "rest_site";
+-    public const string RewardScreenState = "reward_screen";
+-    public const string CardBundleState = "card_bundle";
+-    public const string CrystalSphereState = "crystal_sphere";
+-    public const string ShopState = "shop";
+-    public const string EventState = "event";
+-    public const string TreasureState = "treasure";
+-    public const string BossRelicState = "boss_relic";
+-    public const string RunConfigState = "run_config";
+-    public const string ErrorState = "error";
+-
+-    // Inbound verbs
+-    public const string ChooseAction = "choose";
+-    public const string SkipAction = "skip";
+-    public const string CancelAction = "cancel";
+-    public const string StartRunAction = "start_run";
+-
+-    // Descriptive per-option actions
+-    public const string RestOptionAction = "rest_option";
+-    public const string LeaveShopAction = "leave_shop";
+-    public const string BuyCardAction = "buy_card";
+-    public const string BuyRelicAction = "buy_relic";
+-    public const string BuyPotionAction = "buy_potion";
+-    public const string RemoveCardAction = "remove_card";
+-    public const string BuyItemAction = "buy_item";
+-    public const string EventChoiceAction = "event_choice";
+-    public const string CollectTreasureAction = "collect";
+-    public const string PickRelicAction = "pick_relic";
+-    public const string PickRewardAction = "pick_reward";
+-    public const string PickCardBundleAction = "pick_card_bundle";
+-    public const string DivineCellAction = "divine_cell";
+-    public const string ProceedAction = "proceed";
+-
+-    // Terminal results
+-    public const string VictoryResult = "victory";
+-    public const string DefeatResult = "defeat";
+-    public const string TerminatedResult = "terminated";
+-    public const string GameOverMessage = "Game over";
+-}
+-
+ /// <summary>
+ /// The shared "ask the agent until the answer is valid" loop for positional
+ /// decisions (SPEC2 section 1.2). Each round builds a FRESH message (new
+diff --git a/spire-mentor-mod/SimStateExtractor.cs b/spire-mentor-mod/SimStateExtractor.cs
+index fbd8bd2054e45b55db82bfc4cc4deb0ef798d643..271d53e74778ec8f2830f66b6817d9f9f0fbf0a6 100644
+--- a/spire-mentor-mod/SimStateExtractor.cs
++++ b/spire-mentor-mod/SimStateExtractor.cs
+@@ -215,6 +215,15 @@ public static class SimStateExtractor
+         return d;
+     }
+ 
++    /// <summary>Whether the current map position is the first of two act bosses.</summary>
++    internal static bool IsFirstOfDoubleBoss(RunState? runState)
++    {
++        if (runState?.Map?.SecondBossMapPoint == null)
++            return false;
++        MapCoord? here = runState.CurrentMapCoord;
++        return here.HasValue && here.Value == runState.Map.BossMapPoint.coord;
++    }
++
+     public static Dictionary<string, object?> SerializeRunState(RunState? runState, Player? player)
+     {
+         try
+@@ -259,7 +268,7 @@ public static class SimStateExtractor
+                 // `awaiting_second_boss`): the run's last boss values only
+                 // winning. Null when there is no run to read.
+                 ["is_last_act"] = runState == null ? null : (bool?)(runState.CurrentActIndex >= runState.Acts.Count - 1),
+-                ["awaiting_second_boss"] = runState == null ? null : (bool?)SafeBool(() => SimAutoSlayer.IsFirstOfDoubleBoss(runState)),
++                ["awaiting_second_boss"] = runState == null ? null : (bool?)SafeBool(() => IsFirstOfDoubleBoss(runState)),
+                 ["character"] = player?.Character?.Id.Entry,
+                 ["unlocked_epochs"] = SerializeUnlockedEpochs(runState, player),
+             };
+diff --git a/sts2-pycli/python/realgame_mcts.py b/sts2-pycli/python/realgame_mcts.py
+index 285efcb6a090da481d4d397aeeb38afd9794989b..2e0fd13d26aec643f8d94e63a0e6a9069abd4b05 100644
+--- a/sts2-pycli/python/realgame_mcts.py
++++ b/sts2-pycli/python/realgame_mcts.py
+@@ -400,42 +400,14 @@ def pick_combat_action_mcts(
+ # ---------------------------------------------------------------------------
+ 
+ 
+-def pick_card_select_mirrored(
++def prepare_card_select_mirror(
+     state: dict[str, Any],
+     cfg: RecommendConfig,
+     mirror: Any,
+     *,
+     sims: int | None = None,
+-) -> tuple[dict[str, Any], list[int] | None]:
+-    """Answer a MID-COMBAT ``card_select`` off the fight's persistent mirror.
+-
+-    Native play (the reference) genuinely SEARCHES these choices: playing
+-    Armaments/Warcry/True Grit leaves the engine on a ``pending_choice`` whose
+-    ``ResolveChoice`` options are the only legal actions, so MCTS ranks them
+-    like any other move. The mirror reproduces that exactly, because it never
+-    stopped being that engine state — the played card already parked it on the
+-    choice.
+-
+-    What this replaced: a three-tier chain that rebuilt the state from the
+-    previous snapshot, replayed the opening play, and required the engine's
+-    re-derived option list to match the game's exactly — then fell to a
+-    prompt-key heuristic, then to uniform random. On the 60-run realdll_v4
+-    sweep 263 of 635 prompts failed that match gate and 175 were answered at
+-    random.
+-
+-    Args:
+-        state: The bridge ``card_select`` message. ``state["combat"]`` is the
+-            board the mod now attaches (``SimCombatHandler.
+-            BuildEmbeddedCombatState``); its absence means this selection is
+-            not mid-combat and the caller should not be here.
+-        cfg: MCTS knobs.
+-        mirror: The fight's :class:`combat_mirror.CombatMirror`.
+-        sims: Per-decision simulation budget override.
+-
+-    Returns:
+-        ``(bridge action, picked option indices)``. The caller applies the
+-        picks to the mirror only after the game accepts the action.
+-    """
++) -> tuple[RecommendConfig, list[dict[str, Any]], int, int]:
++    """Reconcile and arm the original mirror for a native card selection before search."""
+     from sts2_hint import adapter
+ 
+     run_state = state.get("run_state") or {}
+@@ -525,6 +497,49 @@ def pick_card_select_mirrored(
+         # DLL driver: inject, arm, then search.
+         mirror.arm_turn_start_resume_for(turn_start_blocked_on)
+ 
++    return call_cfg, bridge_cards, min_select, max_select
++
++
++def pick_card_select_mirrored(
++    state: dict[str, Any],
++    cfg: RecommendConfig,
++    mirror: Any,
++    *,
++    sims: int | None = None,
++) -> tuple[dict[str, Any], list[int] | None]:
++    """Answer a MID-COMBAT ``card_select`` off the fight's persistent mirror.
++
++    Native play (the reference) genuinely SEARCHES these choices: playing
++    Armaments/Warcry/True Grit leaves the engine on a ``pending_choice`` whose
++    ``ResolveChoice`` options are the only legal actions, so MCTS ranks them
++    like any other move. The mirror reproduces that exactly, because it never
++    stopped being that engine state — the played card already parked it on the
++    choice.
++
++    What this replaced: a three-tier chain that rebuilt the state from the
++    previous snapshot, replayed the opening play, and required the engine's
++    re-derived option list to match the game's exactly — then fell to a
++    prompt-key heuristic, then to uniform random. On the 60-run realdll_v4
++    sweep 263 of 635 prompts failed that match gate and 175 were answered at
++    random.
++
++    Args:
++        state: The bridge ``card_select`` message. ``state["combat"]`` is the
++            board the mod now attaches (``SimCombatHandler.
++            BuildEmbeddedCombatState``); its absence means this selection is
++            not mid-combat and the caller should not be here.
++        cfg: MCTS knobs.
++        mirror: The fight's :class:`combat_mirror.CombatMirror`.
++        sims: Per-decision simulation budget override.
++
++    Returns:
++        ``(bridge action, picked option indices)``. The caller applies the
++        picks to the mirror only after the game accepts the action.
++    """
++    call_cfg, bridge_cards, min_select, max_select = prepare_card_select_mirror(
++        state, cfg, mirror, sims=sims
++    )
++
+     def _indices(picked: list[int]) -> list[int]:
+         """Option positions -> the bridge's own ``cards[i]["index"]`` handles."""
+         return [int(bridge_cards[i].get("index", i)) for i in picked]
+@@ -558,8 +573,8 @@ def pick_card_select_mirrored(
+     # (`headless_eval.pick_card_select_mirrored`), which calls the same method.
+     picked = mirror.search_choice_picks(
+         call_cfg,
+-        hand=wire["deck"]["hand"],
+-        n_options=n,
++        hand=mirror.wire["deck"]["hand"],
++        n_options=len(bridge_cards),
+         min_select=min_select,
+         max_select=max_select,
+     )
+diff --git a/sts2-rs/crates/sts2-py/src/lib.rs b/sts2-rs/crates/sts2-py/src/lib.rs
+index 27edacd08b692879ad05359b466bb2e7ea60fe46..f44e530e03778992fd6dedecfa713f3c59dd93be 100644
+--- a/sts2-rs/crates/sts2-py/src/lib.rs
++++ b/sts2-rs/crates/sts2-py/src/lib.rs
+@@ -657,7 +657,7 @@ impl PyCombatState {
+     /// Borrow the inner [`CoreCombatState`] (Rust-side only — not
+     /// exposed to Python). Used by [`crate::state_dict::state_to_dict_py`]
+     /// to serialize without re-exposing the `inner` field.
+-    pub(crate) fn inner_ref(&self) -> &CoreCombatState {
++    pub fn inner_ref(&self) -> &CoreCombatState {
+         &self.inner
+     }
+ 

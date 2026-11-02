@@ -1,0 +1,404 @@
+diff --git a/sts2-rs/crates/sts2-content/src/cards/necrobinder/rattle.rs b/sts2-rs/crates/sts2-content/src/cards/necrobinder/rattle.rs
+index 46c7542..7574967 100644
+--- a/sts2-rs/crates/sts2-content/src/cards/necrobinder/rattle.rs
++++ b/sts2-rs/crates/sts2-content/src/cards/necrobinder/rattle.rs
+@@ -37,8 +37,8 @@ use super::prelude::*;
+ // MULTI-HIT SCALING: the hit count is `1 + (Osty attacks this turn)`, mirroring
+ // C# `CalculatedHits` (1 + `CreatureAttackedEntry` count where `Actor == Osty
+ // && HappenedThisTurn`). The per-turn Osty-attack tally now lives on
+-// `CombatLog::osty_attacks_this_turn` (incremented at the damage
+-// chokepoint for an Osty dealer, reset at the owner's turn start), so the hit
++// `CombatLog::osty_attacks_this_turn` (incremented once per actual Osty
++// AttackCommand, reset at the owner's turn start), so the hit
+ // count is exact. Bead `sts2-rs-osty-attacks-this-turn`.
+ //
+ // `deal_damage_from_osty_to_enemy` is a no-op when the Osty is absent
+@@ -66,11 +66,9 @@ pub(crate) fn play_rattle(state: &mut CombatState, target: Option<CreatureUid>)
+     // Hit count = 1 + (Osty attacks already made this turn). C# computes the
+     // count ONCE (`WithHitCount`) from history, so the extra hits this card
+     // deals must NOT feed back into their own count — snapshot before looping.
+-    // (Each Osty hit increments `osty_attacks_this_turn` via the chokepoint.)
++    // All hits belong to this one AttackCommand; damage results do not increase its count.
+     let hits = resolving_preview(state, preview_rattle, target);
+-    for _ in 0..hits {
+-        deal_damage_from_osty_to_enemy(state, t, dmg);
+-    }
++    sts2_core::card_effects::deal_damage_from_osty_to_enemy_with_hits(state, t, dmg, hits);
+ 
+     EffectResult::Resolved
+ }
+@@ -149,7 +147,7 @@ mod tests {
+         );
+         assert_eq!(
+             state.combat_log.osty_attacks_this_turn, 1,
+-            "the Osty hit bumps the per-turn tally"
++            "the Osty command bumps the per-turn tally"
+         );
+     }
+ 
+@@ -173,8 +171,9 @@ mod tests {
+             "1 + 1 prior Osty attack → two 7-damage hits"
+         );
+         assert_eq!(
+-            state.combat_log.osty_attacks_this_turn, 3,
+-            "snapshot=2 hits added to the existing 1 → 3 total this turn"
++            state.combat_log.osty_attacks_this_turn, 2,
++            "one multi-hit command added to the existing one → two commands"
+         );
++        assert_eq!(state.combat_log.osty_powered_hits_by_target_this_turn.as_slice(), &[(enemy, 2)]);
+     }
+ }
+diff --git a/sts2-rs/crates/sts2-content/tests/osty_attack_commands.rs b/sts2-rs/crates/sts2-content/tests/osty_attack_commands.rs
+new file mode 100644
+index 0000000..47a05d8
+--- /dev/null
++++ b/sts2-rs/crates/sts2-content/tests/osty_attack_commands.rs
+@@ -0,0 +1,212 @@
++//! Osty AttackCommand counts are distinct from per-target powered DamageResults.
++//! Real Rattle replays exercise the same command boundary as single-hit and AoE callers.
++
++use sts2_content::monster_dispatch::MonsterSpawnArgs;
++use sts2_core::cards::{CardId, PileKind};
++use sts2_core::potions::CharacterId;
++use sts2_core::runstate::{RoomType, RunState};
++use sts2_core::{Action, CardUid, CombatState, CreatureUid, MonsterKind, PowerKind};
++
++/// Keep one durable opponent and a live Osty while removing incidental starter cards.
++fn fixture() -> CombatState {
++    sts2_content::cards::dispatch::ensure_installed();
++    let mut run = RunState {
++        character_id: CharacterId::Necrobinder,
++        current_hp: 80,
++        max_hp: 80,
++        ..RunState::default()
++    };
++    sts2_content::run_callbacks::populate_starter_deck(&mut run, CharacterId::Necrobinder);
++    let mut state = sts2_content::run_bridge::enter_combat_from_roster(
++        &run,
++        &[(MonsterKind::Nibbit, MonsterSpawnArgs::None, 9999)],
++        RoomType::Monster,
++    );
++    state.player.hand.clear();
++    state.player.draw.clear();
++    state.player.discard.clear();
++    state.player.energy = 20;
++    state.restore_osty(20, 20, 0);
++    state
++}
++
++/// Add a real card instance without simulating its play or attacks.
++fn card(state: &mut CombatState, id: CardId, pile: PileKind) -> CardUid {
++    let mut card = sts2_content::cards::spec_index::card_pod_from_id(id, false).unwrap();
++    card.uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++    let uid = card.uid;
++    state.cards.push(card);
++    match pile {
++        PileKind::Hand => state.player.hand.push(uid),
++        PileKind::Draw => state.player.draw.push(uid),
++        _ => panic!("fixture supports Hand and Draw only"),
++    }
++    uid
++}
++
++/// Return the independently retained GangUp hit count for this target.
++fn hits(state: &CombatState, target: CreatureUid) -> u32 {
++    state
++        .combat_log
++        .osty_powered_hits_by_target_this_turn
++        .iter()
++        .find(|(uid, _)| *uid == target)
++        .map_or(0, |(_, n)| *n)
++}
++
++/// Native Bodyguard then two Rattles gives commands 0/1/2 and powered results 0/1/3.
++#[test]
++fn osty_commands_rattle_counts_once_per_command_not_each_hit() {
++    let mut state = fixture();
++    let target = state.enemy_uids[0];
++    for id in [
++        CardId::Bodyguard,
++        CardId::Rattle,
++        CardId::Rattle,
++        CardId::Rattle,
++    ] {
++        card(&mut state, id, PileKind::Hand);
++    }
++    sts2_core::apply(
++        &mut state,
++        Action::PlayCard {
++            hand_index: 0,
++            target: None,
++        },
++    );
++    assert_eq!(
++        (
++            state.combat_log.osty_attacks_this_turn,
++            hits(&state, target)
++        ),
++        (0, 0)
++    );
++    for (commands, results, damage) in [(1, 1, 7), (2, 3, 14), (3, 6, 21)] {
++        let hp = state
++            .creatures
++            .iter()
++            .find(|c| c.id == target.0)
++            .unwrap()
++            .current_hp;
++        sts2_core::apply(
++            &mut state,
++            Action::PlayCard {
++                hand_index: 0,
++                target: Some(0),
++            },
++        );
++        assert_eq!(
++            (
++                state.combat_log.osty_attacks_this_turn,
++                hits(&state, target)
++            ),
++            (commands, results)
++        );
++        assert_eq!(
++            hp - state
++                .creatures
++                .iter()
++                .find(|c| c.id == target.0)
++                .unwrap()
++                .current_hp,
++            damage
++        );
++    }
++}
++
++/// Fully blocked AoE remains one command, with one powered result per target; a missing pet cannot attack.
++#[test]
++fn osty_commands_aoe_and_missing_pet_keep_distinct_counts() {
++    let mut state = fixture();
++    let second = state.spawn_enemy(MonsterKind::Nibbit);
++    for enemy in state.enemy_uids.clone() {
++        state
++            .creatures
++            .iter_mut()
++            .find(|c| c.id == enemy.0)
++            .unwrap()
++            .block = 100;
++    }
++    assert_eq!(
++        sts2_core::card_effects::deal_damage_from_osty_to_all_alive_enemies(&mut state, 7),
++        0
++    );
++    assert_eq!(state.combat_log.osty_attacks_this_turn, 1);
++    assert_eq!(hits(&state, state.enemy_uids[0]), 1);
++    assert_eq!(hits(&state, second), 1);
++    state.kill_osty();
++    let target = state.enemy_uids[0];
++    assert_eq!(
++        sts2_core::card_effects::deal_damage_from_osty_to_enemy(&mut state, target, 7),
++        0
++    );
++    assert_eq!(
++        sts2_core::card_effects::deal_damage_from_osty_to_all_alive_enemies(&mut state, 7),
++        0
++    );
++    assert_eq!(state.combat_log.osty_attacks_this_turn, 1);
++}
++
++/// Multiple commands from the same card stay distinct; one multi-hit command stays singular.
++#[test]
++fn osty_commands_do_not_deduplicate_by_card_identity() {
++    let mut state = fixture();
++    let target = state.enemy_uids[0];
++    let source = card(&mut state, CardId::Rattle, PileKind::Hand);
++    state.player.hand.clear();
++    state.player.play.push(source);
++    sts2_core::card_effects::deal_damage_from_osty_to_enemy_with_hits(&mut state, target, 7, 2);
++    assert_eq!(
++        (
++            state.combat_log.osty_attacks_this_turn,
++            hits(&state, target)
++        ),
++        (1, 2)
++    );
++    sts2_core::card_effects::deal_damage_from_osty_to_enemy(&mut state, target, 7);
++    assert_eq!(
++        (
++            state.combat_log.osty_attacks_this_turn,
++            hits(&state, target)
++        ),
++        (2, 3)
++    );
++}
++
++/// Echo and automatic replay iterations each execute a new command through the original card handler.
++#[test]
++fn osty_commands_echo_and_automatic_replays_are_new_commands() {
++    for automatic in [false, true] {
++        let mut state = fixture();
++        let target = state.enemy_uids[0];
++        if automatic {
++            card(&mut state, CardId::Havoc, PileKind::Hand);
++            let rattle = card(&mut state, CardId::Rattle, PileKind::Draw);
++            state.cards[rattle.get() as usize - 1].base_replay_count = 1;
++        } else {
++            let owner = state.player.creature_uid.unwrap();
++            sts2_core::card_effects::apply_power_to_creature(
++                &mut state,
++                owner,
++                PowerKind::EchoForm,
++                1,
++            );
++            card(&mut state, CardId::Rattle, PileKind::Hand);
++        }
++        sts2_core::apply(
++            &mut state,
++            Action::PlayCard {
++                hand_index: 0,
++                target: if automatic { None } else { Some(0) },
++            },
++        );
++        assert_eq!(
++            (
++                state.combat_log.osty_attacks_this_turn,
++                hits(&state, target)
++            ),
++            (2, 3),
++            "automatic={automatic}"
++        );
++    }
++}
+diff --git a/sts2-rs/crates/sts2-core/src/card_effects.rs b/sts2-rs/crates/sts2-core/src/card_effects.rs
+index 553cdb9..66b8f55 100644
+--- a/sts2-rs/crates/sts2-core/src/card_effects.rs
++++ b/sts2-rs/crates/sts2-core/src/card_effects.rs
+@@ -305,11 +305,37 @@ pub fn deal_damage_from_osty_to_enemy(
+     target_uid: CreatureUid,
+     base: i32,
+ ) -> i32 {
+-    let Some(dealer) = osty_dealer_ref(state) else {
+-        return 0;
+-    };
++    deal_damage_from_osty_to_enemy_with_hits(state, target_uid, base, 1)
++}
++
++/// Execute one Osty AttackCommand with multiple damage results; each command counts once.
++pub fn deal_damage_from_osty_to_enemy_with_hits(
++    state: &mut CombatState,
++    target_uid: CreatureUid,
++    base: i32,
++    hits: i32,
++) -> i32 {
+     let card = originating_card_id(state);
+-    damage::apply_damage(state, dealer, target_uid, base, ValueProps::MOVE, card)
++    let mut total = 0_i32;
++    let mut executed = false;
++    for _ in 0..hits.max(0) {
++        let Some(dealer) = osty_dealer_ref(state) else {
++            break;
++        };
++        if !state.creatures.iter().any(|c| c.id == target_uid.0 && c.current_hp > 0) {
++            break;
++        }
++        executed = true;
++        total = total.saturating_add(damage::apply_damage(
++            state, dealer, target_uid, base, ValueProps::MOVE, card,
++        ));
++    }
++    if executed {
++        // Fully blocked results still belong to the completed CreatureAttackedEntry.
++        state.combat_log.osty_attacks_this_turn =
++            state.combat_log.osty_attacks_this_turn.saturating_add(1);
++    }
++    total
+ }
+ 
+ /// Osty-dealer analogue of [`deal_damage_to_all_alive_enemies`] (C#
+@@ -334,6 +360,7 @@ pub fn deal_damage_from_osty_to_all_alive_enemies(state: &mut CombatState, base:
+         })
+         .collect();
+     let mut total = 0_i32;
++    let mut executed = false;
+     for target_uid in targets {
+         let alive = state
+             .creatures
+@@ -342,6 +369,7 @@ pub fn deal_damage_from_osty_to_all_alive_enemies(state: &mut CombatState, base:
+         if !alive {
+             continue;
+         }
++        executed = true;
+         total = total.saturating_add(damage::apply_damage(
+             state,
+             dealer,
+@@ -351,6 +379,10 @@ pub fn deal_damage_from_osty_to_all_alive_enemies(state: &mut CombatState, base:
+             card,
+         ));
+     }
++    if executed {
++        state.combat_log.osty_attacks_this_turn =
++            state.combat_log.osty_attacks_this_turn.saturating_add(1);
++    }
+     total
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-core/src/damage.rs b/sts2-rs/crates/sts2-core/src/damage.rs
+index 379fa36..13d3da3 100644
+--- a/sts2-rs/crates/sts2-core/src/damage.rs
++++ b/sts2-rs/crates/sts2-core/src/damage.rs
+@@ -1106,15 +1106,9 @@ fn apply_damage_with_final_impl(
+         }
+     }
+ 
+-    // Necrobinder: tally an Osty-as-dealer attack so Rattle's hit count
+-    // (`1 + ostyAttacksThisTurn`) scales. C# counts `CreatureAttackedEntry`
+-    // whose `Actor == Owner.Osty` this turn; the Osty is routed as the dealer
+-    // `CreatureRef::Enemy(pet_uid)` (see `card_effects::osty_dealer_ref`).
+-    // Bead `sts2-rs-osty-attacks-this-turn`.
++    // GangUp counts powered DamageResults; Osty AttackCommands are counted at their caller boundary.
+     if let (CreatureRef::Enemy(dealer_uid), Some(pet_uid)) = (dealer, state.player.pet_uid) {
+         if dealer_uid == pet_uid {
+-            state.combat_log.osty_attacks_this_turn =
+-                state.combat_log.osty_attacks_this_turn.saturating_add(1);
+             // GH #806: per-target powered-hit tally for GangUp (GangUp.cs:24-29
+             // counts the target's powered `DamageReceivedEntry`s from a
+             // same-side, non-owner dealer — the Osty).
+@@ -4022,10 +4016,9 @@ mod tests {
+         );
+     }
+ 
+-    /// An Osty-as-dealer attack bumps `osty_attacks_this_turn` (Necrobinder
+-    /// Rattle scaling). Pins the `dealer_uid == pet_uid` equality.
++    /// A damage result contributes GangUp's per-target hit, not a complete AttackCommand.
+     #[test]
+-    fn osty_attack_increments_counter_when_pet_is_dealer() {
++    fn osty_damage_result_keeps_command_and_powered_hit_counts_distinct() {
+         let mut state = enemy_target_state(50, 0, SmallVec::new());
+         state.player.pet_uid = Some(cuid(2));
+         assert_eq!(state.combat_log.osty_attacks_this_turn, 0);
+@@ -4039,9 +4032,10 @@ mod tests {
+         );
+ 
+         assert_eq!(
+-            state.combat_log.osty_attacks_this_turn, 1,
+-            "a pet-dealer attack increments the Osty attack counter"
++            state.combat_log.osty_attacks_this_turn, 0,
++            "a damage result cannot represent the whole AttackCommand"
+         );
++        assert_eq!(state.combat_log.osty_powered_hits_by_target_this_turn.as_slice(), &[(cuid(1), 1)]);
+     }
+ 
+     // ----- arm_reattach_dead_state (Decimillipede revive arm) -----
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index 3285ba3..086daea 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -3145,9 +3145,8 @@ pub struct TurnEvents {
+     pub doom_applied_by_player_this_turn: bool,
+     /// Number of times the Osty (the Necrobinder's pet) has attacked this
+     /// player turn. Mirrors C# `History` `CreatureAttackedEntry` count where
+-    /// `Actor == Owner.Osty && HappenedThisTurn`. Incremented at the damage
+-    /// chokepoint ([`crate::damage`]) when the dealer is the pet
+-    /// (`CreatureRef::Enemy(pet_uid)`), cleared each player turn in
++    /// `Actor == Owner.Osty && HappenedThisTurn`. Incremented once at the original
++    /// Osty AttackCommand boundary (including multi-hit/AoE), cleared each player turn in
+     /// [`Self::reset_per_turn`], and read by `Rattle`'s `1 + count` hit-count
+     /// scaling. Bead `sts2-rs-osty-attacks-this-turn`.
+     pub osty_attacks_this_turn: i32,

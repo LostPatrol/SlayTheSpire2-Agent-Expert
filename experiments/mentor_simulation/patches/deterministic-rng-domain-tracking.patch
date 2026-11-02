@@ -1,0 +1,171 @@
+diff --git a/sts2-rs/crates/sts2-core/src/dotnet_rng.rs b/sts2-rs/crates/sts2-core/src/dotnet_rng.rs
+index 2442a69..629f818 100644
+--- a/sts2-rs/crates/sts2-core/src/dotnet_rng.rs
++++ b/sts2-rs/crates/sts2-core/src/dotnet_rng.rs
+@@ -318,6 +318,8 @@ pub struct Rng {
+     seed: u64,
+     base: MegaRandom,
+     counter: u32,
++    // Public simulation distinguishes a consumed draw from a choice with multiple outcomes.
++    uncertainty_counter: u32,
+ }
+ 
+ impl Rng {
+@@ -339,6 +341,7 @@ impl Rng {
+             seed,
+             base: MegaRandom::new(seed),
+             counter: 0,
++            uncertainty_counter: 0,
+         }
+     }
+ 
+@@ -352,6 +355,7 @@ impl Rng {
+             seed: 0,
+             base: MegaRandom::placeholder(),
+             counter: 0,
++            uncertainty_counter: 0,
+         }
+     }
+ 
+@@ -373,6 +377,7 @@ impl Rng {
+             // seed feeds it directly (no separate non-parity warmup needed).
+             base: MegaRandom::new(seed),
+             counter: 0,
++            uncertainty_counter: 0,
+         }
+     }
+ 
+@@ -435,6 +440,12 @@ impl Rng {
+         self.counter
+     }
+ 
++    /// Count draws with more than one possible value, without changing PRNG advancement.
++    #[must_use]
++    pub const fn uncertainty_counter(&self) -> u32 {
++        self.uncertainty_counter
++    }
++
+     /// Advance the underlying sample stream `target_count - self.counter`
+     /// times. Panics if `target_count < self.counter`.
+     pub fn fast_forward_counter(&mut self, target_count: u32) {
+@@ -446,6 +457,8 @@ impl Rng {
+         );
+         while self.counter < target_count {
+             self.counter += 1;
++            // Skipped calls do not retain their domains, so their uncertainty is unknown.
++            self.uncertainty_counter += 1;
+             // v0.107.1: C# FastForwardCounter replays `_random.NextInt()`; every
+             // counted draw consumes exactly one MegaRandom 64-bit step, so one
+             // `next_u64()` advances the stream identically.
+@@ -459,6 +472,9 @@ impl Rng {
+         self.counter += 1;
+         let exclusive_high = i64::from(high) + 1;
+         let range_size = exclusive_high - i64::from(low);
++        if range_size > 1 {
++            self.uncertainty_counter += 1;
++        }
+         // v0.107.1: C# `_random.Next(min, max)` == `(int)(NextDouble() * (max-min)) + min`
+         // for both the small (`NextInner(int)`) and large (`NextInner(long)`)
+         // branches — a single `sample()` per draw, no special large-range path
+@@ -505,6 +521,7 @@ impl Rng {
+     /// (`DoubleToInt64Bits(__result)`).
+     pub fn next_double(&mut self) -> f64 {
+         self.counter += 1;
++        self.uncertainty_counter += 1;
+         let sample = self.base.sample();
+         if rng_trace_enabled() {
+             eprintln!(
+@@ -520,6 +537,9 @@ impl Rng {
+     /// Uniform `[0, upper)` float. Increments counter by 1.
+     pub fn next_float(&mut self, upper: f64) -> f64 {
+         self.counter += 1;
++        if upper != 0.0 {
++            self.uncertainty_counter += 1;
++        }
+         self.base.sample() * upper
+     }
+ 
+@@ -527,6 +547,9 @@ impl Rng {
+     pub fn next_float_range(&mut self, low: f64, high: f64) -> f64 {
+         assert!(low <= high, "low must be <= high");
+         self.counter += 1;
++        if low != high {
++            self.uncertainty_counter += 1;
++        }
+         low + self.base.sample() * (high - low)
+     }
+ 
+@@ -620,6 +643,24 @@ impl Rng {
+ mod tests {
+     use super::*;
+ 
++    /// Singleton rolls consume native draws but do not introduce a branch to prove.
++    #[test]
++    fn uncertainty_counter_preserves_rng_and_counts_only_nontrivial_domains() {
++        let mut rng = Rng::new(42);
++        assert_eq!(rng.next_int(7, 7), 7);
++        assert_eq!(rng.next_float(0.0), 0.0);
++        assert_eq!(rng.next_float_range(3.0, 3.0), 3.0);
++        assert_eq!((rng.counter(), rng.uncertainty_counter()), (3, 0));
++        let _ = rng.next_int(0, 1);
++        let _ = rng.next_double();
++        assert_eq!((rng.counter(), rng.uncertainty_counter()), (5, 2));
++        rng.fast_forward_counter(7);
++        assert_eq!((rng.counter(), rng.uncertainty_counter()), (7, 4));
++        let mut advanced = Rng::new(42);
++        advanced.fast_forward_counter(7);
++        assert_eq!(rng.next_int(0, 999), advanced.next_int(0, 999));
++    }
++
+     /// Low-level Xoshiro256\*\* vectors: `MegaRandom(seed).NextULong()` × 4.
+     /// Captured from the v0.107.1 oracle (`MegaCrit.Sts2.Core.Random.MegaRandom`
+     /// via a sts2.dll reference harness) — locks in splitmix64 seeding + the
+diff --git a/sts2-rs/crates/sts2-core/src/run_rng_set.rs b/sts2-rs/crates/sts2-core/src/run_rng_set.rs
+index 350b318..0fcf693 100644
+--- a/sts2-rs/crates/sts2-core/src/run_rng_set.rs
++++ b/sts2-rs/crates/sts2-core/src/run_rng_set.rs
+@@ -375,6 +375,22 @@ impl RunRngSet {
+         ]
+     }
+ 
++    /// Count non-singleton choices in the same order as the native-consumption fingerprint.
++    #[must_use]
++    pub fn combat_uncertainty_fingerprint(&self) -> [u32; COMBAT_STREAM_COUNT] {
++        [
++            self.shuffle.uncertainty_counter(),
++            self.monster_ai.uncertainty_counter(),
++            self.combat_targets.uncertainty_counter(),
++            self.combat_card_selection.uncertainty_counter(),
++            self.combat_energy_costs.uncertainty_counter(),
++            self.combat_orbs.uncertainty_counter(),
++            self.combat_card_generation.uncertainty_counter(),
++            self.combat_potion_generation.uncertainty_counter(),
++            self.niche.uncertainty_counter(),
++        ]
++    }
++
+     /// Reseed every combat-relevant stream to an independent fresh seed
+     /// derived from `(base, n, per-stream salt)`, resetting each cursor to
+     /// 0. This realizes **outcome `n`** of a stochastic transition for
+@@ -509,6 +525,21 @@ impl Default for RunRngSet {
+ mod tests {
+     use super::*;
+ 
++    /// Keep singleton target selection distinct from an uncertain shuffle or enemy choice.
++    #[test]
++    fn uncertainty_fingerprint_uses_combat_stream_order() {
++        let mut set = RunRngSet::new(7);
++        let _ = set.combat_targets.next_int(0, 0);
++        assert_eq!(set.combat_counter_fingerprint()[2], 1);
++        assert_eq!(set.combat_uncertainty_fingerprint(), [0; COMBAT_STREAM_COUNT]);
++        let _ = set.shuffle.next_int(0, 1);
++        let _ = set.combat_targets.next_int(0, 1);
++        let mut expected = [0; COMBAT_STREAM_COUNT];
++        expected[0] = 1;
++        expected[2] = 1;
++        assert_eq!(set.combat_uncertainty_fingerprint(), expected);
++    }
++
+     #[test]
+     fn stream_mut_names_every_stream_a_producer_can_carry() {
+         let mut set = RunRngSet::new(7);

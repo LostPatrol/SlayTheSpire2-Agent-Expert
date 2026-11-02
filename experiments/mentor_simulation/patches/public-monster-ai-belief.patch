@@ -1,0 +1,519 @@
+diff --git a/sts2-rs/crates/sts2-core/src/monster_ai.rs b/sts2-rs/crates/sts2-core/src/monster_ai.rs
+--- a/sts2-rs/crates/sts2-core/src/monster_ai.rs
++++ b/sts2-rs/crates/sts2-core/src/monster_ai.rs
+@@ -1,4 +1,6 @@
++//! Enemy state machines, weighted public hypotheses, and performed-move history.
+ use std::collections::BTreeMap;
++use std::hash::Hash;
+ 
+ use smallvec::SmallVec;
+ 
+@@ -275,6 +277,20 @@
+     pub step: u8,
+ }
+ 
++/// Non-recursive per-instance state carried by a public AI hypothesis.
++#[derive(Clone, Debug, PartialEq, Eq, Hash)]
++pub struct MonsterAiInstanceState {
++    current: StateId,
++    state_log: SmallVec<[StateId; 16]>,
++    performed_first_move: bool,
++    initial_resolved: bool,
++    performed_at_least_once: bool,
++    owner_uid: Option<CreatureUid>,
++    counter: i32,
++    forced_next_state: Option<StateId>,
++    slot: Option<u8>,
++}
++
+ #[derive(Clone, Debug)]
+ pub struct MonsterAi {
+     /// The moveset state machine. Wrapped in an `Arc` (perf 2026-07-05):
+@@ -299,6 +315,12 @@
+     /// remove) can only ever make reads fall back to the string lookup —
+     /// never return the wrong state.
+     current_idx: u32,
++    /// Publicly indistinguishable selected moves, resolved only when the enemy acts.
++    current_move_belief: Option<Vec<(StateId, f64)>>,
++    /// Complete history alternatives underlying the indistinguishable current telegraph.
++    current_ai_belief: Option<Vec<(MonsterAiInstanceState, f64)>>,
++    /// A stun postpones the latent move instead of revealing its hidden history.
++    resume_ai_belief: Option<Vec<(MonsterAiInstanceState, f64)>>,
+     state_log: SmallVec<[StateId; 16]>,
+     performed_first_move: bool,
+     /// Whether the initial state has been resolved against the RUN's
+@@ -384,6 +406,9 @@
+             initial,
+             current: initial,
+             current_idx: 0,
++            current_move_belief: None,
++            current_ai_belief: None,
++            resume_ai_belief: None,
+             state_log: SmallVec::new(),
+             performed_first_move: false,
+             initial_resolved: false,
+@@ -416,6 +441,9 @@
+             initial,
+             current: initial,
+             current_idx: 0,
++            current_move_belief: None,
++            current_ai_belief: None,
++            resume_ai_belief: None,
+             state_log: SmallVec::new(),
+             performed_first_move: false,
+             initial_resolved: false,
+@@ -492,6 +520,9 @@
+     /// `OwnerAware` branch resolves to `false`.
+     pub fn set_owner(&mut self, uid: CreatureUid) {
+         self.owner_uid = Some(uid);
++        for alternatives in [&mut self.current_ai_belief, &mut self.resume_ai_belief].into_iter().flatten() {
++            for (instance, _) in alternatives { instance.owner_uid = Some(uid); }
++        }
+     }
+ 
+     /// Read the current owner uid, if set. Exposed for the combat
+@@ -512,6 +543,9 @@
+     /// `beetle_charged` flag). Bead `sts2-rs-976k`.
+     pub fn set_counter(&mut self, n: i32) {
+         self.counter = n;
++        for alternatives in [&mut self.current_ai_belief, &mut self.resume_ai_belief].into_iter().flatten() {
++            for (instance, _) in alternatives { instance.counter = n; }
++        }
+     }
+ 
+     /// Saturating-increment the per-instance counter — Rust analogue
+@@ -520,6 +554,9 @@
+     /// `sts2-rs-976k`.
+     pub fn increment_counter(&mut self) {
+         self.counter = self.counter.saturating_add(1);
++        for alternatives in [&mut self.current_ai_belief, &mut self.resume_ai_belief].into_iter().flatten() {
++            for (instance, _) in alternatives { instance.counter = instance.counter.saturating_add(1); }
++        }
+     }
+ 
+     /// Read the encounter slot index, if assigned. See the `slot` field
+@@ -536,6 +573,9 @@
+     /// `sts2-rs-c8why`.
+     pub fn set_slot(&mut self, slot: u8) {
+         self.slot = Some(slot);
++        for alternatives in [&mut self.current_ai_belief, &mut self.resume_ai_belief].into_iter().flatten() {
++            for (instance, _) in alternatives { instance.slot = Some(slot); }
++        }
+     }
+ 
+     /// Queue a one-shot state override for the next
+@@ -560,6 +600,10 @@
+             "force_next_state({state_id:?}): unknown state id",
+         );
+         self.forced_next_state = Some(state_id);
++        self.resume_ai_belief = None;
++        if let Some(alternatives) = &mut self.current_ai_belief {
++            for (instance, _) in alternatives { instance.forced_next_state = Some(state_id); }
++        }
+     }
+ 
+     /// Read the queued forced-next-state override (if any). Exposed
+@@ -631,6 +675,9 @@
+             return;
+         }
+         self.set_current(target);
++        self.current_move_belief = None;
++        self.current_ai_belief = None;
++        self.resume_ai_belief = None;
+         self.performed_first_move = true;
+         self.performed_at_least_once = false;
+         self.forced_next_state = None;
+@@ -704,6 +751,156 @@
+     #[must_use]
+     pub fn move_history(&self) -> &[StateId] {
+         &self.state_log
++    }
++
++    /// Attach conditional public probabilities without revealing a sampled current move.
++    pub fn set_current_move_belief(&mut self, alternatives: Vec<(StateId, f64)>) -> bool {
++        let alternatives = alternatives.into_iter().map(|(id, weight)| {
++            let mut ai = self.clone();
++            ai.current_move_belief = None;
++            ai.current_ai_belief = None;
++            ai.resume_ai_belief = None;
++            ai.set_current(id);
++            (ai, weight)
++        }).collect();
++        self.set_current_ai_belief(alternatives)
++    }
++
++    /// Preserve weighted current moves and distinct histories without sampling at import time.
++    pub fn set_current_ai_belief(&mut self, alternatives: Vec<(Self, f64)>) -> bool {
++        let mut merged: Vec<(MonsterAiInstanceState, f64)> = Vec::new();
++        for (ai, weight) in alternatives {
++            if !weight.is_finite() || weight <= 0.0 || ai.current_ai_belief.is_some()
++                || ai.resume_ai_belief.is_some()
++                || !self.states.get(ai.current).is_some_and(MonsterState::is_move)
++            {
++                return false;
++            }
++            let instance = ai.instance_state();
++            if let Some((_, previous)) = merged.iter_mut().find(|(saved, _)| *saved == instance) {
++                *previous += weight;
++            } else {
++                merged.push((instance, weight));
++            }
++        }
++        let total: f64 = merged.iter().map(|(_, weight)| weight).sum();
++        if merged.is_empty() || !total.is_finite() || total <= 0.0 { return false; }
++        merged.sort_by_cached_key(|(instance, _)| format!("{instance:?}"));
++        for (_, weight) in &mut merged { *weight /= total; }
++        self.restore_instance_state(&merged[0].0);
++        self.resume_ai_belief = None;
++        self.current_move_belief = (merged.len() > 1).then(|| merged.iter()
++            .map(|(instance, weight)| (instance.current, *weight)).collect());
++        self.current_ai_belief = (merged.len() > 1).then_some(merged);
++        true
++    }
++
++    /// Copy only concrete instance fields; belief snapshots never recursively contain beliefs.
++    fn instance_state(&self) -> MonsterAiInstanceState {
++        MonsterAiInstanceState { current:self.current, state_log:self.state_log.clone(),
++            performed_first_move:self.performed_first_move, initial_resolved:self.initial_resolved,
++            performed_at_least_once:self.performed_at_least_once, owner_uid:self.owner_uid,
++            counter:self.counter, forced_next_state:self.forced_next_state, slot:self.slot }
++    }
++
++    /// Restore the concrete history sampled at a chance edge without firing move effects.
++    fn restore_instance_state(&mut self, instance: &MonsterAiInstanceState) {
++        self.set_current(instance.current);
++        self.state_log.clone_from(&instance.state_log);
++        self.performed_first_move = instance.performed_first_move;
++        self.initial_resolved = instance.initial_resolved;
++        self.performed_at_least_once = instance.performed_at_least_once;
++        self.owner_uid = instance.owner_uid;
++        self.counter = instance.counter;
++        self.forced_next_state = instance.forced_next_state;
++        self.slot = instance.slot;
++    }
++
++    /// Expose the unresolved belief for semantic state hashes and search support.
++    #[must_use]
++    pub fn current_move_belief(&self) -> Option<&[(StateId, f64)]> {
++        self.current_move_belief.as_deref()
++    }
++
++    /// Read weighted concrete histories for public filtering and semantic validation.
++    #[must_use]
++    pub fn current_ai_belief(&self) -> Option<&[(MonsterAiInstanceState, f64)]> {
++        self.current_ai_belief.as_deref()
++    }
++
++    /// Reattach a postponed latent move when the stun's follow-up resumes it.
++    fn restore_resumed_belief(&mut self) {
++        if let Some(alternatives) = self.resume_ai_belief.take() {
++            self.restore_instance_state(&alternatives[0].0);
++            self.current_move_belief = Some(alternatives.iter()
++                .map(|(instance, weight)| (instance.current, *weight)).collect());
++            self.current_ai_belief = Some(alternatives);
++        }
++    }
++
++    /// Resolve a latent selected move through the chance-detected combat AI stream.
++    pub fn resolve_current_move_belief(&mut self, rng: &mut DotNetRng) -> bool {
++        let Some(alternatives) = self.current_ai_belief.take() else {
++            return false;
++        };
++        self.current_move_belief = None;
++        let total: f64 = alternatives.iter().map(|(_, weight)| weight).sum();
++        let roll = rng.next_float(total);
++        let mut cumulative = 0.0;
++        let mut selected = alternatives.last().expect("nonempty move belief").0.clone();
++        for (instance, weight) in alternatives {
++            cumulative += weight;
++            if roll < cumulative {
++                selected = instance;
++                break;
++            }
++        }
++        self.restore_instance_state(&selected);
++        true
++    }
++
++    /// Hash runtime semantics without unstable code addresses or cached lookup indices.
++    pub fn hash_runtime_state<H: std::hash::Hasher>(&self, hasher: &mut H) {
++        self.initial.hash(hasher);
++        self.instance_state().hash(hasher);
++        for belief in [&self.current_ai_belief, &self.resume_ai_belief] {
++            belief.is_some().hash(hasher);
++            if let Some(alternatives) = belief {
++                alternatives.len().hash(hasher);
++                for (instance, weight) in alternatives {
++                    instance.hash(hasher);
++                    weight.to_bits().hash(hasher);
++                }
++            }
++        }
++        for (id, state) in self.states.iter() {
++            id.hash(hasher);
++            match state {
++                MonsterState::Move(movement) => {
++                    0_u8.hash(hasher);
++                    movement.intents.hash(hasher);
++                    movement.follow_up.hash(hasher);
++                    movement.must_perform_once.hash(hasher);
++                },
++                MonsterState::RandomBranch(branch) => {
++                    1_u8.hash(hasher);
++                    for entry in &branch.branches {
++                        entry.state_id.hash(hasher);
++                        entry.repeat_type.hash(hasher);
++                        entry.max_times.hash(hasher);
++                        entry.weight.to_bits().hash(hasher);
++                        entry.cooldown.hash(hasher);
++                    }
++                },
++                MonsterState::ConditionalBranch(branch) => {
++                    2_u8.hash(hasher);
++                    for entry in &branch.branches {
++                        std::mem::discriminant(&entry.condition).hash(hasher);
++                        entry.state_id.hash(hasher);
++                    }
++                },
++            }
++        }
+     }
+ 
+     /// Restore witnessed performed moves without replaying their effects or consuming RNG.
+@@ -837,6 +1034,8 @@
+ 
+         self.resolve_to_move_no_combat(rng);
+ 
++        self.restore_resumed_belief();
++
+         match self.cur() {
+             MonsterState::Move(m) => m,
+             _ => unreachable!(),
+@@ -874,6 +1073,8 @@
+         self.set_current(next_id);
+ 
+         self.resolve_to_move_with_combat(rng, combat);
++
++        self.restore_resumed_belief();
+ 
+         match self.cur() {
+             MonsterState::Move(m) => m,
+@@ -1019,6 +1220,12 @@
+             .is_some_and(MonsterState::should_appear_in_logs)
+         {
+             self.state_log.push(performed);
++            if let Some(alternatives) = &mut self.resume_ai_belief {
++                for (instance, _) in alternatives {
++                    instance.state_log.push(performed);
++                    instance.performed_first_move = true;
++                }
++            }
+         }
+     }
+ 
+@@ -1058,6 +1265,9 @@
+         if !self.can_transition_away() {
+             return false;
+         }
++        let latent_resume = next_move.is_none().then(|| {
++            self.current_ai_belief.clone().or_else(|| self.resume_ai_belief.clone())
++        }).flatten();
+         let resume = next_move.or_else(|| {
+             if self.current == stun_state {
+                 self.forced_next_state
+@@ -1070,6 +1280,7 @@
+         if let Some(resume) = resume {
+             self.force_next_state(resume);
+         }
++        self.resume_ai_belief = latent_resume;
+         true
+     }
+ 
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -4287,6 +4287,16 @@
+         // — so re-read the live telegraph, which every stun/force path
+         // re-points. The snapshot only fixes WHO acts, and in what order.
+         // Issue #806.
++        if let Some(idx) = crate::creature_pos(&state.creatures, enemy_uid.0) {
++            let creature = &state.creatures[idx];
++            if creature.current_hp > 0 || is_acting_reattach_corpse(state, creature) {
++                if let Some(ai) = state.creatures[idx].ai.as_mut() {
++                    if ai.resolve_current_move_belief(&mut state.run_rng.monster_ai) {
++                        state.creatures[idx].intent = ai.current_move().intents.first().copied();
++                    }
++                }
++            }
++        }
+         let live = crate::creature_by_id(&state.creatures, enemy_uid.0);
+         let intent = live.map_or(snapshot_intent, |c| c.intent);
+         // The move that is about to run: C# marks THAT `MoveState` performed
+diff --git a/sts2-rs/crates/sts2-core/tests/public_move_belief.rs b/sts2-rs/crates/sts2-core/tests/public_move_belief.rs
+new file mode 100644
+--- /dev/null
++++ b/sts2-rs/crates/sts2-core/tests/public_move_belief.rs
+@@ -0,0 +1,163 @@
++//! Publicly indistinguishable enemy moves remain weighted chance until execution.
++use smallvec::smallvec;
++use std::collections::BTreeMap;
++use sts2_core::monster_ai::{MonsterAi, MonsterState, MoveState};
++use sts2_core::{CombatPhase, CombatState, CreatureUid, DotNetRng, Intent, MonsterKind};
++
++/// Give the two indistinguishable moves observably different settlement effects.
++fn heal_one(state: &mut CombatState, _: CreatureUid) {
++    state.player.current_hp += 1;
++}
++
++/// Give the second move a distinct settlement effect without changing its telegraph.
++fn heal_three(state: &mut CombatState, _: CreatureUid) {
++    state.player.current_hp += 3;
++}
++
++/// Build an ambiguous telegraph with unequal public probabilities.
++fn ambiguous_ai() -> MonsterAi {
++    let mut states = BTreeMap::new();
++    for (id, effect) in [
++        ("A", heal_one as fn(&mut CombatState, CreatureUid)),
++        ("B", heal_three as fn(&mut CombatState, CreatureUid)),
++    ] {
++        states.insert(id, MonsterState::Move(MoveState {
++            id, effect, intents: smallvec![Intent::Heal],
++            follow_up: Some(id), must_perform_once: false,
++        }));
++    }
++    let mut ai = MonsterAi::new(states, "A");
++    assert!(ai.set_current_move_belief(vec![("A", 1.0), ("B", 3.0)]));
++    ai
++}
++
++/// Selection consumes exactly one chance-visible AI draw and preserves unequal weights.
++#[test]
++fn latent_moves_follow_public_weights_and_resolve_once() {
++    let root = ambiguous_ai();
++    let mut selected_b = 0;
++    // A broad finite seed panel catches uniform selection without asserting exact frequencies.
++    for seed in 0..4096 {
++        let mut ai = root.clone();
++        let mut rng = DotNetRng::new(seed);
++        assert_eq!(rng.counter(), 0);
++        assert!(ai.resolve_current_move_belief(&mut rng));
++        assert_eq!(rng.counter(), 1);
++        selected_b += usize::from(ai.current_state_id() == "B");
++        assert!(ai.current_move_belief().is_none());
++        assert!(!ai.resolve_current_move_belief(&mut rng));
++        assert_eq!(rng.counter(), 1);
++    }
++    assert!((2800..3350).contains(&selected_b), "weighted B count: {selected_b}");
++    assert!(root.current_move_belief().is_some());
++}
++
++/// A public phase override replaces the latent move rather than resurrecting it later.
++#[test]
++fn explicit_move_override_clears_latent_moves_without_rng() {
++    let mut ai = ambiguous_ai();
++    ai.force_current_state("A");
++    let mut rng = DotNetRng::new(0);
++    assert!(!ai.resolve_current_move_belief(&mut rng));
++    assert_eq!(rng.counter(), 0);
++    assert_eq!(ai.current_state_id(), "A");
++}
++
++/// Equal current moves must not collapse distinct repeat histories or private counters.
++#[test]
++fn latent_histories_restore_the_sampled_instance_state() {
++    let mut first = ambiguous_ai();
++    first.force_current_state("A");
++    assert!(first.restore_move_history(&["A".into()]));
++    first.set_counter(7);
++    let mut second = first.clone();
++    assert!(second.restore_move_history(&["B".into(), "B".into()]));
++    second.set_counter(19);
++    let mut root = first.clone();
++    assert!(root.set_current_ai_belief(vec![(first, 1.0), (second, 1.0)]));
++    assert_eq!(root.current_ai_belief().unwrap().len(), 2);
++    let mut seen = std::collections::BTreeSet::new();
++    for seed in 0..32 {
++        let mut ai = root.clone();
++        ai.resolve_current_move_belief(&mut DotNetRng::new(seed));
++        seen.insert((ai.counter(), ai.move_history().to_vec()));
++    }
++    assert_eq!(seen, [(7, vec!["A"]), (19, vec!["B", "B"])].into_iter().collect());
++}
++
++/// A stun postpones the original uncertain move without choosing a history at import time.
++#[test]
++fn stun_resumes_the_original_latent_move() {
++    let mut ai = ambiguous_ai();
++    std::sync::Arc::make_mut(&mut ai.states).insert("S", MonsterState::Move(MoveState {
++        id:"S", effect:heal_one, intents:smallvec![Intent::Stun],
++        follow_up:Some("A"), must_perform_once:true,
++    }));
++    assert!(ai.stun_immediate("S", None));
++    assert_eq!(ai.current_state_id(), "S");
++    assert!(ai.current_ai_belief().is_none());
++    let mut rng = DotNetRng::new(0);
++    ai.on_move_performed();
++    ai.roll_move(&mut rng);
++    assert_eq!(rng.counter(), 0);
++    assert_eq!(ai.current_ai_belief().unwrap().len(), 2);
++    assert!(ai.resolve_current_move_belief(&mut rng));
++    assert_eq!(rng.counter(), 1);
++    assert_eq!(ai.move_history(), &["S"]);
++}
++
++/// Every search hash separates equal telegraphs with distinct histories and branch weights.
++#[test]
++fn semantic_hashes_include_history_counter_and_belief_weights() {
++    let mut state = CombatState::default();
++    let uid = state.spawn_enemy(MonsterKind::Nibbit);
++    let mut first = ambiguous_ai();
++    first.force_current_state("A");
++    first.set_owner(uid);
++    assert!(first.restore_move_history(&["A".into()]));
++    let mut second = first.clone();
++    assert!(second.restore_move_history(&["B".into()]));
++    second.set_counter(2);
++    let hashes = |ai: MonsterAi| {
++        let mut world = state.clone();
++        world.set_creature_ai(uid, ai);
++        (sts2_core::hashing::state_hash(&world),
++            sts2_core::hashing::search_hash(&world),
++            sts2_core::hashing::chance_outcome_hash(&world))
++    };
++    assert_ne!(hashes(first.clone()), hashes(second.clone()));
++    let mut left = first.clone();
++    assert!(left.set_current_ai_belief(vec![(first.clone(), 1.0), (second.clone(), 3.0)]));
++    let mut right = first.clone();
++    assert!(right.set_current_ai_belief(vec![(first, 3.0), (second, 1.0)]));
++    assert_ne!(hashes(left), hashes(right));
++}
++
++/// The actual enemy walk, rather than a standalone sampler, executes both latent bodies.
++#[test]
++fn enemy_execution_resolves_the_current_move_belief() {
++    let mut root = CombatState::default();
++    root.player.current_hp = 10;
++    root.player.max_hp = 50;
++    root.init_player_creature();
++    let uid = root.spawn_enemy(MonsterKind::Nibbit);
++    let mut ai = ambiguous_ai();
++    ai.set_owner(uid);
++    root.set_creature_ai(uid, ai);
++    let enemy = root.creatures.iter_mut().find(|c| c.id == uid.0).unwrap();
++    enemy.current_hp = 30;
++    enemy.max_hp = 30;
++    enemy.intent = Some(Intent::Heal);
++    root.phase = CombatPhase::EnemyTurnExec;
++    let mut observed = std::collections::BTreeSet::new();
++    for seed in 0..32 {
++        let mut state = root.clone();
++        state.run_rng.monster_ai = DotNetRng::new(seed);
++        sts2_core::combat_loop::enemy_turn_exec(&mut state);
++        observed.insert(state.player.current_hp);
++        assert_eq!(state.run_rng.monster_ai.counter(), 1);
++        assert!(state.creatures.iter().find(|c| c.id == uid.0).unwrap()
++            .ai.as_ref().unwrap().current_move_belief().is_none());
++    }
++    assert_eq!(observed, [11, 13].into_iter().collect());
++}

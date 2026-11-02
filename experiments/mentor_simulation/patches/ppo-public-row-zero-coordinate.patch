@@ -1,0 +1,78 @@
+diff --git a/sts2-rs/crates/sts2-runai/src/ppo/wire.rs b/sts2-rs/crates/sts2-runai/src/ppo/wire.rs
+--- a/sts2-rs/crates/sts2-runai/src/ppo/wire.rs
++++ b/sts2-rs/crates/sts2-runai/src/ppo/wire.rs
+@@ -25,12 +25,12 @@
+ //! observation still builds, the net still answers, and only the win rate
+ //! knows. In particular:
+ //!
+-//! * **The row-0 map guard.** `rm.map_coord()` is `None` at an act's first map
+-//!   choice, but the DLL reports the pre-act Neow/Ancient node (row 0) as
+-//!   `current` — a row its own act graph never contains. Feeding it through
++//! * **The row-0 map guard.** Older graphs omit the pre-act Neow/Ancient
++//!   node even when the DLL reports it as `current`. Feeding that absent node through
+ //!   made `mapfeat` compute real forward cones where training saw the
+ //!   degenerate act-start encoding, flipping the act-start route on 27 of 42
+ //!   exactly-reproduced live decisions (2026-08-02 pathing diagnosis).
++//!   A row-0 node actually present in the public graph is a valid coordinate.
+ //! * **`total_floor` is `floor - 1`, `act_index` is 1-based.** The engine's
+ //!   `rm.total_floor()` is 0 at Neow where the DLL's `context.total_floor` is
+ //!   1. Both fed the encoder off-by-one on every meta decision — 4735/4735 in
+@@ -264,10 +264,8 @@
+ 
+ /// The act-map current coord, with the row-0 guard applied.
+ ///
+-/// Returns `None` both when there is no map in reach and when `current` sits
+-/// on row 0 — the pre-act Neow/Ancient node, which the act graph never
+-/// contains. See the module note: feeding it through flipped 27 of 42
+-/// reproduced act-start routes.
++/// Suppress a pre-act row-0 cursor only when its exact node is absent from
++/// the supplied graph. Newer native graphs include the actual Ancient node.
+ fn current_coord(state: &Value) -> Option<Coord> {
+     let map = obj(state, "map")?;
+     // Only trust `current` when the graph came with it, matching Python's
+@@ -277,13 +275,16 @@
+     }
+     let cur = obj(map, "current")?;
+     let row = cur.get("row").and_then(Value::as_i64).unwrap_or(-1);
+-    if row == 0 {
++    let col = i(cur, "col");
++    if row == 0
++        && !arr(map, "nodes").iter().any(|node| {
++            node.get("row").and_then(Value::as_i64) == Some(row)
++                && node.get("col").and_then(Value::as_i64) == Some(col)
++        })
++    {
+         return None;
+     }
+-    Some(Coord {
+-        col: i(cur, "col"),
+-        row,
+-    })
++    Some(Coord { col, row })
+ }
+ 
+ /// One bridge map node → the `full_map()` node shape `mapfeat` consumes.
+@@ -1300,6 +1301,23 @@
+         assert_eq!(d.obs.act_floor, 3, "act_floor is row + 1");
+     }
+ 
++    /// Preserve an actual Ancient node while retaining the missing-node guard for other columns.
++    #[test]
++    fn a_row_zero_current_present_in_the_public_graph_is_preserved() {
++        let mut state = map_state(0);
++        state["map"]["nodes"]
++            .as_array_mut()
++            .unwrap()
++            .insert(0, json!({"col":2,"row":0,"type":"Ancient","children":[]}));
++        let decision = build_decision(&state, "map_select").unwrap();
++        assert_eq!(decision.obs.map_coord, Some((2, 0)));
++        assert_eq!(decision.obs.act_floor, 1);
++        state["map"]["current"]["col"] = json!(4);
++        let missing = build_decision(&state, "map_select").unwrap();
++        assert_eq!(missing.obs.map_coord, None);
++        assert_eq!(missing.obs.act_floor, 0);
++    }
++
+     /// `total_floor` is the DLL floor minus one and never negative; the engine
+     /// is 0 at Neow where the DLL says 1.
+     #[test]

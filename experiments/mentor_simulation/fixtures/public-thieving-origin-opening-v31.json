@@ -1,0 +1,940 @@
+{
+  "source": "agent/codex/solver-resume5-20261030/validation/v30-public-remaining20/public-ironclad-1458832212/response.json",
+  "source_sha256": "8C86C6864B08BD0E16B56731FD729BFD8C99F49430E674856DDF1BE5CE9D0152",
+  "scope": "Literal public opening state; no private diagnostics or substituted observations.",
+  "state": {
+    "action_revision": 202,
+    "available_actions": [
+      "play_card",
+      "end_turn",
+      "use_potion"
+    ],
+    "combat": {
+      "action_readiness": {
+        "actions_settled": true,
+        "can_use_combat_actions": true,
+        "snapshot_stable": true
+      },
+      "ally_powered_hits_by_target_this_turn": [],
+      "cards_discarded_this_turn": 0,
+      "cards_drawn_by_effect_this_turn": 0,
+      "cards_drawn_this_combat": 5,
+      "cards_exhausted_this_turn": 0,
+      "discard": [],
+      "doom_applied_this_turn": false,
+      "draw": [
+        {
+          "card_count": 1,
+          "card_id": "CONFLAGRATION",
+          "card_ids": [
+            "CONFLAGRATION"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 2,
+              "current_value": 2,
+              "enchanted_value": 2,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "CONFLAGRATION*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DEFEND_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DEFEND_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DEFEND_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "OFFERING",
+          "card_ids": [
+            "OFFERING"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "OFFERING*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "RELAX",
+          "card_ids": [
+            "RELAX"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 15,
+              "current_value": 15,
+              "enchanted_value": 15,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 3,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "RELAX*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "RELAX",
+          "card_ids": [
+            "RELAX"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 15,
+              "current_value": 15,
+              "enchanted_value": 15,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 3,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "RELAX*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "SPITE",
+          "card_ids": [
+            "SPITE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "SPITE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "STRIKE_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "STRIKE_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "STRIKE_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "STRIKE_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "STRIKE_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "TWIN_STRIKE",
+          "card_ids": [
+            "TWIN_STRIKE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "TWIN_STRIKE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "UNRELENTING",
+          "card_ids": [
+            "UNRELENTING"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 14,
+              "current_value": 14,
+              "enchanted_value": 14,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "UNRELENTING*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "UPPERCUT",
+          "card_ids": [
+            "UPPERCUT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 13,
+              "current_value": 13,
+              "enchanted_value": 13,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "UPPERCUT+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        }
+      ],
+      "enemies": [
+        {
+          "alive": true,
+          "block": 0,
+          "enemy_id": "ThievingHopper",
+          "hittable": true,
+          "hp": "79/79",
+          "i": 0,
+          "instance_id": "visible-enemy-2",
+          "intents": [
+            {
+              "damage": 17,
+              "hits": 1,
+              "intent_type": "ATTACK"
+            }
+          ],
+          "power_details": [
+            {
+              "amount": 5,
+              "display_amount": 5,
+              "power_id": "ESCAPE_ARTIST_POWER"
+            }
+          ],
+          "powers": [
+            "ESCAPE_ARTIST_POWER 5"
+          ]
+        }
+      ],
+      "energy_spent_this_turn": 0,
+      "energy_wasted_this_combat": 0,
+      "exhaust": [],
+      "generated_cards_this_combat": 0,
+      "hand": [
+        {
+          "card_count": 1,
+          "card_id": "INFLAME",
+          "card_ids": [
+            "INFLAME"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 0,
+          "instance_id": "visible-6",
+          "keyword_state_complete": true,
+          "line": "INFLAME+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "SWORD_BOOMERANG",
+          "card_ids": [
+            "SWORD_BOOMERANG"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 3,
+              "current_value": 3,
+              "enchanted_value": 3,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 1,
+          "instance_id": "visible-9",
+          "keyword_state_complete": true,
+          "line": "SWORD_BOOMERANG*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "POMMEL_STRIKE",
+          "card_ids": [
+            "POMMEL_STRIKE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 9,
+              "current_value": 9,
+              "enchanted_value": 9,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 2,
+          "instance_id": "visible-10",
+          "keyword_state_complete": true,
+          "line": "POMMEL_STRIKE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "BASH",
+          "card_ids": [
+            "BASH"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 8,
+              "current_value": 8,
+              "enchanted_value": 8,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "i": 3,
+          "instance_id": "visible-12",
+          "keyword_state_complete": true,
+          "line": "BASH*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 4,
+          "instance_id": "visible-13",
+          "keyword_state_complete": true,
+          "line": "DEFEND_IRONCLAD*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        }
+      ],
+      "hp_loss_events_this_combat": 0,
+      "hp_loss_events_this_turn": 0,
+      "lightning_orbs_channeled_this_combat": 0,
+      "osty_attacks_this_turn": 0,
+      "play": [],
+      "player": {
+        "block": 0,
+        "energy": 3,
+        "hp": "91/91",
+        "orb_capacity": null,
+        "orb_details": [],
+        "power_details": [],
+        "powers": [],
+        "stars": 0
+      },
+      "players": [],
+      "powered_hits_by_target_this_turn": [],
+      "public_card_block_history": {
+        "available": true,
+        "complete": true,
+        "entries": [],
+        "scope": "current_combat",
+        "source": "offline_public_card_sourced_block_gains"
+      },
+      "public_card_play_history": {
+        "available": true,
+        "complete": true,
+        "plays": [],
+        "scope": "current_combat",
+        "source": "offline_public_completed_card_plays"
+      },
+      "stars_gained_this_turn": 0,
+      "status_cards_drawn_this_turn": 0,
+      "unspent_energy_at_turn_end_sum": 0
+    },
+    "public_history": {
+      "combat_cost_origins": [],
+      "encounter_id": "offline-public-combat-11",
+      "enemy_turns": [
+        {
+          "enemies": [
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "ThievingHopper",
+              "hittable": true,
+              "hp": "79/79",
+              "i": 0,
+              "instance_id": "visible-enemy-2",
+              "intents": [
+                {
+                  "damage": 17,
+                  "hits": 1,
+                  "intent_type": "ATTACK"
+                }
+              ],
+              "power_details": [
+                {
+                  "amount": 5,
+                  "display_amount": 5,
+                  "power_id": "ESCAPE_ARTIST_POWER"
+                }
+              ],
+              "powers": [
+                "ESCAPE_ARTIST_POWER 5"
+              ]
+            }
+          ],
+          "player": {
+            "block": 0,
+            "energy": 3,
+            "hp": "91/91",
+            "orb_capacity": null,
+            "orb_details": [],
+            "power_details": [],
+            "powers": [],
+            "stars": 0
+          },
+          "turn": 1
+        }
+      ],
+      "history_complete": false,
+      "schema_version": 1,
+      "source": "observed_full_run_public_frames_and_completed_actions"
+    },
+    "run": {
+      "act_count": 3,
+      "act_floor": 2,
+      "act_id": "1",
+      "act_index": 2,
+      "ascension": 0,
+      "awaiting_second_boss": false,
+      "boss_id": "KNOWLEDGE_DEMON_BOSS",
+      "character_id": "IRONCLAD",
+      "deck": [
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "line": "STRIKE_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "line": "STRIKE_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "line": "STRIKE_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "line": "STRIKE_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_IRONCLAD",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "line": "STRIKE_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "line": "DEFEND_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "line": "DEFEND_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "line": "DEFEND_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_IRONCLAD",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "line": "DEFEND_IRONCLAD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "BASH",
+          "card_ids": [
+            "BASH"
+          ],
+          "line": "BASH*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "TWIN_STRIKE",
+          "card_ids": [
+            "TWIN_STRIKE"
+          ],
+          "line": "TWIN_STRIKE*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "POMMEL_STRIKE",
+          "card_ids": [
+            "POMMEL_STRIKE"
+          ],
+          "line": "POMMEL_STRIKE*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "SWORD_BOOMERANG",
+          "card_ids": [
+            "SWORD_BOOMERANG"
+          ],
+          "line": "SWORD_BOOMERANG*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "CONFLAGRATION",
+          "card_ids": [
+            "CONFLAGRATION"
+          ],
+          "line": "CONFLAGRATION*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "UPPERCUT",
+          "card_ids": [
+            "UPPERCUT"
+          ],
+          "line": "UPPERCUT+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "INFLAME",
+          "card_ids": [
+            "INFLAME"
+          ],
+          "line": "INFLAME+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "SPITE",
+          "card_ids": [
+            "SPITE"
+          ],
+          "line": "SPITE*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "UNRELENTING",
+          "card_ids": [
+            "UNRELENTING"
+          ],
+          "line": "UNRELENTING*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "OFFERING",
+          "card_ids": [
+            "OFFERING"
+          ],
+          "line": "OFFERING*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "RELAX",
+          "card_ids": [
+            "RELAX"
+          ],
+          "line": "RELAX*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "RELAX",
+          "card_ids": [
+            "RELAX"
+          ],
+          "line": "RELAX*1",
+          "upgraded": false
+        }
+      ],
+      "deck_size": 21,
+      "floor": 19,
+      "gold": 328,
+      "hp": "91/91",
+      "is_last_act": false,
+      "map_coord": {
+        "col": 2,
+        "row": 1
+      },
+      "max_energy": 3,
+      "potions": [
+        {
+          "discard": true,
+          "i": 0,
+          "occupied": true,
+          "potion_id": "CLARITY",
+          "usable": true
+        },
+        {
+          "discard": false,
+          "i": 1,
+          "occupied": false,
+          "potion_id": null,
+          "usable": false
+        },
+        {
+          "discard": false,
+          "i": 2,
+          "occupied": false,
+          "potion_id": null,
+          "usable": false
+        }
+      ],
+      "relic_ids": [
+        "BURNING_BLOOD",
+        "NUTRITIOUS_OYSTER",
+        "BOWLER_HAT",
+        "UNCEASING_TOP",
+        "MINIATURE_CANNON",
+        "PAELS_HORN"
+      ],
+      "relic_is_melted": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "relic_stacks": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "relic_statuses": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "room_type": "Monster"
+    },
+    "screen": "COMBAT",
+    "supported": true,
+    "turn": 1
+  }
+}
+

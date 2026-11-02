@@ -1,0 +1,1376 @@
+diff --git a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+index 2e1167b..7b0aea0 100644
+--- a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
++++ b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+@@ -1,466 +1,680 @@
+-//! Public combat-history recording through real card dispatch and the content factory.
+-//! Recording is diagnostic only; metadata uses completed iteration tokens, not rule counters.
+-
+-use sts2_content::{cards::dispatch, monster_dispatch::MonsterSpawnArgs};
+-use sts2_core::cards::{Card, CardId, CardType, TargetType};
+-use sts2_core::potions::CharacterId;
+-use sts2_core::runstate::{RoomType, RunState};
+-use sts2_core::{CardUid, CombatState, MonsterKind, PowerKind};
+-
+-/// Build the same combat with recording on or off before its initial hooks and hand draw.
+-fn factory(record: bool) -> CombatState {
+-    dispatch::ensure_installed();
+-    let mut run = RunState {
+-        character_id: CharacterId::Ironclad,
+-        current_hp: 80,
+-        max_hp: 80,
+-        record_public_combat_history: record,
+-        ..RunState::default()
+-    };
+-    sts2_content::run_callbacks::populate_starter_deck(&mut run, CharacterId::Ironclad);
+-    sts2_content::run_bridge::enter_combat_from_roster(
+-        &run,
+-        &[(MonsterKind::Nibbit, MonsterSpawnArgs::None, 9999)],
+-        RoomType::Monster,
+-    )
+-}
+-
+-/// Keep a live opponent while controlling the actual played and auto-played instances.
+-fn fixture() -> CombatState {
+-    let mut state = factory(true);
+-    state.player.hand.clear();
+-    state.player.draw.clear();
+-    state.player.discard.clear();
+-    state.player.energy = 20;
+-    state
+-}
+-
+-/// Add one real skill instance, with replay metadata consumed by the original dispatcher.
+-fn skill(state: &mut CombatState, id: CardId, replay: i32) -> CardUid {
+-    let uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
+-    state.cards.push(Card {
+-        uid,
+-        card_id: id,
+-        cost: 0,
+-        card_type: CardType::Skill,
+-        target_type: TargetType::Self_,
+-        base_block: 5,
+-        base_replay_count: replay,
+-        ..Card::pod_defaults()
+-    });
+-    uid
+-}
+-
+-/// Build a small real Tyranny turn: four old draw cards, then PF plus an ordinary refill draw.
+-fn observed_refill_fixture() -> (CombatState, Vec<CardUid>) {
+-    let mut state = fixture();
+-    state.player.character = Some(CharacterId::Regent);
+-    let mut add = |id, upgraded| {
+-        let mut card = sts2_content::cards::spec_index::card_pod_from_id(id, upgraded).unwrap();
+-        let uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
+-        card.uid = uid;
+-        state.cards.push(card);
+-        uid
+-    };
+-    let old_hand = add(CardId::Venerate, false);
+-    let old_draw = [
+-        add(CardId::SovereignBlade, false),
+-        add(CardId::FallingStar, false),
+-        add(CardId::RefineBlade, true),
+-        add(CardId::Bulwark, true),
+-    ];
+-    let photon = add(CardId::PhotonCut, true);
+-    let ordinary = add(CardId::DefendRegent, false);
+-    let other = add(CardId::Glow, true);
+-    state.cards[photon.get() as usize - 1]
+-        .set_enchantment(sts2_core::cards::EnchantmentId::PerfectFit, 1);
+-    state.player.hand.push(old_hand);
+-    state.player.draw.extend(old_draw.iter().rev().copied());
+-    state.player.discard.extend([photon, ordinary, other]);
+-    sts2_core::draw_knowledge::set_root_knowledge(
+-        &mut state.player,
+-        vec![old_draw.to_vec()],
+-        vec![],
+-        vec![vec![photon]],
+-    )
+-    .unwrap();
+-    let player = state.player.creature_uid.unwrap();
+-    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Tyranny, 1);
+-    let expected = old_draw.into_iter().chain([photon, ordinary]).collect();
+-    (state, expected)
+-}
+-
+-/// Add real HATCH_MOVE listeners to the witnessed Tyranny cross-refill fixture.
+-fn observed_hatch_fixture() -> (CombatState, Vec<CardUid>, Vec<sts2_core::CreatureUid>) {
+-    let (mut state, draws) = observed_refill_fixture();
+-    let mut eggs = Vec::new();
+-    for _ in 0..3 {
+-        let egg = state.spawn_enemy(MonsterKind::ToughEgg);
+-        state.set_creature_ai(
+-            egg,
+-            sts2_content::monsters::act2_hive::create_tough_egg_ai(),
+-        );
+-        // Spawn attachment does not publish a move; this fixture starts at the witnessed HATCH telegraph.
+-        state
+-            .creatures
+-            .iter_mut()
+-            .find(|c| c.id == egg.0)
+-            .unwrap()
+-            .intent = Some(sts2_core::Intent::Summon);
+-        sts2_core::card_effects::apply_power_to_creature(&mut state, egg, PowerKind::Hatch, 1);
+-        sts2_core::card_effects::apply_power_to_creature(&mut state, egg, PowerKind::Minion, 1);
+-        eggs.push(egg);
+-    }
+-    (state, draws, eggs)
+-}
+-
+-/// Past Hatch results and observed card draws share one original EndTurn and unchanged RNG calls.
+-#[test]
+-fn observed_hatch_hp_composes_with_cross_refill_draws_and_preserves_other_state() {
+-    let (before, draws, eggs) = observed_hatch_fixture();
+-    let mut raw = before.clone();
+-    sts2_core::draw_knowledge::apply_observed_draws(&mut raw, sts2_core::Action::EndTurn, &draws)
+-        .unwrap();
+-    assert_eq!(
+-        raw.run_rng.niche.counter() - before.run_rng.niche.counter(),
+-        3
+-    );
+-    let evidence: Vec<_> = eggs.iter().copied().zip([19, 20, 21]).collect();
+-    let mut witnessed = before.clone();
+-    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut witnessed, &evidence, |state| {
+-        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
+-    })
+-    .unwrap();
+-    for &(owner, hp) in &evidence {
+-        let creature = raw.creatures.iter_mut().find(|c| c.id == owner.0).unwrap();
+-        creature.current_hp = hp;
+-        creature.max_hp = hp;
+-    }
+-    assert_eq!(
+-        witnessed, raw,
+-        "only the observed Hatch results may differ from ordinary sampling"
+-    );
+-    assert!(witnessed.replay_observations.is_none());
+-    assert!(witnessed
+-        .player
+-        .draw_knowledge
+-        .as_ref()
+-        .unwrap()
+-        .observed_draws
+-        .is_none());
+-}
+-
+-/// Owner mismatches, illegal support, missing events and extra evidence cannot commit a prefix.
+-#[test]
+-fn observed_hatch_hp_rejects_bad_or_incomplete_evidence_atomically() {
+-    let (before, draws, eggs) = observed_hatch_fixture();
+-    let good: Vec<_> = eggs.iter().copied().zip([19, 20, 21]).collect();
+-    let mut wrong_owner = good.clone();
+-    wrong_owner.swap(0, 1);
+-    let mut unsupported = good.clone();
+-    unsupported[0].1 = 22;
+-    let mut extra = good.clone();
+-    extra.push((before.player.creature_uid.unwrap(), 20));
+-    for (evidence, reason) in [
+-        (wrong_owner, "observed_hatch_hp_owner_mismatch"),
+-        (unsupported, "observed_hatch_hp_outside_positive_support"),
+-        (
+-            good[..2].to_vec(),
+-            "observed_hatch_hp_unwitnessed_extra_event",
+-        ),
+-        (extra, "observed_hatch_hp_queue_not_consumed"),
+-    ] {
+-        let mut state = before.clone();
+-        assert_eq!(
+-            sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &evidence, |state| {
+-                sts2_core::draw_knowledge::apply_observed_draws(
+-                    state,
+-                    sts2_core::Action::EndTurn,
+-                    &draws,
+-                )
+-            }),
+-            Err(reason)
+-        );
+-        assert_eq!(state, before);
+-        assert!(state.replay_observations.is_none());
+-    }
+-    let mut state = before.clone();
+-    let mut duplicate = good.clone();
+-    duplicate[1].0 = duplicate[0].0;
+-    assert_eq!(
+-        sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &duplicate, |_| {
+-            panic!("duplicate owners must be rejected before executing the prefix")
+-        }),
+-        Err("observed_hatch_hp_duplicate_owner")
+-    );
+-    assert_eq!(state, before);
+-    let mut wrong_draws = draws.clone();
+-    wrong_draws.swap(4, 5);
+-    assert_eq!(
+-        sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &good, |state| {
+-            sts2_core::draw_knowledge::apply_observed_draws(
+-                state,
+-                sts2_core::Action::EndTurn,
+-                &wrong_draws,
+-            )
+-        }),
+-        Err("observed_draw_outside_positive_support")
+-    );
+-    assert_eq!(state, before);
+-}
+-
+-/// The original version-specific sampler owns support; a shell HP getter is never substituted.
+-#[test]
+-fn observed_hatch_hp_preserves_versioned_support_and_unarmed_sampling() {
+-    use sts2_content::monsters::act2_hive::tough_egg_hatch_hp_bounds;
+-    use sts2_core::GameVersion::{V0_107_1, V0_111_0};
+-    assert_eq!(tough_egg_hatch_hp_bounds(0, V0_107_1), (19, 22));
+-    assert_eq!(tough_egg_hatch_hp_bounds(8, V0_107_1), (20, 23));
+-    assert_eq!(tough_egg_hatch_hp_bounds(0, V0_111_0), (19, 23));
+-    assert_eq!(tough_egg_hatch_hp_bounds(8, V0_111_0), (20, 24));
+-    let (mut before, draws, eggs) = observed_hatch_fixture();
+-    let mut rng = before.run_rng.niche.clone();
+-    let natural: Vec<_> = eggs
+-        .iter()
+-        .copied()
+-        .map(|owner| (owner, rng.next_int_exclusive(19, 22)))
+-        .collect();
+-    let mut raw = before.clone();
+-    sts2_core::draw_knowledge::apply_observed_draws(&mut raw, sts2_core::Action::EndTurn, &draws)
+-        .unwrap();
+-    for &(owner, hp) in &natural {
+-        let creature = raw.creatures.iter().find(|c| c.id == owner.0).unwrap();
+-        assert_eq!((creature.current_hp, creature.max_hp), (hp, hp));
+-    }
+-    let mut observed = before.clone();
+-    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut observed, &natural, |state| {
+-        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
+-    })
+-    .unwrap();
+-    assert_eq!(observed, raw);
+-    before.game_version = V0_111_0;
+-    let evidence: Vec<_> = eggs.into_iter().map(|owner| (owner, 22)).collect();
+-    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut before, &evidence, |state| {
+-        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
+-    })
+-    .unwrap();
+-    assert!(before.replay_observations.is_none());
+-}
+-
+-/// Observed draw conditioning crosses the original refill and keeps its native RNG advances.
+-#[test]
+-fn observed_draw_replay_crosses_refill_and_preserves_rng_work() {
+-    let (mut state, expected) = observed_refill_fixture();
+-    let mut unconditioned = state.clone();
+-    let _ = sts2_core::apply(&mut unconditioned, sts2_core::Action::EndTurn);
+-    sts2_core::draw_knowledge::apply_observed_draws(
+-        &mut state,
+-        sts2_core::Action::EndTurn,
+-        &expected,
+-    )
+-    .unwrap();
+-    assert_eq!(state.player.hand.as_slice(), expected.as_slice());
+-    assert!(state.pending_choice.is_some());
+-    assert!(state.player.discard.is_empty());
+-    assert_eq!(state.player.draw.len(), 2);
+-    assert_eq!(
+-        state.run_rng.shuffle.counter(),
+-        unconditioned.run_rng.shuffle.counter()
+-    );
+-    assert_eq!(
+-        state.run_rng.combat_counter_fingerprint(),
+-        unconditioned.run_rng.combat_counter_fingerprint()
+-    );
+-    assert!(state
+-        .player
+-        .draw_knowledge
+-        .as_ref()
+-        .unwrap()
+-        .observed_draws
+-        .is_none());
+-}
+-
+-/// Wrong PF support and incomplete/extra evidence cannot commit any guessed prefix state.
+-#[test]
+-fn observed_draw_replay_rejects_bad_support_and_queue_lengths_atomically() {
+-    let (before, expected) = observed_refill_fixture();
+-    let mut bad_pf = expected.clone();
+-    bad_pf.swap(4, 5);
+-    let mut extra = expected.clone();
+-    extra.push(before.player.hand[0]);
+-    for (evidence, reason) in [
+-        (bad_pf, "observed_draw_outside_positive_support"),
+-        (
+-            expected[..5].to_vec(),
+-            "observed_draw_replay_unwitnessed_extra_draw",
+-        ),
+-        (extra, "observed_draw_replay_queue_not_consumed"),
+-    ] {
+-        let mut state = before.clone();
+-        assert_eq!(
+-            sts2_core::draw_knowledge::apply_observed_draws(
+-                &mut state,
+-                sts2_core::Action::EndTurn,
+-                &evidence
+-            ),
+-            Err(reason)
+-        );
+-        assert_eq!(state, before);
+-        assert!(state
+-            .player
+-            .draw_knowledge
+-            .as_ref()
+-            .unwrap()
+-            .observed_draws
+-            .is_none());
+-    }
+-}
+-
+-/// A no-draw observation leaves ordinary state/RNG unchanged and no recorder scratch behind.
+-#[test]
+-fn observed_draw_replay_cleans_an_ordinary_world_and_rejects_deferred_mode() {
+-    sts2_content::potions::dispatch::ensure_installed();
+-    let mut state = fixture();
+-    state
+-        .player
+-        .potions
+-        .push(sts2_core::potions::PotionKind::BlockPotion);
+-    let action = sts2_core::Action::DrinkPotion {
+-        potion_slot: 0,
+-        target: None,
+-    };
+-    let mut raw = state.clone();
+-    let _ = sts2_core::apply(&mut raw, action.clone());
+-    sts2_core::draw_knowledge::apply_observed_draws(&mut state, action.clone(), &[]).unwrap();
+-    assert_eq!(state, raw);
+-    assert!(state.player.draw_knowledge.is_none());
+-    state.player.deferred_draw_order = true;
+-    let before = state.clone();
+-    assert_eq!(
+-        sts2_core::draw_knowledge::apply_observed_draws(&mut state, action, &[]),
+-        Err("observed_draw_replay_requires_materialized_public_prefix")
+-    );
+-    assert_eq!(state, before);
+-}
+-
+-/// Opt-in is visible from the initial draw, and cannot change game state or RNG.
+-#[test]
+-fn public_history_factory_records_from_birth_without_changing_the_world() {
+-    let plain = factory(false);
+-    let recorded = factory(true);
+-    assert_eq!(plain, recorded);
+-    assert!(plain.combat_log.event_log.public_history().is_none());
+-    let history = recorded.combat_log.event_log.public_history().unwrap();
+-    assert!(history.complete && history.blocks_complete());
+-    assert!(recorded
+-        .combat_log
+-        .event_log
+-        .rows()
+-        .iter()
+-        .any(|row| matches!(
+-            row.entry,
+-            sts2_core::event_log::EventLogEntry::CardDrawn { .. }
+-        )));
+-}
+-
+-/// Initial turn-start auto-plays are captured before the first externally chosen action.
+-#[test]
+-fn public_history_initial_turn_auto_play_is_not_lost() {
+-    let mut state = fixture();
+-    for _ in 0..6 {
+-        let uid = skill(&mut state, CardId::DefendIronclad, 0);
+-        state.player.draw.push(uid);
+-    }
+-    let player = state.player.creature_uid.unwrap();
+-    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Mayhem, 1);
+-    state.phase = sts2_core::CombatPhase::Setup;
+-    let _ = sts2_core::combat_loop::start_combat(&mut state);
+-    let _ = sts2_core::combat_loop::start_player_turn(&mut state);
+-    let history = state.combat_log.event_log.public_history().unwrap();
+-    assert!(history.complete && history.blocks_complete());
+-    assert!(history
+-        .plays
+-        .iter()
+-        .any(|play| play.auto_played && play.first_in_series));
+-}
+-
+-/// Base and Echo replays have separate finished entries and separate block iteration tokens.
+-#[test]
+-fn public_history_manual_base_and_echo_replays_have_independent_finished_tokens() {
+-    let mut state = fixture();
+-    let player = state.player.creature_uid.unwrap();
+-    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::EchoForm, 1);
+-    let uid = skill(&mut state, CardId::DefendIronclad, 1);
+-    state.player.hand.push(uid);
+-    let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
+-    let history = state.combat_log.event_log.public_history().unwrap();
+-    assert!(history.complete && history.blocks_complete());
+-    assert_eq!(history.plays.len(), 3);
+-    assert_eq!(history.blocks.len(), 3);
+-    assert_eq!(
+-        history
+-            .plays
+-            .iter()
+-            .map(|p| p.first_in_series)
+-            .collect::<Vec<_>>(),
+-        vec![true, false, false]
+-    );
+-    for (play, block) in history.plays.iter().zip(&history.blocks) {
+-        assert!(!play.auto_played);
+-        assert_eq!(play.card_uid, uid);
+-        assert_eq!(play.token, block.play_token);
+-        assert_eq!(block.amount, 5);
+-    }
+-    assert_eq!(
+-        state
+-            .combat_log
+-            .event_log
+-            .rows()
+-            .iter()
+-            .filter(|row| matches!(
+-                row.entry,
+-                sts2_core::event_log::EventLogEntry::CardPlayFinished { .. }
+-            ))
+-            .count(),
+-        3
+-    );
+-}
+-
+-/// Havoc finishes after its child; FeelNoPain's unpowered block is never card-attributed.
+-#[test]
+-fn public_history_nested_havoc_and_auto_replay_preserve_completion_order_and_block_props() {
+-    let mut state = fixture();
+-    let player = state.player.creature_uid.unwrap();
+-    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::FeelNoPain, 3);
+-    let parent = skill(&mut state, CardId::Havoc, 0);
+-    let child = skill(&mut state, CardId::DefendIronclad, 1);
+-    state.player.hand.push(parent);
+-    state.player.draw.push(child);
+-    let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
+-    let history = state.combat_log.event_log.public_history().unwrap();
+-    assert!(history.complete && history.blocks_complete());
+-    assert_eq!(
+-        history.plays.iter().map(|p| p.card_uid).collect::<Vec<_>>(),
+-        vec![child, child, parent]
+-    );
+-    assert_eq!(
+-        history
+-            .plays
+-            .iter()
+-            .map(|p| p.auto_played)
+-            .collect::<Vec<_>>(),
+-        vec![true, true, false]
+-    );
+-    assert_eq!(
+-        history
+-            .plays
+-            .iter()
+-            .map(|p| p.first_in_series)
+-            .collect::<Vec<_>>(),
+-        vec![true, false, true]
+-    );
+-    assert_eq!(history.blocks.len(), 2);
+-    assert_eq!(state.player.block, 13);
+-    assert_eq!(history.blocks[0].play_token, history.plays[0].token);
+-    assert_eq!(history.blocks[1].play_token, history.plays[1].token);
+-}
++//! Public combat-history recording through real card dispatch and the content factory.
++//! Recording is diagnostic only; metadata uses completed iteration tokens, not rule counters.
++
++use sts2_content::{cards::dispatch, monster_dispatch::MonsterSpawnArgs};
++use sts2_core::cards::{Card, CardId, CardType, TargetType};
++use sts2_core::potions::CharacterId;
++use sts2_core::runstate::{RoomType, RunState};
++use sts2_core::{CardUid, CombatState, MonsterKind, PowerKind};
++
++/// Build the same combat with recording on or off before its initial hooks and hand draw.
++fn factory(record: bool) -> CombatState {
++    dispatch::ensure_installed();
++    let mut run = RunState {
++        character_id: CharacterId::Ironclad,
++        current_hp: 80,
++        max_hp: 80,
++        record_public_combat_history: record,
++        ..RunState::default()
++    };
++    sts2_content::run_callbacks::populate_starter_deck(&mut run, CharacterId::Ironclad);
++    sts2_content::run_bridge::enter_combat_from_roster(
++        &run,
++        &[(MonsterKind::Nibbit, MonsterSpawnArgs::None, 9999)],
++        RoomType::Monster,
++    )
++}
++
++/// Keep a live opponent while controlling the actual played and auto-played instances.
++fn fixture() -> CombatState {
++    let mut state = factory(true);
++    state.player.hand.clear();
++    state.player.draw.clear();
++    state.player.discard.clear();
++    state.player.energy = 20;
++    state
++}
++
++/// Add one real skill instance, with replay metadata consumed by the original dispatcher.
++fn skill(state: &mut CombatState, id: CardId, replay: i32) -> CardUid {
++    let uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++    state.cards.push(Card {
++        uid,
++        card_id: id,
++        cost: 0,
++        card_type: CardType::Skill,
++        target_type: TargetType::Self_,
++        base_block: 5,
++        base_replay_count: replay,
++        ..Card::pod_defaults()
++    });
++    uid
++}
++
++/// Insert a registered card without replacing its actual resource rules.
++fn real_card(state: &mut CombatState, id: CardId, pile: sts2_core::cards::PileKind) -> CardUid {
++    let mut card = sts2_content::cards::spec_index::card_pod_from_id(id, false).unwrap();
++    card.uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++    let uid = card.uid;
++    state.cards.push(card);
++    match pile {
++        sts2_core::cards::PileKind::Hand => state.player.hand.push(uid),
++        sts2_core::cards::PileKind::Draw => state.player.draw.push(uid),
++        _ => panic!("fixture uses only Hand or Draw"),
++    }
++    uid
++}
++
++/// Finished replays retain ResourceInfo quotes, while the real energy-spent history records one payment.
++#[test]
++fn public_history_resources_manual_echo_are_immutable_quotes_not_repeated_payments() {
++    let mut state = fixture();
++    let owner = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, owner, PowerKind::EchoForm, 1);
++    let uid = real_card(
++        &mut state,
++        CardId::DefendIronclad,
++        sts2_core::cards::PileKind::Hand,
++    );
++    let mut unrecorded = state.clone();
++    unrecorded.combat_log.event_log.disarm_for_search();
++    let energy = state.player.energy;
++    let action = sts2_core::Action::PlayCard {
++        hand_index: 0,
++        target: None,
++    };
++    sts2_core::apply(&mut state, action.clone());
++    sts2_core::apply(&mut unrecorded, action);
++    assert_eq!(state, unrecorded);
++    assert_eq!(state.player.energy, energy - 1);
++    assert_eq!(state.combat_log.energy_spent_this_turn, 1);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert_eq!(history.plays.len(), 2);
++    for play in &history.plays {
++        assert_eq!(
++            (
++                play.was_ethereal,
++                play.energy_value,
++                play.energy_spent,
++                play.stars_spent
++            ),
++            (Some(false), Some(1), Some(1), Some(0))
++        );
++    }
++    let saved = history.plays.clone();
++    state.cards[uid.get() as usize - 1].cost = 9;
++    state.cards[uid.get() as usize - 1]
++        .set_combat_var(sts2_core::cards::VarKey::EtherealThisCombat, 1);
++    assert_eq!(
++        state.combat_log.event_log.public_history().unwrap().plays,
++        saved
++    );
++}
++
++/// Auto-play's EnergyValue is its quote, not its zero actual payment; nested replays keep both.
++#[test]
++fn public_history_resources_auto_and_nested_replays_keep_value_separate_from_spent() {
++    let mut state = fixture();
++    real_card(&mut state, CardId::Havoc, sts2_core::cards::PileKind::Hand);
++    let child = real_card(
++        &mut state,
++        CardId::DefendIronclad,
++        sts2_core::cards::PileKind::Draw,
++    );
++    state.cards[child.get() as usize - 1].base_replay_count = 1;
++    let energy = state.player.energy;
++    sts2_core::apply(
++        &mut state,
++        sts2_core::Action::PlayCard {
++            hand_index: 0,
++            target: None,
++        },
++    );
++    let plays = &state.combat_log.event_log.public_history().unwrap().plays;
++    assert_eq!(plays.len(), 3);
++    for play in &plays[..2] {
++        assert!(play.auto_played);
++        assert_eq!(
++            (play.energy_value, play.energy_spent, play.stars_spent),
++            (Some(1), Some(0), Some(0))
++        );
++    }
++    assert_eq!(
++        (plays[2].energy_value, plays[2].energy_spent),
++        (Some(1), Some(1))
++    );
++    assert_eq!(state.player.energy, energy - 1);
++}
++
++/// X values preserve raw captured payment, and star-cost replays reuse the paid resource quote.
++#[test]
++fn public_history_resources_capture_x_energy_and_star_payment() {
++    let mut state = fixture();
++    state.player.energy = 2;
++    let tempest = real_card(
++        &mut state,
++        CardId::Tempest,
++        sts2_core::cards::PileKind::Hand,
++    );
++    state.cards[tempest.get() as usize - 1]
++        .set_combat_var(sts2_core::cards::VarKey::EtherealThisCombat, 1);
++    sts2_core::apply(
++        &mut state,
++        sts2_core::Action::PlayCard {
++            hand_index: 0,
++            target: None,
++        },
++    );
++    let play = state
++        .combat_log
++        .event_log
++        .public_history()
++        .unwrap()
++        .plays
++        .last()
++        .unwrap();
++    assert_eq!(
++        (play.energy_value, play.energy_spent, play.stars_spent),
++        (Some(2), Some(2), Some(0))
++    );
++    assert_eq!(state.player.energy, 0);
++    assert_eq!(play.was_ethereal, Some(true));
++    let mut state = fixture();
++    state.player.stars = 3;
++    let owner = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, owner, PowerKind::EchoForm, 1);
++    real_card(
++        &mut state,
++        CardId::FallingStar,
++        sts2_core::cards::PileKind::Hand,
++    );
++    sts2_core::apply(
++        &mut state,
++        sts2_core::Action::PlayCard {
++            hand_index: 0,
++            target: Some(0),
++        },
++    );
++    let plays = &state.combat_log.event_log.public_history().unwrap().plays;
++    assert_eq!(plays.len(), 2);
++    assert!(plays.iter().all(
++        |play| (play.energy_value, play.energy_spent, play.stars_spent)
++            == (Some(0), Some(0), Some(2))
++    ));
++    assert_eq!(state.player.stars, 1);
++}
++
++/// A surfaced choice cannot replace the resources captured before its card effect started.
++#[test]
++fn public_history_resources_survive_a_surfaced_choice() {
++    let mut state = fixture();
++    real_card(
++        &mut state,
++        CardId::PhotonCut,
++        sts2_core::cards::PileKind::Hand,
++    );
++    real_card(
++        &mut state,
++        CardId::DefendRegent,
++        sts2_core::cards::PileKind::Hand,
++    );
++    real_card(
++        &mut state,
++        CardId::StrikeRegent,
++        sts2_core::cards::PileKind::Draw,
++    );
++    assert_eq!(
++        sts2_core::apply(
++            &mut state,
++            sts2_core::Action::PlayCard {
++                hand_index: 0,
++                target: Some(0)
++            }
++        ),
++        sts2_core::StepResult::PendingChoice
++    );
++    let before = state.clone();
++    let mut unrecorded = before.clone();
++    unrecorded.combat_log.event_log.disarm_for_search();
++    assert_eq!(
++        before, unrecorded,
++        "recording metadata cannot change pending mechanical state"
++    );
++    let action = sts2_core::Action::ResolveChoice {
++        selection: [0].into_iter().collect(),
++    };
++    sts2_core::apply(&mut state, action.clone());
++    sts2_core::apply(&mut unrecorded, action);
++    assert_eq!(state, unrecorded);
++    let play = state
++        .combat_log
++        .event_log
++        .public_history()
++        .unwrap()
++        .plays
++        .last()
++        .unwrap();
++    assert_eq!(
++        (
++            play.was_ethereal,
++            play.energy_value,
++            play.energy_spent,
++            play.stars_spent
++        ),
++        (Some(false), Some(1), Some(1), Some(0))
++    );
++}
++
++/// Build a small real Tyranny turn: four old draw cards, then PF plus an ordinary refill draw.
++fn observed_refill_fixture() -> (CombatState, Vec<CardUid>) {
++    let mut state = fixture();
++    state.player.character = Some(CharacterId::Regent);
++    let mut add = |id, upgraded| {
++        let mut card = sts2_content::cards::spec_index::card_pod_from_id(id, upgraded).unwrap();
++        let uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++        card.uid = uid;
++        state.cards.push(card);
++        uid
++    };
++    let old_hand = add(CardId::Venerate, false);
++    let old_draw = [
++        add(CardId::SovereignBlade, false),
++        add(CardId::FallingStar, false),
++        add(CardId::RefineBlade, true),
++        add(CardId::Bulwark, true),
++    ];
++    let photon = add(CardId::PhotonCut, true);
++    let ordinary = add(CardId::DefendRegent, false);
++    let other = add(CardId::Glow, true);
++    state.cards[photon.get() as usize - 1]
++        .set_enchantment(sts2_core::cards::EnchantmentId::PerfectFit, 1);
++    state.player.hand.push(old_hand);
++    state.player.draw.extend(old_draw.iter().rev().copied());
++    state.player.discard.extend([photon, ordinary, other]);
++    sts2_core::draw_knowledge::set_root_knowledge(
++        &mut state.player,
++        vec![old_draw.to_vec()],
++        vec![],
++        vec![vec![photon]],
++    )
++    .unwrap();
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Tyranny, 1);
++    let expected = old_draw.into_iter().chain([photon, ordinary]).collect();
++    (state, expected)
++}
++
++/// Add real HATCH_MOVE listeners to the witnessed Tyranny cross-refill fixture.
++fn observed_hatch_fixture() -> (CombatState, Vec<CardUid>, Vec<sts2_core::CreatureUid>) {
++    let (mut state, draws) = observed_refill_fixture();
++    let mut eggs = Vec::new();
++    for _ in 0..3 {
++        let egg = state.spawn_enemy(MonsterKind::ToughEgg);
++        state.set_creature_ai(
++            egg,
++            sts2_content::monsters::act2_hive::create_tough_egg_ai(),
++        );
++        // Spawn attachment does not publish a move; this fixture starts at the witnessed HATCH telegraph.
++        state
++            .creatures
++            .iter_mut()
++            .find(|c| c.id == egg.0)
++            .unwrap()
++            .intent = Some(sts2_core::Intent::Summon);
++        sts2_core::card_effects::apply_power_to_creature(&mut state, egg, PowerKind::Hatch, 1);
++        sts2_core::card_effects::apply_power_to_creature(&mut state, egg, PowerKind::Minion, 1);
++        eggs.push(egg);
++    }
++    (state, draws, eggs)
++}
++
++/// Past Hatch results and observed card draws share one original EndTurn and unchanged RNG calls.
++#[test]
++fn observed_hatch_hp_composes_with_cross_refill_draws_and_preserves_other_state() {
++    let (before, draws, eggs) = observed_hatch_fixture();
++    let mut raw = before.clone();
++    sts2_core::draw_knowledge::apply_observed_draws(&mut raw, sts2_core::Action::EndTurn, &draws)
++        .unwrap();
++    assert_eq!(
++        raw.run_rng.niche.counter() - before.run_rng.niche.counter(),
++        3
++    );
++    let evidence: Vec<_> = eggs.iter().copied().zip([19, 20, 21]).collect();
++    let mut witnessed = before.clone();
++    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut witnessed, &evidence, |state| {
++        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
++    })
++    .unwrap();
++    for &(owner, hp) in &evidence {
++        let creature = raw.creatures.iter_mut().find(|c| c.id == owner.0).unwrap();
++        creature.current_hp = hp;
++        creature.max_hp = hp;
++    }
++    assert_eq!(
++        witnessed, raw,
++        "only the observed Hatch results may differ from ordinary sampling"
++    );
++    assert!(witnessed.replay_observations.is_none());
++    assert!(witnessed
++        .player
++        .draw_knowledge
++        .as_ref()
++        .unwrap()
++        .observed_draws
++        .is_none());
++}
++
++/// Owner mismatches, illegal support, missing events and extra evidence cannot commit a prefix.
++#[test]
++fn observed_hatch_hp_rejects_bad_or_incomplete_evidence_atomically() {
++    let (before, draws, eggs) = observed_hatch_fixture();
++    let good: Vec<_> = eggs.iter().copied().zip([19, 20, 21]).collect();
++    let mut wrong_owner = good.clone();
++    wrong_owner.swap(0, 1);
++    let mut unsupported = good.clone();
++    unsupported[0].1 = 22;
++    let mut extra = good.clone();
++    extra.push((before.player.creature_uid.unwrap(), 20));
++    for (evidence, reason) in [
++        (wrong_owner, "observed_hatch_hp_owner_mismatch"),
++        (unsupported, "observed_hatch_hp_outside_positive_support"),
++        (
++            good[..2].to_vec(),
++            "observed_hatch_hp_unwitnessed_extra_event",
++        ),
++        (extra, "observed_hatch_hp_queue_not_consumed"),
++    ] {
++        let mut state = before.clone();
++        assert_eq!(
++            sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &evidence, |state| {
++                sts2_core::draw_knowledge::apply_observed_draws(
++                    state,
++                    sts2_core::Action::EndTurn,
++                    &draws,
++                )
++            }),
++            Err(reason)
++        );
++        assert_eq!(state, before);
++        assert!(state.replay_observations.is_none());
++    }
++    let mut state = before.clone();
++    let mut duplicate = good.clone();
++    duplicate[1].0 = duplicate[0].0;
++    assert_eq!(
++        sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &duplicate, |_| {
++            panic!("duplicate owners must be rejected before executing the prefix")
++        }),
++        Err("observed_hatch_hp_duplicate_owner")
++    );
++    assert_eq!(state, before);
++    let mut wrong_draws = draws.clone();
++    wrong_draws.swap(4, 5);
++    assert_eq!(
++        sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &good, |state| {
++            sts2_core::draw_knowledge::apply_observed_draws(
++                state,
++                sts2_core::Action::EndTurn,
++                &wrong_draws,
++            )
++        }),
++        Err("observed_draw_outside_positive_support")
++    );
++    assert_eq!(state, before);
++}
++
++/// The original version-specific sampler owns support; a shell HP getter is never substituted.
++#[test]
++fn observed_hatch_hp_preserves_versioned_support_and_unarmed_sampling() {
++    use sts2_content::monsters::act2_hive::tough_egg_hatch_hp_bounds;
++    use sts2_core::GameVersion::{V0_107_1, V0_111_0};
++    assert_eq!(tough_egg_hatch_hp_bounds(0, V0_107_1), (19, 22));
++    assert_eq!(tough_egg_hatch_hp_bounds(8, V0_107_1), (20, 23));
++    assert_eq!(tough_egg_hatch_hp_bounds(0, V0_111_0), (19, 23));
++    assert_eq!(tough_egg_hatch_hp_bounds(8, V0_111_0), (20, 24));
++    let (mut before, draws, eggs) = observed_hatch_fixture();
++    let mut rng = before.run_rng.niche.clone();
++    let natural: Vec<_> = eggs
++        .iter()
++        .copied()
++        .map(|owner| (owner, rng.next_int_exclusive(19, 22)))
++        .collect();
++    let mut raw = before.clone();
++    sts2_core::draw_knowledge::apply_observed_draws(&mut raw, sts2_core::Action::EndTurn, &draws)
++        .unwrap();
++    for &(owner, hp) in &natural {
++        let creature = raw.creatures.iter().find(|c| c.id == owner.0).unwrap();
++        assert_eq!((creature.current_hp, creature.max_hp), (hp, hp));
++    }
++    let mut observed = before.clone();
++    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut observed, &natural, |state| {
++        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
++    })
++    .unwrap();
++    assert_eq!(observed, raw);
++    before.game_version = V0_111_0;
++    let evidence: Vec<_> = eggs.into_iter().map(|owner| (owner, 22)).collect();
++    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut before, &evidence, |state| {
++        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
++    })
++    .unwrap();
++    assert!(before.replay_observations.is_none());
++}
++
++/// Observed draw conditioning crosses the original refill and keeps its native RNG advances.
++#[test]
++fn observed_draw_replay_crosses_refill_and_preserves_rng_work() {
++    let (mut state, expected) = observed_refill_fixture();
++    let mut unconditioned = state.clone();
++    let _ = sts2_core::apply(&mut unconditioned, sts2_core::Action::EndTurn);
++    sts2_core::draw_knowledge::apply_observed_draws(
++        &mut state,
++        sts2_core::Action::EndTurn,
++        &expected,
++    )
++    .unwrap();
++    assert_eq!(state.player.hand.as_slice(), expected.as_slice());
++    assert!(state.pending_choice.is_some());
++    assert!(state.player.discard.is_empty());
++    assert_eq!(state.player.draw.len(), 2);
++    assert_eq!(
++        state.run_rng.shuffle.counter(),
++        unconditioned.run_rng.shuffle.counter()
++    );
++    assert_eq!(
++        state.run_rng.combat_counter_fingerprint(),
++        unconditioned.run_rng.combat_counter_fingerprint()
++    );
++    assert!(state
++        .player
++        .draw_knowledge
++        .as_ref()
++        .unwrap()
++        .observed_draws
++        .is_none());
++}
++
++/// Wrong PF support and incomplete/extra evidence cannot commit any guessed prefix state.
++#[test]
++fn observed_draw_replay_rejects_bad_support_and_queue_lengths_atomically() {
++    let (before, expected) = observed_refill_fixture();
++    let mut bad_pf = expected.clone();
++    bad_pf.swap(4, 5);
++    let mut extra = expected.clone();
++    extra.push(before.player.hand[0]);
++    for (evidence, reason) in [
++        (bad_pf, "observed_draw_outside_positive_support"),
++        (
++            expected[..5].to_vec(),
++            "observed_draw_replay_unwitnessed_extra_draw",
++        ),
++        (extra, "observed_draw_replay_queue_not_consumed"),
++    ] {
++        let mut state = before.clone();
++        assert_eq!(
++            sts2_core::draw_knowledge::apply_observed_draws(
++                &mut state,
++                sts2_core::Action::EndTurn,
++                &evidence
++            ),
++            Err(reason)
++        );
++        assert_eq!(state, before);
++        assert!(state
++            .player
++            .draw_knowledge
++            .as_ref()
++            .unwrap()
++            .observed_draws
++            .is_none());
++    }
++}
++
++/// A no-draw observation leaves ordinary state/RNG unchanged and no recorder scratch behind.
++#[test]
++fn observed_draw_replay_cleans_an_ordinary_world_and_rejects_deferred_mode() {
++    sts2_content::potions::dispatch::ensure_installed();
++    let mut state = fixture();
++    state
++        .player
++        .potions
++        .push(sts2_core::potions::PotionKind::BlockPotion);
++    let action = sts2_core::Action::DrinkPotion {
++        potion_slot: 0,
++        target: None,
++    };
++    let mut raw = state.clone();
++    let _ = sts2_core::apply(&mut raw, action.clone());
++    sts2_core::draw_knowledge::apply_observed_draws(&mut state, action.clone(), &[]).unwrap();
++    assert_eq!(state, raw);
++    assert!(state.player.draw_knowledge.is_none());
++    state.player.deferred_draw_order = true;
++    let before = state.clone();
++    assert_eq!(
++        sts2_core::draw_knowledge::apply_observed_draws(&mut state, action, &[]),
++        Err("observed_draw_replay_requires_materialized_public_prefix")
++    );
++    assert_eq!(state, before);
++}
++
++/// Opt-in is visible from the initial draw, and cannot change game state or RNG.
++#[test]
++fn public_history_factory_records_from_birth_without_changing_the_world() {
++    let plain = factory(false);
++    let recorded = factory(true);
++    assert_eq!(plain, recorded);
++    assert!(plain.combat_log.event_log.public_history().is_none());
++    let history = recorded.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert!(recorded
++        .combat_log
++        .event_log
++        .rows()
++        .iter()
++        .any(|row| matches!(
++            row.entry,
++            sts2_core::event_log::EventLogEntry::CardDrawn { .. }
++        )));
++}
++
++/// Initial turn-start auto-plays are captured before the first externally chosen action.
++#[test]
++fn public_history_initial_turn_auto_play_is_not_lost() {
++    let mut state = fixture();
++    for _ in 0..6 {
++        let uid = skill(&mut state, CardId::DefendIronclad, 0);
++        state.player.draw.push(uid);
++    }
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Mayhem, 1);
++    state.phase = sts2_core::CombatPhase::Setup;
++    let _ = sts2_core::combat_loop::start_combat(&mut state);
++    let _ = sts2_core::combat_loop::start_player_turn(&mut state);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert!(history
++        .plays
++        .iter()
++        .any(|play| play.auto_played && play.first_in_series));
++}
++
++/// Base and Echo replays have separate finished entries and separate block iteration tokens.
++#[test]
++fn public_history_manual_base_and_echo_replays_have_independent_finished_tokens() {
++    let mut state = fixture();
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::EchoForm, 1);
++    let uid = skill(&mut state, CardId::DefendIronclad, 1);
++    state.player.hand.push(uid);
++    let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert_eq!(history.plays.len(), 3);
++    assert_eq!(history.blocks.len(), 3);
++    assert_eq!(
++        history
++            .plays
++            .iter()
++            .map(|p| p.first_in_series)
++            .collect::<Vec<_>>(),
++        vec![true, false, false]
++    );
++    for (play, block) in history.plays.iter().zip(&history.blocks) {
++        assert!(!play.auto_played);
++        assert_eq!(play.card_uid, uid);
++        assert_eq!(play.token, block.play_token);
++        assert_eq!(block.amount, 5);
++    }
++    assert_eq!(
++        state
++            .combat_log
++            .event_log
++            .rows()
++            .iter()
++            .filter(|row| matches!(
++                row.entry,
++                sts2_core::event_log::EventLogEntry::CardPlayFinished { .. }
++            ))
++            .count(),
++        3
++    );
++}
++
++/// Havoc finishes after its child; FeelNoPain's unpowered block is never card-attributed.
++#[test]
++fn public_history_nested_havoc_and_auto_replay_preserve_completion_order_and_block_props() {
++    let mut state = fixture();
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::FeelNoPain, 3);
++    let parent = skill(&mut state, CardId::Havoc, 0);
++    let child = skill(&mut state, CardId::DefendIronclad, 1);
++    state.player.hand.push(parent);
++    state.player.draw.push(child);
++    let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
++    let history = state.combat_log.event_log.public_history().unwrap();
++    assert!(history.complete && history.blocks_complete());
++    assert_eq!(
++        history.plays.iter().map(|p| p.card_uid).collect::<Vec<_>>(),
++        vec![child, child, parent]
++    );
++    assert_eq!(
++        history
++            .plays
++            .iter()
++            .map(|p| p.auto_played)
++            .collect::<Vec<_>>(),
++        vec![true, true, false]
++    );
++    assert_eq!(
++        history
++            .plays
++            .iter()
++            .map(|p| p.first_in_series)
++            .collect::<Vec<_>>(),
++        vec![true, false, true]
++    );
++    assert_eq!(history.blocks.len(), 2);
++    assert_eq!(state.player.block, 13);
++    assert_eq!(history.blocks[0].play_token, history.plays[0].token);
++    assert_eq!(history.blocks[1].play_token, history.plays[1].token);
++}
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+index 600552d..d0b5d6b 100644
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -7043,6 +7043,9 @@ pub struct CardPlayFinish {
+     weighted_drain: i8,
+     extra_plays: i32,
+     card_is_ethereal: bool,
++    /// The original ResourceInfo quote is shared by every replay; resources are paid only once.
++    paid_energy: i32,
++    paid_stars: i32,
+     corruption_active_pre_dispatch: bool,
+     /// EchoForm inputs captured at play-start, before the card's OnPlay
+     /// (bead `sts2-rs-8ett`): the LIVE EchoForm amount and the count of
+@@ -7286,8 +7289,8 @@ pub fn play_card(state: &mut CombatState, hand_index: u8, target: Option<u8>) ->
+     // turn / combat (TouchOfInsanity's `SetToFreeThisCombat`) spends 0 stars,
+     // matching C# `SpendResources`'s `GetStarCostWithModifiers` after the
+     // SetStarCostThisCombat(0).
+-    if star_cost > 0 {
+-        state.spend_stars(star_cost);
++    let paid_stars = if star_cost > 0 {
++        let spent = state.spend_stars(star_cost);
+         if state.is_over {
+             return if state.player_won {
+                 StepResult::CombatWon
+@@ -7295,7 +7298,10 @@ pub fn play_card(state: &mut CombatState, hand_index: u8, target: Option<u8>) ->
+                 StepResult::CombatLost
+             };
+         }
+-    }
++        spent
++    } else {
++        0
++    };
+ 
+     cards::move_card(&mut state.player, card_uid, PileKind::Hand, PileKind::Play)
+         .expect("hand_index validated above");
+@@ -7397,6 +7403,8 @@ pub fn play_card(state: &mut CombatState, hand_index: u8, target: Option<u8>) ->
+     // card played under Hex correctly triggers SpiritOfAsh's block grant
+     // (necro-player-misc C, seeds 3587/5473). Bead `sts2-rs-4wppb`.
+     let card_is_ethereal = card_is_ethereal_at_play(state, &card);
++    crate::event_log::set_public_play_resources(state, card_uid, card_is_ethereal,
++        energy_spent_for_hook, energy_spent_for_hook, paid_stars);
+     hooks::dispatch_before_card_played_powers(state, resolved_cost, card_is_ethereal);
+     // v0.111.0: Juggling counts / clones in `BeforeCardPlayed` (decomp
+     // JugglingPower.cs:36). No-op before v0.111.0.
+@@ -7589,6 +7597,8 @@ pub fn play_card(state: &mut CombatState, hand_index: u8, target: Option<u8>) ->
+         weighted_drain,
+         extra_plays,
+         card_is_ethereal,
++        paid_energy: energy_spent_for_hook,
++        paid_stars,
+         corruption_active_pre_dispatch,
+         echo_form_amount_at_play_start,
+         first_in_series_before,
+@@ -7893,6 +7903,8 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         weighted_drain,
+         extra_plays,
+         card_is_ethereal,
++        paid_energy,
++        paid_stars,
+         corruption_active_pre_dispatch,
+         echo_form_amount_at_play_start,
+         first_in_series_before,
+@@ -8096,6 +8108,8 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+             break;
+         }
+         crate::event_log::begin_public_play(state, card_uid, false, false);
++        crate::event_log::set_public_play_resources(state, card_uid, card_is_ethereal,
++            paid_energy, paid_energy, paid_stars);
+         // C# `CardModel.OnPlayWrapper` fires `Hook.BeforeCardPlayed` once per
+         // play iteration (CardModel.cs:1496, inside the `i < playCount2` loop),
+         // so a duplicated/replayed card re-runs the FULL before-play dispatch:
+@@ -8257,6 +8271,8 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         // `GeneratePlayCount`, before the loop. No-op before v0.111.0.
+         if !multi_play_stops_v0111(state) {
+             crate::event_log::begin_public_play(state, card_uid, false, false);
++            crate::event_log::set_public_play_resources(state, card_uid, card_is_ethereal,
++                paid_energy, paid_energy, paid_stars);
+             // Re-run the FULL before-play dispatch per Echo replay (C# fires
+             // `Hook.BeforeCardPlayed` per play iteration) — re-arms Storm AND
+             // the Afterimage/SerpentForm/Oblivion/Strangle/Monologue snapshots
+@@ -9809,6 +9825,8 @@ pub(crate) fn resolve_auto_played_card_with(
+         // left by an earlier manual play of this card is never read here.
+         state.cards[top_idx].energy_spent = crate::hooks::effective_card_cost(state, top_uid);
+     }
++    // Auto-play captures EnergyValue but spends neither energy nor stars; replays retain this quote.
++    let auto_energy_value = state.cards[top_idx].energy_spent;
+ 
+     // UI play-log: this auto-play passed every early-return guard (unplayable,
+     // AnyAlly-without-ally, ShouldPlay-blocked) above and WILL resolve, so it
+@@ -9941,6 +9959,8 @@ pub(crate) fn resolve_auto_played_card_with(
+         crate::hooks::effective_card_cost(state, top_uid)
+     };
+     let auto_card_is_ethereal = card_is_ethereal_at_play(state, &state.cards[top_idx]);
++    crate::event_log::set_public_play_resources(state, top_uid, auto_card_is_ethereal,
++        auto_energy_value, 0, 0);
+ 
+     // Bead `sts2-rs-afterimage-nested`: C# `AfterimagePower` (and Strangle /
+     // SerpentForm / Oblivion / Storm / Subroutine / Monologue) key their
+@@ -10114,6 +10134,7 @@ pub(crate) fn resolve_auto_played_card_with(
+             corruption_active_pre_dispatch,
+             auto_resolved_cost,
+             auto_card_is_ethereal,
++            auto_energy_value,
+             extra_plays: auto_extra_plays,
+             saved_play_snapshots,
+             rebound_at_auto_play_start,
+@@ -10175,6 +10196,7 @@ pub(crate) fn resolve_auto_played_card_with(
+         corruption_active_pre_dispatch,
+         auto_resolved_cost,
+         auto_card_is_ethereal,
++        auto_energy_value,
+         extra_plays: auto_extra_plays,
+         saved_play_snapshots,
+         rebound_at_auto_play_start,
+@@ -10200,6 +10222,8 @@ pub struct AutoPlayFinish {
+     pub(crate) corruption_active_pre_dispatch: bool,
+     pub(crate) auto_resolved_cost: i32,
+     pub(crate) auto_card_is_ethereal: bool,
++    /// Captured before dispatch; later mutations cannot change the original ResourceInfo quote.
++    pub(crate) auto_energy_value: i32,
+     /// Number of ADDITIONAL replays (beyond the first play) this auto-play owes,
+     /// = `base_replay_count + ModifyCardPlayCount(power) + ModifyCardPlayCount(relic)`.
+     /// Computed BEFORE the first dispatch (catastrophe bug 4) — with
+@@ -10234,6 +10258,7 @@ impl Clone for AutoPlayFinish {
+             corruption_active_pre_dispatch: self.corruption_active_pre_dispatch,
+             auto_resolved_cost: self.auto_resolved_cost,
+             auto_card_is_ethereal: self.auto_card_is_ethereal,
++            auto_energy_value: self.auto_energy_value,
+             extra_plays: self.extra_plays,
+             saved_play_snapshots: self.saved_play_snapshots.clone(),
+             rebound_at_auto_play_start: self.rebound_at_auto_play_start,
+@@ -10250,6 +10275,7 @@ impl PartialEq for AutoPlayFinish {
+             && self.corruption_active_pre_dispatch == other.corruption_active_pre_dispatch
+             && self.auto_resolved_cost == other.auto_resolved_cost
+             && self.auto_card_is_ethereal == other.auto_card_is_ethereal
++            && self.auto_energy_value == other.auto_energy_value
+             && self.extra_plays == other.extra_plays
+             && self.saved_play_snapshots == other.saved_play_snapshots
+             && self.rebound_at_auto_play_start == other.rebound_at_auto_play_start
+@@ -10344,6 +10370,7 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+         corruption_active_pre_dispatch,
+         auto_resolved_cost,
+         auto_card_is_ethereal,
++        auto_energy_value,
+         extra_plays,
+         saved_play_snapshots,
+         rebound_at_auto_play_start,
+@@ -10511,6 +10538,8 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+                 break;
+             }
+             crate::event_log::begin_public_play(state, top_uid, true, false);
++            crate::event_log::set_public_play_resources(state, top_uid, auto_card_is_ethereal,
++                auto_energy_value, 0, 0);
+             // C# `CardModel.OnPlayWrapper` fires `Hook.BeforeCardPlayed` per
+             // play iteration (CardModel.cs:1496) for auto-plays too, so each
+             // replay of an auto-played card re-arms the Afterimage / SerpentForm
+diff --git a/sts2-rs/crates/sts2-core/src/event_log.rs b/sts2-rs/crates/sts2-core/src/event_log.rs
+index 5073f3e..af8069f 100644
+--- a/sts2-rs/crates/sts2-core/src/event_log.rs
++++ b/sts2-rs/crates/sts2-core/src/event_log.rs
+@@ -519,6 +519,11 @@ pub struct PublicCompletedPlay {
+     pub card_type: CardType,
+     pub auto_played: bool,
+     pub first_in_series: bool,
++    /// Immutable per-iteration metadata; absent when a producer did not observe its actual pin.
++    pub was_ethereal: Option<bool>,
++    pub energy_value: Option<i32>,
++    pub energy_spent: Option<i32>,
++    pub stars_spent: Option<i32>,
+     pub round: u16,
+     pub side: Side,
+ }
+@@ -690,7 +695,9 @@ impl EventLog {
+         }
+         if self.rows.len() >= MAX_ROWS {
+             self.dropped = self.dropped.saturating_add(1);
+-            if let Some(history) = self.public_history.as_mut() { history.complete = false; }
++            if let Some(history) = self.public_history.as_mut() {
++                history.complete = false;
++            }
+             return;
+         }
+         // A monster move is caused by nothing that precedes it, so it must not
+@@ -825,6 +832,10 @@ pub(crate) fn begin_public_play(
+             card_type: kind,
+             auto_played: auto,
+             first_in_series: first,
++            was_ethereal: None,
++            energy_value: None,
++            energy_spent: None,
++            stars_spent: None,
+             round: state.round,
+             side: state.side,
+         });
+@@ -843,6 +854,28 @@ pub(crate) fn begin_public_play(
+     }
+ }
+ 
++/// Capture the play's resource quote and Ethereal snapshot before its effect can mutate the card.
++pub(crate) fn set_public_play_resources(
++    state: &mut crate::CombatState,
++    uid: CardUid,
++    was_ethereal: bool,
++    energy_value: i32,
++    energy_spent: i32,
++    stars_spent: i32,
++) {
++    let Some(history) = state.combat_log.event_log.public_history.as_mut() else {
++        return;
++    };
++    if let Some(play) = history.active.iter_mut().rfind(|play| play.card_uid == uid) {
++        play.was_ethereal = Some(was_ethereal);
++        play.energy_value = Some(energy_value);
++        play.energy_spent = Some(energy_spent);
++        play.stars_spent = Some(stars_spent);
++    } else {
++        history.complete = false;
++    }
++}
++
+ /// Observe actual completion at the same pin as the engine's completed-play update.
+ pub(crate) fn finish_public_play(state: &mut crate::CombatState, uid: CardUid, replay: bool) {
+     if !armed(state) {

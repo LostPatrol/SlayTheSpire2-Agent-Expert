@@ -1,0 +1,39 @@
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index 6e4a1fc..0fbe460 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -3529,10 +3529,8 @@ pub enum Action {
+     ///
+     /// Bead sts2-rs-13q (P7-6) adds this variant. `legal_actions`
+     /// emits one [`Self::DrinkPotion`] per occupied slot in
+-    /// [`PlayerCombatState::potions`]; character-locked potions held
+-    /// by the wrong character do not appear in the legal-action set
+-    /// (the gating predicate consumes
+-    /// `sts2_content::potions::PotionSpec::character_lock`), and
++    /// [`PlayerCombatState::potions`]; character locks restrict generation,
++    /// not drinking an already held potion. Native v0.107.1 probe verified.
+     /// `PotionUsage.Automatic` potions (Fairy in a Bottle) neither
+     /// appear nor resolve — the apply arm rejects them as a
+     /// non-consuming no-op (A8 audit §7a).
+@@ -13484,17 +13482,14 @@ pub fn legal_actions(state: &CombatState) -> SmallVec<[Action; 16]> {
+     push_card_play_actions(state, &mut out);
+ 
+     // Potions. Bead sts2-rs-13q (P7-6) emits Action::DrinkPotion per
+-    // occupied slot in `state.player.potions`, gated by the per-potion
+-    // `character_lock` predicate. Targeted-potion predicate (per-enemy
++    // occupied slot in `state.player.potions`. Character locks govern
++    // generation pools, not use of an already held potion; the native
++    // v0.107.1 oracle permits Ironclad to drink an owned PoisonPotion.
++    // Targeted-potion predicate (per-enemy
+     // fan-out for `AnyEnemy` potions like FirePotion) is deferred to
+     // P7-8 / `sts2-rs-h9u`; for now every action is emitted with
+     // `target: None` and the dispatcher resolves targets internally.
+     for (slot, kind) in state.player.potions.iter().enumerate() {
+-        if let (Some(lock), Some(player_char)) = (kind.character_lock(), state.player.character) {
+-            if lock != player_char {
+-                continue;
+-            }
+-        }
+         // `PotionUsage.Automatic` potions (Fairy in a Bottle) are never
+         // manually drinkable — C# disables the drink button
+         // (`NPotionPopup.cs:273`) and `FairyInABottle.OnUse` must only

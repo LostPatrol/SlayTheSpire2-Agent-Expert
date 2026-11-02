@@ -1,0 +1,676 @@
+{
+  "run_id": "public-fixture",
+  "observation_id": "map",
+  "decision_episode_id": "map",
+  "state": {
+    "screen": "MAP",
+    "turn": null,
+    "available_actions": [
+      "choose_map_node"
+    ],
+    "session": {
+      "mode": "singleplayer",
+      "phase": "run",
+      "control_scope": "local_player"
+    },
+    "run": {
+      "character": "铁甲战士",
+      "ascension": 0,
+      "ascension_effects": [],
+      "floor": 0,
+      "act_id": "0",
+      "boss_id": "VANTOM_BOSS",
+      "hp": "80/80",
+      "gold": 99,
+      "max_energy": 3,
+      "base_orb_slots": 0,
+      "deck": [
+        {
+          "line": "打击*5 [1费]：造成6点伤害。",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "keywords": [],
+          "mods": []
+        },
+        {
+          "line": "痛击 [2费]：造成8点伤害。 给予2层易伤。",
+          "card_ids": [
+            "BASH"
+          ],
+          "keywords": [
+            "易伤"
+          ],
+          "mods": []
+        },
+        {
+          "line": "防御*4 [1费]：获得5点格挡。",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "keywords": [
+            "格挡"
+          ],
+          "mods": []
+        }
+      ],
+      "relics": [
+        "燃烧之血"
+      ],
+      "relic_ids": [
+        "BURNING_BLOOD"
+      ],
+      "relic_stacks": [
+        null
+      ],
+      "relic_descriptions": [
+        "在战斗结束时，回复[green]{Heal}[/green]点生命。"
+      ],
+      "potions": [
+        {
+          "i": 0,
+          "potion_id": null,
+          "line": "0: 空",
+          "description": null,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        },
+        {
+          "i": 1,
+          "potion_id": null,
+          "line": "1: 空",
+          "description": null,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        },
+        {
+          "i": 2,
+          "potion_id": null,
+          "line": "2: 空",
+          "description": null,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        }
+      ],
+      "piles": {
+        "draw": [],
+        "discard": [],
+        "exhaust": []
+      }
+    },
+    "map": {
+      "current": null,
+      "boss_node": "16,3",
+      "second_boss_node": null,
+      "nodes": [
+        {
+          "coord": "0,3",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "1,0",
+            "1,2",
+            "1,4"
+          ]
+        },
+        {
+          "coord": "1,0",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "2,0"
+          ]
+        },
+        {
+          "coord": "1,2",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "2,2"
+          ]
+        },
+        {
+          "coord": "1,4",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "2,4",
+            "2,5"
+          ]
+        },
+        {
+          "coord": "2,0",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "3,0"
+          ]
+        },
+        {
+          "coord": "2,2",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "3,2",
+            "3,3"
+          ]
+        },
+        {
+          "coord": "2,4",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "3,4"
+          ]
+        },
+        {
+          "coord": "2,5",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "3,6"
+          ]
+        },
+        {
+          "coord": "3,0",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "4,0"
+          ]
+        },
+        {
+          "coord": "3,2",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "4,1"
+          ]
+        },
+        {
+          "coord": "3,3",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "4,2"
+          ]
+        },
+        {
+          "coord": "3,4",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "4,4"
+          ]
+        },
+        {
+          "coord": "3,6",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "4,5",
+            "4,6"
+          ]
+        },
+        {
+          "coord": "4,0",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "5,0"
+          ]
+        },
+        {
+          "coord": "4,1",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "5,1"
+          ]
+        },
+        {
+          "coord": "4,2",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "5,1",
+            "5,3"
+          ]
+        },
+        {
+          "coord": "4,4",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "5,3"
+          ]
+        },
+        {
+          "coord": "4,5",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "5,5"
+          ]
+        },
+        {
+          "coord": "4,6",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "5,6"
+          ]
+        },
+        {
+          "coord": "5,0",
+          "node_type": "Shop",
+          "visited": false,
+          "children": [
+            "6,0"
+          ]
+        },
+        {
+          "coord": "5,1",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "6,1"
+          ]
+        },
+        {
+          "coord": "5,3",
+          "node_type": "Shop",
+          "visited": false,
+          "children": [
+            "6,2",
+            "6,3"
+          ]
+        },
+        {
+          "coord": "5,5",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "6,5"
+          ]
+        },
+        {
+          "coord": "5,6",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "6,6"
+          ]
+        },
+        {
+          "coord": "6,0",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "7,1"
+          ]
+        },
+        {
+          "coord": "6,1",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "7,1"
+          ]
+        },
+        {
+          "coord": "6,2",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "7,1"
+          ]
+        },
+        {
+          "coord": "6,3",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "7,3"
+          ]
+        },
+        {
+          "coord": "6,5",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "7,4"
+          ]
+        },
+        {
+          "coord": "6,6",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "7,6"
+          ]
+        },
+        {
+          "coord": "7,1",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "8,0"
+          ]
+        },
+        {
+          "coord": "7,3",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "8,2"
+          ]
+        },
+        {
+          "coord": "7,4",
+          "node_type": "Elite",
+          "visited": false,
+          "children": [
+            "8,4"
+          ]
+        },
+        {
+          "coord": "7,6",
+          "node_type": "Elite",
+          "visited": false,
+          "children": [
+            "8,6"
+          ]
+        },
+        {
+          "coord": "8,0",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "9,0"
+          ]
+        },
+        {
+          "coord": "8,2",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "9,2"
+          ]
+        },
+        {
+          "coord": "8,4",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "9,4"
+          ]
+        },
+        {
+          "coord": "8,6",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "9,6"
+          ]
+        },
+        {
+          "coord": "9,0",
+          "node_type": "Treasure",
+          "visited": false,
+          "children": [
+            "10,0",
+            "10,1"
+          ]
+        },
+        {
+          "coord": "9,2",
+          "node_type": "Treasure",
+          "visited": false,
+          "children": [
+            "10,2"
+          ]
+        },
+        {
+          "coord": "9,4",
+          "node_type": "Treasure",
+          "visited": false,
+          "children": [
+            "10,4"
+          ]
+        },
+        {
+          "coord": "9,6",
+          "node_type": "Treasure",
+          "visited": false,
+          "children": [
+            "10,6"
+          ]
+        },
+        {
+          "coord": "10,0",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "11,0"
+          ]
+        },
+        {
+          "coord": "10,1",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "11,2"
+          ]
+        },
+        {
+          "coord": "10,2",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "11,2"
+          ]
+        },
+        {
+          "coord": "10,4",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "11,4"
+          ]
+        },
+        {
+          "coord": "10,6",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "11,6"
+          ]
+        },
+        {
+          "coord": "11,0",
+          "node_type": "Shop",
+          "visited": false,
+          "children": [
+            "12,0",
+            "12,1"
+          ]
+        },
+        {
+          "coord": "11,2",
+          "node_type": "Elite",
+          "visited": false,
+          "children": [
+            "12,2",
+            "12,3"
+          ]
+        },
+        {
+          "coord": "11,4",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "12,5"
+          ]
+        },
+        {
+          "coord": "11,6",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "12,5"
+          ]
+        },
+        {
+          "coord": "12,0",
+          "node_type": "Elite",
+          "visited": false,
+          "children": [
+            "13,0"
+          ]
+        },
+        {
+          "coord": "12,1",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "13,0"
+          ]
+        },
+        {
+          "coord": "12,2",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "13,1"
+          ]
+        },
+        {
+          "coord": "12,3",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "13,3"
+          ]
+        },
+        {
+          "coord": "12,5",
+          "node_type": "Elite",
+          "visited": false,
+          "children": [
+            "13,6"
+          ]
+        },
+        {
+          "coord": "13,0",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "14,0"
+          ]
+        },
+        {
+          "coord": "13,1",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "14,0"
+          ]
+        },
+        {
+          "coord": "13,3",
+          "node_type": "Unknown",
+          "visited": false,
+          "children": [
+            "14,3"
+          ]
+        },
+        {
+          "coord": "13,6",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "14,6"
+          ]
+        },
+        {
+          "coord": "14,0",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "15,0"
+          ]
+        },
+        {
+          "coord": "14,3",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "15,3"
+          ]
+        },
+        {
+          "coord": "14,6",
+          "node_type": "Monster",
+          "visited": false,
+          "children": [
+            "15,5"
+          ]
+        },
+        {
+          "coord": "15,0",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "16,3"
+          ]
+        },
+        {
+          "coord": "15,3",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "16,3"
+          ]
+        },
+        {
+          "coord": "15,5",
+          "node_type": "RestSite",
+          "visited": false,
+          "children": [
+            "16,3"
+          ]
+        },
+        {
+          "coord": "16,3",
+          "node_type": "Boss",
+          "visited": false,
+          "children": []
+        }
+      ],
+      "options": [
+        {
+          "i": 0,
+          "line": "Monster (0,3)"
+        }
+      ]
+    },
+    "protocol_version": 1,
+    "action_revision": 3,
+    "supported": true
+  },
+  "available_actions": [
+    "choose_map_node"
+  ],
+  "action_parameters": {
+    "choose_map_node": {
+      "option_index": "map.options[].i"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "bridge": {
+    "base_url": "http://127.0.0.1:18765",
+    "expected_pid": null,
+    "expected_game_version": "v0.107.1",
+    "require_atomic": true
+  },
+  "provider": {
+    "api_base": "https://api.deepseek.com",
+    "api_key_file": "secrets/apikey-deepseek.txt",
+    "model": "deepseek-flash",
+    "thinking": "enabled",
+    "reasoning_effort": "high",
+    "max_tokens": 16384,
+    "stream": true,
+    "use_env_proxy": false,
+    "context_max_turns": 32,
+    "context_max_characters": 640000,
+    "timeout_seconds": 120,
+    "transient_retries": 2,
+    "format_repair_attempts": 1
+  },
+  "policy": {
+    "mode": "nosl",
+    "deliberation": "calculation_only",
+    "character": "IRONCLAD",
+    "ascension": 0
+  },
+  "limits": {
+    "max_provider_requests_per_run": 60,
+    "max_run_wall_minutes": 120,
+    "max_actions": 40
+  },
+  "logging": {"public_observations_only": true}
+}

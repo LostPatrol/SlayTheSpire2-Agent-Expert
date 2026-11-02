@@ -1,0 +1,577 @@
+<!doctype html>
+<!-- Official local dashboard: authoritative snapshots, stream timeline, and explicit controls. -->
+<html lang="zh-CN" data-theme="dark" data-theme-mode="system" data-character="ironclad" data-layout="stream">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="杀戮尖塔 2 本地 Agent 仪表盘：观察真实决策、推演、用量和游戏回执。">
+  <title>尖塔观测台 · Spire Observatory</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23d8b264' d='M24 2 31 18 30 18 34 34 33 34 38 46 10 46 15 34 14 34 18 18 17 18Z'/%3E%3Cpath fill='%2313140f' d='M24 12 27 22 26 30 24 38 22 30 21 22Z'/%3E%3C/svg%3E">
+  <script>
+    /** Resolve local appearance before first paint without changing controller state. */
+    (() => {
+      try {
+        // Share the existing dashboard and knowledge-page appearance preference.
+        const key = "sts2-agent-theme";
+        const modes = ["system", "light", "dark"];
+        const params = new URLSearchParams(location.search);
+        const requested = params.get("theme");
+        const saved = modes.includes(requested) ? requested : localStorage.getItem(key);
+        const mode = modes.includes(saved) ? saved : "system";
+        const dark = mode === "dark" || (mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.dataset.themeMode = mode;
+        if (requested) document.documentElement.dataset.themeFromQuery = "true";
+        document.documentElement.dataset.layout = params.get("layout") === "split" ? "split" : "stream";
+      } catch (_) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="observatory.js" defer></script>
+  <script src="timeline.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#stage">跳到当前决策</a>
+  <div class="grain" aria-hidden="true"></div>
+
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.4 18.4 12 8 18.6Z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z" fill="currentColor"/></symbol>
+    <symbol id="i-step" viewBox="0 0 24 24"><path d="M6 5.4 15 12l-9 6.6Z" fill="currentColor"/><path d="M17 5h2.2v14H17z" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6.4" y="6.4" width="11.2" height="11.2" fill="currentColor"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.6c3.1-1.2 5.5-.9 8 1.2 2.5-2.1 4.9-2.4 8-1.2v12.9c-3.1-1.2-5.5-.9-8 1.2-2.5-2.1-4.9-2.4-8-1.2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 6.8v12.9" stroke="currentColor" stroke-width="1.2"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.4 5.4l1.7 1.7M16.9 16.9l1.7 1.7M18.6 5.4l-1.7 1.7M7.1 16.9l-1.7 1.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.6 8.6 0 0 1 9.8 4a8.8 8.8 0 1 0 10.2 10.2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 3.6v16.8A8.4 8.4 0 0 0 12 3.6Z" fill="currentColor"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m15.6 15.6 4.2 4.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-diamond" viewBox="0 0 24 24"><path d="M12 2.8 21.2 12 12 21.2 2.8 12Z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M12 7.8 16.2 12 12 16.2 7.8 12Z" fill="currentColor"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.2S3.8 15.4 3.8 9.6A4.3 4.3 0 0 1 12 7.5a4.3 4.3 0 0 1 8.2 2.1c0 5.8-8.2 10.6-8.2 10.6Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 7.4V12l3.2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-stairs" viewBox="0 0 24 24"><path d="M4 20h4v-4h4v-4h4V8h4V4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="m14.2 6.4 3.4 3.4M4 20l3.6-1 10.8-10.8a2.4 2.4 0 0 0-3.4-3.4L4.2 15.6Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-quill" viewBox="0 0 24 24"><path d="M20 4c-5.2 0-9.3 2.5-12 7l-2.2 5.2L11 14c4.5-3 7.2-6.4 9-10Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m4 20 4.8-6.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2.8 12h4l2.2-6 3.2 12 2.6-8 1.8 2h4.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10.4 13.6a4 4 0 0 0 5.6 0l2.2-2.2a4 4 0 1 0-5.6-5.6l-1.2 1.2M13.6 10.4a4 4 0 0 0-5.6 0l-2.2 2.2a4 4 0 1 0 5.6 5.6l1.2-1.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 4.6-9 4.6-9-4.6ZM3 12l9 4.6 9-4.6M3 16.4l9 4.6 9-4.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="5.2" y="3.4" width="13.6" height="17.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 8.2 14.2 12 12 15.8 9.8 12Z" fill="currentColor"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><path d="M4.2 10.4h15.6v9.2H4.2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M3.4 7h17.2v3.4H3.4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 7v12.6" stroke="currentColor" stroke-width="1.4"/><path d="M12 7c-1.6-3.4-5.6-2.6-5.6-.4 0 1.4 2.6 1.6 5.6.4Zm0 0c1.6-3.4 5.6-2.6 5.6-.4 0 1.4-2.6 1.6-5.6.4Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3.4c2.6 3.4 4.8 5.6 4.8 9a4.8 4.8 0 0 1-9.6 0c0-1.8.9-3 2.1-4.2.2 1.2.8 1.9 1.6 2.3-.2-2.4-.2-4.8 1.1-7.1Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9.4 3.4h5.2M10.4 3.4v5.2l-4 8.2A2 2 0 0 0 8.2 20h7.6a2 2 0 0 0 1.8-3.2l-4-8.2V3.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.6 15.2h8.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+    <symbol id="i-sword" viewBox="0 0 24 24"><path d="M12 1.8 14.8 6V15H9.2V6Z" fill="currentColor"/><rect x="6.6" y="15" width="10.8" height="2.2" fill="currentColor"/><rect x="10.6" y="17.2" width="2.8" height="3.6" fill="currentColor"/><circle cx="12" cy="21.7" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4.5 12h14M13.5 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <div class="console">
+    <header class="masthead">
+      <a class="brand" href="#" aria-label="尖塔观测台首页">
+        <svg class="brand-sigil" viewBox="0 0 44 58" aria-hidden="true">
+          <defs>
+            <linearGradient id="sigil-gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f0d190"/><stop offset=".55" stop-color="#c9973f"/><stop offset="1" stop-color="#8a5f22"/>
+            </linearGradient>
+          </defs>
+          <path d="M22 2 28 16 27 16 32 32 31 32 37 48 41 51 41 56 3 56 3 51 7 48 13 32 12 32 17 16 16 16Z" fill="url(#sigil-gold)" stroke="#f6dfae" stroke-width=".7" stroke-opacity=".5"/>
+          <path d="M22 10 25.4 18 24.6 26 27 34 25.8 42 24 47 22 50 20 47 18.2 42 17 34 19.4 26 18.6 18Z" fill="#0d0e0a" fill-opacity=".82"/>
+          <path d="M22 18 23.3 22 22 26.4 20.7 22Z" fill="#f0d190"/>
+          <path d="M3 56h38" stroke="#f0d190" stroke-opacity=".55"/>
+        </svg>
+        <span class="brand-text">
+          
+          <span class="brand-name">尖塔观测台</span>
+        </span>
+      </a>
+      <div class="top-phase phase" aria-label="运行状态">
+        <span class="orb paused" id="phase-orb" aria-hidden="true"></span>
+        <div class="phase-copy">
+          <h1 id="phase-label">等待连接</h1>
+          <p id="phase-detail" hidden></p>
+        </div>
+      </div>
+      <div class="command-buttons" aria-label="运行控制">
+        <button class="btn primary" id="run-toggle" type="button" title="继续自动游玩" aria-label="继续自动游玩" data-mode="resume" disabled><svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span>继续</span></button>
+        <button class="btn" id="step" type="button" title="单步" aria-label="单步" disabled><svg class="ico" aria-hidden="true"><use href="#i-step"/></svg><span>单步</span></button>
+        <button class="btn danger" id="stop" type="button" title="停止" aria-label="停止" disabled><svg class="ico" aria-hidden="true"><use href="#i-stop"/></svg><span>停止</span></button>
+      </div>
+      <div class="masthead-tools">
+        <span class="policy" id="policy-tag">NoSL</span>
+        <div class="layout-switch" role="group" aria-label="布局切换">
+          <button class="layout-option" id="layout-split" type="button" data-layout-mode="split" aria-pressed="false">分栏</button>
+          <button class="layout-option" id="layout-stream" type="button" data-layout-mode="stream" aria-pressed="true">时间轴</button>
+        </div>
+        <button class="tool-button" id="knowledge-open" type="button">
+          <svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span>档案库</span>
+        </button>
+        <button class="tool-button" id="theme-toggle" type="button" aria-label="切换外观：跟随系统">
+          <svg class="ico" aria-hidden="true"><use id="theme-icon" href="#i-auto"/></svg><span id="theme-label">跟随系统</span>
+        </button>
+        <span class="conn" id="connection"><i aria-hidden="true"></i><span id="connection-text">等待连接</span></span>
+      </div>
+    </header>
+
+    <main class="workspace" id="main">
+      <aside class="col col-left" aria-label="本局与推演">
+        <p id="connection-banner" class="connection-banner" role="status">正在连接本地控制器。</p>
+        <p id="game-launch-banner" class="connection-banner" role="status" hidden></p>
+        <section class="panel run-panel">
+          <header class="panel-head">
+            <span class="panel-title">本局</span>
+            <span class="tag tag-quiet" id="screen-label">等待观测</span>
+          </header>
+          <div class="run-body">
+            <div class="run-hero">
+              <div class="hp-block">
+                <div class="hp-figure"><strong id="hp-value">—</strong><span>/ <span id="hp-max">—</span></span><span class="hp-unit">HP</span></div>
+                <div class="hp-track" role="meter" aria-label="生命值" aria-valuetext="等待观测"><i id="hp-bar" style="width:0%"></i><span class="notches" aria-hidden="true"></span></div>
+              </div>
+              <div class="hero-block">
+                <b class="hero-name"><span id="hero-name">等待角色</span> <span class="hero-asc" id="hero-asc">—</span></b>
+              </div>
+            </div>
+            <dl class="stat-grid">
+              <div><dt>楼层</dt><dd id="floor-value">—</dd></div>
+              <div><dt>幕</dt><dd id="act-value">—</dd></div>
+              <div><dt>已完成动作</dt><dd id="action-budget">—</dd></div>
+              <div><dt>运行耗时</dt><dd id="time-budget">—</dd></div>
+            </dl>
+            <div class="run-divider"><span>准备下一局</span></div>
+            <div class="newrun" id="launch-settings">
+              <label class="field compact"><span>角色</span>
+                <select id="char-select" disabled>
+                  <option value="IRONCLAD">铁甲战士</option>
+                  <option value="SILENT">静默猎手</option>
+                  <option value="DEFECT">故障机器人</option>
+                  <option value="NECROBINDER">亡灵契约师</option>
+                  <option value="REGENT">储君</option>
+                </select>
+              </label>
+              <label class="field compact asc-field"><span>难度 <output id="asc-value" for="ascension">A0</output></span>
+                <input id="ascension" type="range" min="0" max="10" step="1" value="0" aria-label="进阶难度" disabled>
+              </label>
+              <button class="btn primary start-compact" id="start" type="button" title="启动或复用游戏；完成后保持暂停" aria-label="启动游戏" disabled><span id="start-label">启动</span></button>
+            </div>
+            <p class="fineprint" id="launch-settings-note">连接后读取当前启动设置。</p>
+          </div>
+        </section>
+
+        <section class="panel sim-panel">
+          <header class="panel-head">
+            <span class="panel-title">策略与推演</span>
+            <span class="tag tag-quiet" id="sim-badge">等待局面</span>
+          </header>
+          <div class="sim-body sim-inline-body">
+            <form id="simulation-settings" class="sim-inline-form">
+              <label class="field"><span>读取权限</span>
+                <select id="sim-read-access" disabled>
+                  <option value="public">公开信息 · 概率推演</option>
+                  <option value="internal">内部数据 · 真实 RNG</option>
+                </select>
+              </label>
+              <div class="preset-grid" role="group" aria-label="决策方案预设">
+                <button class="preset" type="button" data-network-preset="upstream" disabled><b>全自动</b><span>无 LLM · MCTS / PPO 直接决定</span></button>
+                <button class="preset" type="button" data-network-preset="assist" disabled><b>网络辅助</b><span>程序提供候选 · 模型决定</span></button>
+                <button class="preset" type="button" data-network-preset="base" disabled><b>基础方式</b><span>模型决定 · 关闭学习先验</span></button>
+              </div>
+              <label class="field"><span>战斗决策</span>
+                <select id="simulation-combat-mode">
+                  <option value="assist">MCTS 提供候选 · 大模型决定</option>
+                  <option value="upstream">MCTS 直接决定 · 无 LLM</option>
+                  <option value="llm">大模型决定 · 不自动搜索候选</option>
+                </select>
+              </label>
+              <label class="field"><span>整局决策</span>
+                <select id="simulation-run-mode">
+                  <option value="llm">大模型决定 · 不启用 PPO</option>
+                  <option value="assist">PPO 提供建议 · 大模型决定</option>
+                  <option value="upstream">PPO 直接决定 · 无 LLM</option>
+                </select>
+              </label>
+              <label class="field strength-field"><span>搜索强度 <output id="simulation-strength-value" for="simulation-strength">3.00 · 目标普通 1,000 / Boss 4,000 次</output></span>
+                <div class="strength" id="simulation-strength-effects">
+                  <div class="strength-track" aria-hidden="true"><i id="strength-fill"></i></div>
+                  <input id="simulation-strength" type="range" min="1" max="5" step="any" value="3" aria-label="搜索强度" disabled>
+                  <div class="strength-notches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+              </label>
+              <details class="advanced" open>
+                <summary>网络与搜索组件</summary>
+                <label class="field"><span>模拟续局策略</span>
+                  <select id="simulation-rollout"><option value="upstream">rollout 网络</option><option value="heuristic">基础启发式</option></select>
+                </label>
+                <label class="field"><span>动作先验</span>
+                  <select id="simulation-prior"><option value="upstream">学习先验网络</option><option value="off">关闭</option></select>
+                </label>
+                <label class="field"><span>截断局面估值</span>
+                  <select id="simulation-value"><option value="texel">TexelWide</option><option value="learned">价值网络</option></select>
+                </label>
+                <label class="field"><span>随机奖励池</span>
+                  <select id="simulation-reward-pool"><option value="known">仅使用已确认的公开奖励池</option><option value="full_unlock">按全解锁奖励池推演</option></select>
+                </label>
+                <label class="field"><span>搜索配置</span>
+                  <select id="simulation-profile"><option value="upstream">角色与房间配置</option><option value="base">基础 MCTS 配置</option></select>
+                </label>
+                <p class="fineprint">续局、先验和估值参与搜索；最终执行者由上方两组决策模式决定。全解锁奖励池只是推演假设，不会修改存档。</p>
+              </details>
+              <div class="sim-snapshot">
+                <div class="sub-label"><span>当前推演</span><b id="sim-summary-time">—</b></div>
+                <div class="snap-grid">
+                  <div><span>候选</span><b id="sim-summary-count">—</b></div>
+                  <div><span>推荐</span><b id="sim-summary-best">—</b></div>
+                  <div><span>搜索</span><b id="sim-summary-search">—</b></div>
+                  <div><span>胜 / 败 / 未终局</span><b id="sim-summary-outcomes">—</b></div>
+                </div>
+              </div>
+              <p class="note" id="simulation-decision-note">大模型仅参与选择了大模型的决策阶段；预设和选项保存后生效。</p>
+              <p class="fineprint" id="simulation-settings-note">连接后读取已保存设置。</p>
+              <div class="sim-inline-actions">
+                <button class="btn primary full" id="simulation-settings-save" type="submit" disabled>应用推演设置</button>
+                <button class="link-button" type="button" data-open="sim">候选与原始数据 <svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </aside>
+
+      <section class="col col-stage" id="stage" aria-label="当前决策与记录">
+        <div class="decision-stack">
+        <article class="panel decision framed" aria-labelledby="decision-action">
+          <header class="decision-head">
+            <div class="decision-kicker"><span class="pulse-dot" aria-hidden="true"></span><span>当前决策</span></div>
+            <div class="decision-meta">
+              <span class="seal" id="decision-status">等待决策</span>
+              <span class="engine" id="decision-engine">—</span>
+              <time id="decision-time">—</time>
+            </div>
+          </header>
+          <div class="decision-body">
+            <div class="action-line">
+              <span class="action-mark" aria-hidden="true"><svg class="ico"><use href="#i-card"/></svg></span>
+              <div class="action-copy">
+                <h2 id="decision-action">等待完整决策</h2>
+                <p class="target" id="decision-target" hidden></p>
+              </div>
+            </div>
+            <section class="reason">
+              <h3>决策依据</h3>
+              <p id="decision-reason">完整决策到达后，说明会保留在这里。</p>
+            </section>
+            <div class="plan-grid">
+              <section><h3>构筑方向</h3><p id="decision-plan">—</p></section>
+              <section><h3>当前目标</h3><p id="scene-plan">—</p></section>
+            </div>
+
+            <div class="decision-telemetry-slot large-only" id="decision-telemetry"></div>
+            <div class="decision-gap large-only" aria-hidden="true"></div>
+
+            <aside class="decision-side large-only">
+              <div class="side-candidate-head">
+                <div><span class="side-kicker">推演候选</span><span class="side-meta" id="side-candidate-meta">等待推演</span></div>
+                <b class="side-top" id="side-candidate-best">—</b>
+              </div>
+              <div id="decision-candidate-list" class="decision-candidates"></div>
+              <button class="link-button" type="button" data-open="sim">全部候选与原始输出 <svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></button>
+            </aside>
+          </div>
+          <footer class="decision-foot">
+            <details class="raw-inline">
+              <summary>原始动作数据</summary>
+              <pre id="decision-json">尚无完整动作</pre>
+            </details>
+            <div class="foot-actions">
+              <span class="micro" id="decision-identity">—</span>
+              <button class="link-button guide-link" type="button" data-open="guide"><svg class="ico" aria-hidden="true"><use href="#i-quill"/></svg>人工指导 <span class="guide-count" id="guide-count">0</span></button>
+              <button class="link-button" type="button" data-open="reasoning">原始输出 <svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></button>
+            </div>
+          </footer>
+        </article>
+        </div>
+
+        <section class="panel stream-panel" id="stream-panel">
+          <header class="panel-head">
+            <span class="panel-title">时间轴</span>
+            <div class="stream-stats">
+              <span><b id="stream-tools">—</b> 工具</span>
+              <span><b id="stream-requests">—</b> 请求</span>
+              <span><b id="stream-events">—</b> 事件</span>
+              <span class="stream-avg">工具平均 <b id="stream-average">—</b></span>
+            </div>
+            <span class="count" id="stream-count">决策 → 工具 → 请求 → 事件</span>
+          </header>
+          <div class="panel-body stream-body">
+            <ol class="stream-list" id="stream-list"></ol>
+          </div>
+        </section>
+
+        <section class="panel history-panel">
+          <header class="panel-head">
+            <span class="panel-title">决策记录</span>
+            <span class="count" id="history-count">等待决策记录</span>
+          </header>
+          <ol class="log" id="history-list"></ol>
+        </section>
+
+        <section class="pipeline large-only" id="pipeline" aria-label="执行流水线">
+          <header class="pipeline-head">
+            <div class="pipeline-title"><span class="pipeline-mark" aria-hidden="true"></span>执行流水线</div>
+            <div class="pipeline-meta"><span>工具 <b id="pipeline-tool-count">—</b></span><span>决策 <b id="pipeline-decision-count">—</b></span><span>事件 <b id="pipeline-event-count">—</b></span><span class="pipeline-live" id="pipeline-status">时间倒序</span></div>
+          </header>
+          <div class="pipeline-stream" id="pipeline-stream" aria-label="按时间排列的统一事件流"></div>
+        </section>
+      </section>
+
+      <aside class="col col-right" aria-label="遥测、工具与事件">
+        <section class="panel telemetry-panel">
+          <header class="panel-head">
+            <span class="panel-title">遥测</span>
+            <span class="tag tag-quiet">TOKEN</span>
+          </header>
+          <div class="panel-body">
+            <div class="telemetry-simple">
+              <div class="metric-row">
+                <div class="metric">
+                  <div class="metric-value"><strong id="token-speed">—</strong><span>token/s</span><b class="metric-state" id="speed-state">待机</b></div>
+                </div>
+                <div class="metric total">
+                  <div class="metric-value"><strong id="total-tokens">未知</strong><span>tokens</span></div>
+                </div>
+              </div>
+              <div class="spark" id="speed-bars" aria-hidden="true"></div>
+              <div class="usage-mix">
+                <div class="mix-bar" aria-hidden="true"><i class="hit" id="mix-hit" style="width:0%"></i><i class="miss" id="mix-miss" style="width:0%"></i><i class="out" id="mix-out" style="width:0%"></i></div>
+                <div class="mix-legend">
+                  <span><i class="hit"></i>缓存命中 <b id="cache-hit-tokens">未知</b></span>
+                  <span><i class="miss"></i>未命中 <b id="cache-miss-tokens">未知</b></span>
+                  <span><i class="out"></i>输出 <b id="completion-tokens">未知</b></span>
+                </div>
+              </div>
+              <div class="bay-candidates" id="bay-candidates"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel tools-panel">
+          <header class="panel-head">
+            <span class="panel-title">工具调用</span>
+            <span class="count" id="tool-count">—</span>
+          </header>
+          <div class="panel-body tools-body">
+            <div id="tools-list" class="tools-list"></div>
+            <div class="tool-stats-line"><span><b id="tool-success-rate">—</b> 成功</span><span>平均 <b id="tool-average">—</b></span></div>
+          </div>
+        </section>
+
+        <section class="panel events-panel">
+          <header class="panel-head">
+            <span class="panel-title">程序时间线</span>
+            <span class="count" id="timeline-count">等待程序事件</span>
+          </header>
+          <div class="panel-body events-body">
+            <div class="legend" aria-label="事件图例">
+              <span><i class="dot observe"></i>公开观测</span>
+              <span><i class="dot model"></i>模型响应</span>
+              <span><i class="dot calculator"></i>有限计算</span>
+              <span><i class="dot execution"></i>游戏执行</span>
+              <span><i class="dot tool"></i>工具</span>
+            </div>
+            <div class="timeline" id="timeline-list"></div>
+            <div class="obs-link"><span>公开观测 JSON · 只读</span><button class="link-button" type="button" data-open="obs">打开原始数据 <svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></button></div>
+          </div>
+        </section>
+
+        <section class="panel event-stats large-only">
+          <header class="panel-head">
+            <span class="panel-title">事件构成</span>
+            <span class="count" id="event-count">—</span>
+          </header>
+          <div class="panel-body">
+            <div class="event-stat-row"><span><i class="dot observe"></i>公开观测</span><b id="event-stat-observe">—</b><div class="event-stat-bar"><i id="event-bar-observe" style="width:0%"></i></div></div>
+            <div class="event-stat-row"><span><i class="dot model"></i>模型响应</span><b id="event-stat-model">—</b><div class="event-stat-bar"><i id="event-bar-model" style="width:0%"></i></div></div>
+            <div class="event-stat-row"><span><i class="dot calculator"></i>有限计算</span><b id="event-stat-calculator">—</b><div class="event-stat-bar"><i id="event-bar-calculator" style="width:0%"></i></div></div>
+            <div class="event-stat-row"><span><i class="dot execution"></i>游戏执行</span><b id="event-stat-execution">—</b><div class="event-stat-bar"><i id="event-bar-execution" style="width:0%"></i></div></div>
+            <div class="event-stat-row"><span><i class="dot tool"></i>工具</span><b id="event-stat-tool">—</b><div class="event-stat-bar"><i id="event-bar-tool" style="width:0%"></i></div></div>
+          </div>
+        </section>
+      </aside>
+
+      <aside class="col col-context" aria-label="辅助信息">
+        <section class="panel assets-panel large-only">
+          <header class="panel-head">
+            <span class="panel-title">本局资产</span>
+            <span class="count" id="assets-count">等待观测</span>
+          </header>
+          <div class="panel-body">
+            <div class="asset-group"><span class="micro">遗物</span><div class="asset-chips" id="asset-relics"></div></div>
+            <div class="asset-group"><span class="micro">药水</span><div class="asset-chips" id="asset-potions"></div></div>
+            <div class="asset-group"><span class="micro">牌组</span><div class="deck-line" id="asset-deck-count">—</div><div class="asset-chips" id="asset-deck"></div></div>
+          </div>
+        </section>
+        <section class="panel observation-summary large-only">
+          <header class="panel-head">
+            <span class="panel-title">公开观测</span>
+            <span class="count">只读</span>
+          </header>
+          <div class="panel-body">
+            <dl class="obs-summary-grid">
+              <div><dt>画面</dt><dd id="obs-screen">—</dd></div>
+              <div><dt>能量</dt><dd id="obs-energy">—</dd></div>
+              <div><dt>格挡</dt><dd id="obs-block">—</dd></div>
+              <div><dt>金币</dt><dd id="obs-gold">—</dd></div>
+              <div><dt>敌人</dt><dd id="obs-enemies">—</dd></div>
+              <div><dt>手牌</dt><dd id="obs-hand">—</dd></div>
+            </dl>
+            <button class="link-button" type="button" data-open="obs">查看原始 JSON <svg class="ico" aria-hidden="true"><use href="#i-link"/></svg></button>
+          </div>
+        </section>
+
+        <section class="panel budget-panel large-only">
+          <header class="panel-head">
+            <span class="panel-title">运行预算</span>
+            <span class="count">累计</span>
+          </header>
+          <div class="panel-body">
+            <div class="budget-line"><span>动作</span><b id="budget-actions">—</b></div>
+            <div class="budget-meter"><i id="budget-action-meter" style="width:0%"></i></div>
+            <div class="budget-line"><span>累计时长</span><b id="budget-time">—</b></div>
+            <div class="budget-meter"><i id="budget-time-meter" style="width:0%"></i></div>
+            <div class="budget-line"><span>请求</span><b id="budget-requests">—</b></div>
+            <div class="budget-meter"><i id="budget-request-meter" style="width:0%"></i></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="statusbar">
+      <span id="version">游戏桥等待连接</span>
+      <span class="status-sep" aria-hidden="true"></span>
+      <span id="run-identity" class="status-demo">本地控制器</span>
+      <span class="grow"></span>
+      <button class="link-button" type="button" data-open="obs">公开观测</button>
+    </footer>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <aside class="drawer drawer-sim" id="drawer-sim" role="dialog" aria-modal="true" aria-labelledby="sim-title" aria-hidden="true" inert>
+    <header class="drawer-head">
+      <div><h2 id="sim-title">策略与推演</h2></div>
+      <button class="icon-button" type="button" data-close aria-label="关闭策略与推演"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="drawer-tabs" role="tablist" aria-label="推演视图">
+      <button class="drawer-tab active" type="button" role="tab" aria-selected="true" aria-controls="sim-pane-candidates" data-sim-tab="candidates">候选 <b id="sim-candidate-count">—</b></button>
+      <button class="drawer-tab" type="button" role="tab" aria-selected="false" aria-controls="sim-pane-raw" data-sim-tab="raw">原始</button>
+    </div>
+    <div class="drawer-scroll">
+      <section class="sim-pane active" id="sim-pane-candidates" role="tabpanel">
+        <p class="meta" id="sim-meta">等待推演结果</p>
+        <div id="sim-results" class="candidate-list"></div>
+      </section>
+      <section class="sim-pane" id="sim-pane-raw" role="tabpanel" hidden>
+        <pre id="simulation-json" class="json-block"></pre>
+      </section>
+    </div>
+  </aside>
+
+  <aside class="drawer drawer-wide" id="drawer-reasoning" role="dialog" aria-modal="true" aria-labelledby="reasoning-title" aria-hidden="true" inert>
+    <header class="drawer-head">
+      <div><h2 id="reasoning-title">原始输出</h2></div>
+      <button class="icon-button" type="button" data-close aria-label="关闭原始输出"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="reasoning-toolbar">
+      <div class="mini-tabs" role="tablist" aria-label="响应类型">
+        <button class="mini-tab active" type="button" role="tab" aria-selected="true" data-stream="reasoning">推理文本</button>
+        <button class="mini-tab" type="button" role="tab" aria-selected="false" data-stream="content">最终响应</button>
+      </div>
+      <div class="request-controls">
+        <label class="sr-only" for="request-select">模型请求</label>
+        <select id="request-select">
+          <option>等待模型请求</option>
+        </select>
+        <span class="request-status" id="request-status">未开始</span>
+        <button class="btn ghost small" id="follow-button" type="button" aria-pressed="true">跟随输出</button>
+      </div>
+    </div>
+    <div class="reasoning-stream" id="stream-box" tabindex="0" aria-label="模型返回文本">
+      <pre id="stream-text"></pre>
+      <div id="stream-empty" class="empty-note"><strong>等待下一次思考</strong><p>这里展示模型 API 返回的原始文本。</p></div>
+    </div>
+    <footer class="drawer-foot">
+      <span id="request-meta">尚无模型请求</span>
+      <span id="model-activity">等待输出</span>
+      <span id="stream-length">—</span>
+    </footer>
+  </aside>
+
+  <aside class="drawer" id="drawer-guide" role="dialog" aria-modal="true" aria-labelledby="guide-title" aria-hidden="true" inert>
+    <header class="drawer-head">
+      <div><h2 id="guide-title">人工指导</h2></div>
+      <button class="icon-button" type="button" data-close aria-label="关闭人工指导"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="drawer-scroll">
+      <form id="instruction-form">
+        <div class="field-head"><label for="instruction-text">指导内容</label><span id="char-count">0 / 3000</span></div>
+        <textarea id="instruction-text" rows="5" maxlength="3000" placeholder="写下希望 Agent 优先考虑的策略…"></textarea>
+        <label class="field"><span>生效范围</span>
+          <select id="instruction-scope">
+            <option value="next_decision">下一次完整决策</option>
+            <option value="combat">本场战斗</option>
+            <option value="run">本局，直到撤销</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button class="btn primary" id="queue" type="submit" disabled>加入下次决策</button>
+          <button class="btn ghost" id="redecide" type="button" disabled>暂停并重决策</button>
+        </div>
+        <p class="fineprint">指导只影响后续完整决策；已经发出的模型请求不会被改写。</p>
+      </form>
+      <div class="subhead"><h3>指令记录</h3><span id="instruction-count">0 条</span></div>
+      <div class="instruction-list" id="instruction-list"></div>
+      <div class="rail-hint">
+        <h3>指导如何生效</h3>
+        <ul>
+          <li>只在选定的作用域内注入；不会改写已经发出的模型请求。</li>
+          <li>“暂停并重决策”保留已消耗预算，并重新生成完整方案。</li>
+          <li>撤销只影响后续完整决策，不追溯已经注入的内容。</li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+  <aside class="drawer drawer-knowledge" id="drawer-knowledge" role="dialog" aria-modal="true" aria-labelledby="knowledge-title" aria-hidden="true" inert>
+    <header class="drawer-head">
+      <div><h2 id="knowledge-title">档案库</h2></div>
+      <button class="icon-button" type="button" data-close aria-label="关闭档案库"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="codex-tools">
+      <label class="search-field"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><input id="codex-search" type="search" placeholder="搜索名称、ID 或机制，例如 旋风斩 / Whirlwind" autocomplete="off" aria-label="搜索档案条目"></label>
+      <label class="field compact"><span class="sr-only">分类</span><select id="codex-kind"><option value="">所有分类</option></select></label>
+      <span class="codex-count" id="codex-count">等待搜索</span>
+    </div>
+    <div class="codex-body">
+      <div class="codex-list" id="codex-results" aria-label="档案条目"></div>
+      <article class="codex-detail" id="codex-detail">
+        <p class="empty-note">选择左侧条目查看来源、版本与完整字段。</p>
+      </article>
+    </div>
+  </aside>
+
+  <aside class="drawer drawer-obs" id="drawer-obs" role="dialog" aria-modal="true" aria-labelledby="obs-title" aria-hidden="true" inert>
+    <header class="drawer-head">
+      <div><h2 id="obs-title">公开观测</h2></div>
+      <button class="icon-button" type="button" data-close aria-label="关闭公开观测"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="drawer-scroll">
+      <p class="fineprint">控制器最近收到的公开观测。连接中断时保留最后快照。</p>
+      <pre id="obs-json" class="json-block"></pre>
+    </div>
+  </aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="noscript">此页面需要启用 JavaScript 才能显示交互效果。</p></noscript>
+</body>
+</html>

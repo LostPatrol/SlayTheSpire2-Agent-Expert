@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "source_revision": "2af6543ca7a6c76acfde6be582651c7c05e88e50",
+  "source_path": "data/guides.json",
+  "source_sha256": "89396fa89a8d33b4338a22291439b8bb7ba067ca34e097feebb5bc9efdc8c33e",
+  "corpus_sha256": "3e2401d3eba8670bad5c0c88ca8b64ee34f8ff4f396580ecb515c1e328cf7b44",
+  "license": "PolyForm Noncommercial 1.0.0",
+  "guide_count": 8,
+  "section_count": 81,
+  "verification": "unversioned_strategy_reference",
+  "notice": "Copyright © 2025-present Peter Lord and Spire Codex contributors. Game content © Mega Crit. Community prose is advice, not verified game rules."
+}

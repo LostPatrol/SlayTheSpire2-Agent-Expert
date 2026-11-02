@@ -1,0 +1,61 @@
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index b6c1c94..042f409 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -8849,6 +8849,23 @@ fn rebank_wire_cost_after_edge(c: &mut crate::cards::Card, other: crate::cards::
+ // would silently swallow new variants.
+ #[allow(clippy::needless_pass_by_value, clippy::match_same_arms)]
+ pub fn apply(state: &mut CombatState, action: Action) -> StepResult {
++    let result = apply_with_observed_quotes(state, action);
++    if result != StepResult::InvalidTarget {
++        // A native quote belongs to the observed root; future costs use reconstructed rules.
++        for card in &mut state.cards {
++            if card.combat_var(cards::VarKey::ObservedEnergyCost) != 0 {
++                card.set_combat_var(cards::VarKey::ObservedEnergyCost, 0);
++            }
++            if card.combat_var(cards::VarKey::ObservedStarCost) != 0 {
++                card.set_combat_var(cards::VarKey::ObservedStarCost, 0);
++            }
++        }
++    }
++    result
++}
++
++/// Resolve one action before expiring observation-only cost quotes.
++fn apply_with_observed_quotes(state: &mut CombatState, action: Action) -> StepResult {
+     // A state built before the relic channels froze carries no relic plan
+     // (its planned dispatchers take their generic path); build it now.
+     state.relics.ensure_plan();
+@@ -13502,10 +13519,7 @@ pub fn legal_actions(state: &CombatState) -> SmallVec<[Action; 16]> {
+     // occupied slot in `state.player.potions`. Character locks govern
+     // generation pools, not use of an already held potion; the native
+     // v0.107.1 oracle permits Ironclad to drink an owned PoisonPotion.
+-    // Targeted-potion predicate (per-enemy
+-    // fan-out for `AnyEnemy` potions like FirePotion) is deferred to
+-    // P7-8 / `sts2-rs-h9u`; for now every action is emitted with
+-    // `target: None` and the dispatcher resolves targets internally.
++    // Targeted potions branch over the same living enemy slots as card plays.
+     for (slot, kind) in state.player.potions.iter().enumerate() {
+         // `PotionUsage.Automatic` potions (Fairy in a Bottle) are never
+         // manually drinkable — C# disables the drink button
+@@ -13516,11 +13530,15 @@ pub fn legal_actions(state: &CombatState) -> SmallVec<[Action; 16]> {
+         if kind.is_automatic() {
+             continue;
+         }
+-        #[allow(clippy::cast_possible_truncation)]
+-        out.push(Action::DrinkPotion {
+-            potion_slot: slot as u8,
+-            target: None,
+-        });
++        if potion_effects::lookup_target_type(*kind) == Some(potions::PotionTargetType::AnyEnemy) {
++            for (index, uid) in state.enemy_uids.iter().enumerate() {
++                if creature_by_id(&state.creatures, uid.0).is_some_and(|enemy| enemy.current_hp > 0) {
++                    out.push(Action::DrinkPotion { potion_slot: slot as u8, target: Some(index as u8) });
++                }
++            }
++        } else {
++            out.push(Action::DrinkPotion { potion_slot: slot as u8, target: None });
++        }
+     }
+ 
+     // End turn is always legal in PlayerPlayPhase.

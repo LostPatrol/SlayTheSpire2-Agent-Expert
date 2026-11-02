@@ -1,0 +1,3033 @@
+{
+  "source_panel": "E:\\STS2-Agent-Expert\\agent\\codex\\solver-resume5-20261030\\validation\\v28-public-defect-first",
+  "source_response": "E:\\STS2-Agent-Expert\\agent\\codex\\solver-resume5-20261030\\validation\\v28-public-defect-first\\public-defect-1458832210\\response.json",
+  "source_response_sha256": "aa0aa5949fdd300ab2bc3d91f6f21536972789822e9777fec0782527047e1b24",
+  "artifact": {
+    "input": "E:\\STS2-Agent-Expert\\agent\\codex\\solver-resume5-20261030\\candidate-v28\\mentor-simulation.exe",
+    "frozen": "E:\\STS2-Agent-Expert\\agent\\codex\\solver-resume5-20261030\\validation\\v28-public-defect-first\\mentor-simulation.exe",
+    "sha256": "f28a6db18ac06c61de864d5e0f98db4e49a8640a04a5bd00e06566019351a065",
+    "alignment_source_sha256": "7fd64932692f765ea2da1a5051caa6a6025e24d7a70d3a685a6e0af1d2cde0de",
+    "alignment_source_scope": "working_tree_snapshot_not_independent_build_evidence",
+    "compiled_alignment_source_sha256": "7fd64932692f765ea2da1a5051caa6a6025e24d7a70d3a685a6e0af1d2cde0de",
+    "working_alignment_matches_build_provenance": true,
+    "matching_executable_source_provenance_copied": true,
+    "compiler_profile": {
+      "opt_level": 2,
+      "lto": false,
+      "codegen_units": 16
+    },
+    "reference_pin": "28429066d91ed05c10b7b57597fc624196d197a4"
+  },
+  "attempt": {
+    "request": {
+      "op": "alignment_run",
+      "seed": 1458832210,
+      "character": "defect",
+      "model_path": "E:\\STS2-Agent-Expert\\vendor\\spire-mentor\\sts2-pycli\\data\\ppo\\ppo_fullrun_defect_deckmut_it150_v0111vocab.onnx",
+      "features": "",
+      "mode": "public",
+      "execution_profile": "corrected",
+      "ascension": 0,
+      "act1": "overgrowth",
+      "simulations": 1000,
+      "boss_simulations": 4000,
+      "max_steps": 100000,
+      "livelock_stall_limit": 256,
+      "timeout_ms": 600000,
+      "rollout_policy": "upstream",
+      "action_prior": "upstream",
+      "value_model": "texel",
+      "search_profile": "upstream",
+      "capture_internal_roots": true,
+      "engine_stage_profile": "native_ui",
+      "interactive_potion_swap": true,
+      "public_uncertainty": {
+        "worlds": 32,
+        "full_unlock_catalogue": true
+      }
+    },
+    "removed_environment_keys": [],
+    "status": "noncompletion",
+    "process_cpu": {
+      "kernel_seconds": 5.53125,
+      "user_seconds": 155.671875
+    },
+    "returncode": 0,
+    "response_path": "E:\\STS2-Agent-Expert\\agent\\codex\\solver-resume5-20261030\\validation\\v28-public-defect-first\\public-defect-1458832210\\response.json",
+    "outcome": "policy_halt",
+    "won": false,
+    "final_hp": 75,
+    "act_index": 3,
+    "adapter_error": "alignment_public_combat_blocked",
+    "combat": {
+      "actual_rollouts": 352734,
+      "belief_cut_reasons": {},
+      "belief_unsupported_cuts": 0,
+      "boss_decisions": 69,
+      "decision_entrypoint": "production_mcts_search",
+      "depth_cap_hits": 0,
+      "elite_decisions": 65,
+      "event_vetoes": "production_public_guard_only_no_extra_private_wrapper_veto",
+      "fallbacks": "see_each_production_search_response; unavailable_roots_halt",
+      "motif_decisions": 0,
+      "ordinary_decisions": 113,
+      "simulations_spent": 415000
+    },
+    "source_hashes": {
+      "content": "b6f03698bf58abcf",
+      "core": "b32626c1d045c8c6",
+      "mcts": "bdc13a34206d5d61",
+      "runai": "c5917ba0a38dec40"
+    },
+    "action_count": 335,
+    "upstream_steps": 335,
+    "decision_count": 336,
+    "terminal": false,
+    "wall_seconds": 179.81300000008196,
+    "cell": "public-defect-1458832210"
+  },
+  "last_decision": {
+    "actual_enemy_slot_map": [
+      {
+        "core_index": 0,
+        "public_index": 0
+      }
+    ],
+    "actual_legal_actions": [
+      {
+        "action": "drink_potion",
+        "potion_slot": 0,
+        "target_index": null
+      },
+      {
+        "action": "drink_potion",
+        "potion_slot": 1,
+        "target_index": 0
+      },
+      {
+        "action": "drink_potion",
+        "potion_slot": 2,
+        "target_index": 0
+      },
+      {
+        "action": "end_turn"
+      }
+    ],
+    "actual_native_legal_actions": [
+      {
+        "option_index": 0,
+        "target_index": null,
+        "type": "use_potion"
+      },
+      {
+        "option_index": 1,
+        "target_index": 0,
+        "type": "use_potion"
+      },
+      {
+        "option_index": 2,
+        "target_index": 0,
+        "type": "use_potion"
+      },
+      {
+        "type": "end_turn"
+      }
+    ],
+    "floor": 39,
+    "imported_snapshot": {
+      "end_turn_executed": false,
+      "enemies": [
+        {
+          "alive": true,
+          "block": 0,
+          "enemy_id": "MechaKnight",
+          "hittable": true,
+          "hp": {
+            "current": 279,
+            "max": 300
+          },
+          "i": 0,
+          "power_details": [
+            {
+              "amount": 2,
+              "display_amount": null,
+              "facing": null,
+              "index": 0,
+              "power_id": "ARTIFACT_POWER"
+            }
+          ],
+          "powers": [
+            "ARTIFACT_POWER 2"
+          ]
+        }
+      ],
+      "hand": [
+        {
+          "affliction": null,
+          "boundary_reason": null,
+          "card_id": "ECHO_FORM_CARD",
+          "card_index": 0,
+          "cost": 3,
+          "cost_observation_current": true,
+          "cost_observation_only": false,
+          "costs_x": false,
+          "dynamic_values": null,
+          "effective_keywords": [
+            "Ethereal"
+          ],
+          "enchantment": null,
+          "enchantments": [],
+          "fetch_played_this_turn": null,
+          "generated_in_combat": null,
+          "handle": "h0",
+          "import_notes": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "supported": true,
+          "target": "Self_",
+          "upgraded": false
+        }
+      ],
+      "history_statistics": {
+        "ally_powered_hits_by_target_this_turn": [],
+        "cards_discarded_this_turn": 0,
+        "cards_drawn_by_effect_this_turn": 0,
+        "cards_drawn_this_combat": 5,
+        "cards_exhausted_this_turn": 0,
+        "doom_applied_this_turn": false,
+        "energy_spent_this_turn": 2,
+        "energy_wasted_this_combat": 0,
+        "ethereal_cards_played_this_combat": 0,
+        "fetch_played_this_turn": [],
+        "generated_cards_this_combat": 1,
+        "hp_loss_events_this_combat": 0,
+        "hp_loss_events_this_turn": 0,
+        "last_attack_skill_played": null,
+        "lightning_orbs_channeled_this_combat": 2,
+        "osty_attacks_this_turn": 0,
+        "powered_hits_by_target_this_turn": [
+          {
+            "hits": 2,
+            "instance_id": "visible-enemy-2"
+          }
+        ],
+        "powered_hits_this_turn": 2,
+        "shivs_played_this_turn": 0,
+        "stars_gained_this_turn": 0,
+        "status_cards_drawn_this_turn": 0,
+        "unspent_energy_at_turn_end_sum": 0,
+        "zero_cost_attacks_played_this_turn": 1
+      },
+      "history_support": {
+        "legacy_scope": "current_consumers_are_checked_unobserved_future_generated_consumers_are_not_globally_proved",
+        "missing_value_features": [],
+        "unknown_statistics": [
+          "last_attack_skill_played"
+        ],
+        "unspent_energy_meaning": "original_turn_end_entry_energy_sum_including_carried_energy_not_native_resource_loss"
+      },
+      "horizon": "sampled_prefix_or_first_action_successor_mcts_statistics_are_separate",
+      "initial_round": 1,
+      "pending_choice": null,
+      "pending_play": false,
+      "phase": "PlayerPlayPhase",
+      "pile_cards": {
+        "discard": [
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "BALL_LIGHTNING",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s21",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Enemy",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "BOOST_AWAY",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s22",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "DAZED",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [
+              "Ethereal",
+              "Unplayable"
+            ],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s23",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "None",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "GO_FOR_THE_EYES",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s24",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Enemy",
+            "upgraded": true
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "LIGHTNING_ROD",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s25",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          }
+        ],
+        "draw": [
+          {
+            "affliction": null,
+            "boundary_reason": "card_energy_cost_not_reconstructible:0:core_expected:2",
+            "card_id": "ROCKET_PUNCH",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": true,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s15",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": false,
+            "target": "Enemy",
+            "upgraded": true
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "BOOST_AWAY",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s2",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": true
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "CAPACITOR",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s3",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "CLUMSY",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [
+              "Ethereal",
+              "Unplayable"
+            ],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s4",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "None",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "DEFEND_DEFECT",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s5",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "DEFEND_DEFECT",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s6",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "DEFEND_DEFECT",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s7",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "DEFEND_DEFECT",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s8",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "DUALCAST",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": {
+              "amount": 1,
+              "enchantment_id": "PERFECTFIT"
+            },
+            "enchantments": [
+              {
+                "amount": 1,
+                "enchantment_id": "PERFECTFIT"
+              }
+            ],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s9",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": true
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "ECHO_FORM_CARD",
+            "card_index": null,
+            "cost": 3,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [
+              "Ethereal"
+            ],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s10",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "GLASSWORK",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s11",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "GO_FOR_THE_EYES",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s12",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Enemy",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "HAILSTORM",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": {
+              "amount": 2,
+              "enchantment_id": "SWIFT"
+            },
+            "enchantments": [
+              {
+                "amount": 2,
+                "enchantment_id": "SWIFT"
+              }
+            ],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s13",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "HELIX_DRILL",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s14",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Enemy",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "SPINNER_CARD",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s16",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "STRIKE_DEFECT",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s17",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Enemy",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "STRIKE_DEFECT",
+            "card_index": null,
+            "cost": 1,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s18",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Enemy",
+            "upgraded": false
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "WHITE_NOISE",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [
+              "Exhaust"
+            ],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s19",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": true
+          },
+          {
+            "affliction": null,
+            "boundary_reason": null,
+            "card_id": "ZAP",
+            "card_index": null,
+            "cost": 0,
+            "cost_observation_current": true,
+            "cost_observation_only": false,
+            "costs_x": false,
+            "dynamic_values": null,
+            "effective_keywords": [],
+            "enchantment": null,
+            "enchantments": [],
+            "fetch_played_this_turn": null,
+            "generated_in_combat": null,
+            "handle": "s20",
+            "import_notes": [],
+            "star_cost": 0,
+            "star_costs_x": false,
+            "supported": true,
+            "target": "Self_",
+            "upgraded": true
+          }
+        ],
+        "exhaust": []
+      },
+      "pile_order": "unordered_multiset",
+      "piles": {
+        "discard": 5,
+        "draw": 19,
+        "exhaust": 0
+      },
+      "player": {
+        "attacks_played_this_turn": 2,
+        "block": 12,
+        "cards_played_this_turn": 4,
+        "energy": 2,
+        "hp": {
+          "current": 75,
+          "max": 75
+        },
+        "manual_card_plays_this_turn": 0,
+        "manual_card_series_started_this_turn": 0,
+        "non_auto_card_plays_this_turn": 0,
+        "orb_capacity": 3,
+        "orb_details": [
+          {
+            "evoke_value": 9,
+            "orb_id": "Lightning",
+            "passive_value": 4
+          },
+          {
+            "evoke_value": 9,
+            "orb_id": "Lightning",
+            "passive_value": 4
+          }
+        ],
+        "orb_projection_error": null,
+        "power_details": [
+          {
+            "amount": 3,
+            "display_amount": null,
+            "facing": null,
+            "index": 0,
+            "power_id": "THORNS_POWER"
+          },
+          {
+            "amount": 1,
+            "display_amount": null,
+            "facing": null,
+            "index": 1,
+            "power_id": "FOCUS_POWER"
+          },
+          {
+            "amount": 1,
+            "display_amount": null,
+            "facing": null,
+            "index": 2,
+            "power_id": "DEXTERITY_POWER"
+          },
+          {
+            "amount": 2,
+            "display_amount": null,
+            "facing": null,
+            "index": 3,
+            "power_id": "LIGHTNING_ROD_POWER"
+          }
+        ],
+        "powers": [
+          "DEXTERITY_POWER 1",
+          "FOCUS_POWER 1",
+          "LIGHTNING_ROD_POWER 2",
+          "THORNS_POWER 3"
+        ],
+        "skills_played_this_turn": 2,
+        "stars": 0
+      },
+      "potions": [
+        {
+          "boundary_reason": null,
+          "i": 0,
+          "occupied": true,
+          "potion_id": "LUCKY_TONIC",
+          "supported": true,
+          "usable": true
+        },
+        {
+          "boundary_reason": null,
+          "i": 1,
+          "occupied": true,
+          "potion_id": "POTION_SHAPED_ROCK",
+          "supported": true,
+          "usable": true
+        },
+        {
+          "boundary_reason": null,
+          "i": 2,
+          "occupied": true,
+          "potion_id": "POTION_SHAPED_ROCK",
+          "supported": true,
+          "usable": true
+        },
+        {
+          "boundary_reason": null,
+          "i": 3,
+          "occupied": false,
+          "potion_id": null,
+          "supported": true,
+          "usable": false
+        },
+        {
+          "boundary_reason": null,
+          "i": 4,
+          "occupied": false,
+          "potion_id": null,
+          "supported": true,
+          "usable": false
+        }
+      ],
+      "projected_incoming_damage": 25,
+      "round": 1,
+      "schema_version": 2,
+      "score_support": {
+        "evaluation": "read_separate_mcts_terminal_counts_values_and_cutoffs",
+        "level": "sampled",
+        "meaning": "immediate_snapshot_not_terminal_value_or_win_probability"
+      },
+      "stopped": false,
+      "terminal": false,
+      "turn_support": {
+        "future_intent": "hypothetical_without_private_move_history",
+        "gaps": [],
+        "matching": "public_intent_against_static_move_definitions"
+      }
+    },
+    "kind": "combat_import",
+    "omitted_private_fields": [
+      "all_rng_cursors",
+      "unknown_draw_order",
+      "enemy_move_id_and_history",
+      "undisplayed_power_counters",
+      "unwitnessed_play_history"
+    ],
+    "projection": {
+      "projection_notes": [
+        "run seed/RNG/unrevealed offers excluded",
+        "no engine-private effect preview outcomes imported",
+        "simple public localization variables rendered; unsupported formatting retains original engine prose",
+        "Ancient relic identities/titles are published; unresolved dynamic description text stays unknown"
+      ],
+      "public_map": {
+        "boss_node": "14,3",
+        "current": "6,4",
+        "nodes": [
+          {
+            "children": [
+              "1,0",
+              "1,4"
+            ],
+            "coord": "0,3",
+            "node_type": "Ancient",
+            "visited": true
+          },
+          {
+            "children": [
+              "2,0"
+            ],
+            "coord": "1,0",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "2,5",
+              "2,3"
+            ],
+            "coord": "1,4",
+            "node_type": "Monster",
+            "visited": true
+          },
+          {
+            "children": [
+              "3,1"
+            ],
+            "coord": "2,0",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "3,3",
+              "3,4"
+            ],
+            "coord": "2,3",
+            "node_type": "Unknown",
+            "visited": true
+          },
+          {
+            "children": [
+              "3,6"
+            ],
+            "coord": "2,5",
+            "node_type": "Shop",
+            "visited": false
+          },
+          {
+            "children": [
+              "4,2"
+            ],
+            "coord": "3,1",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "4,3",
+              "4,2"
+            ],
+            "coord": "3,3",
+            "node_type": "Unknown",
+            "visited": true
+          },
+          {
+            "children": [
+              "4,4",
+              "4,3"
+            ],
+            "coord": "3,4",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "4,6"
+            ],
+            "coord": "3,6",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "5,3",
+              "5,1"
+            ],
+            "coord": "4,2",
+            "node_type": "Shop",
+            "visited": true
+          },
+          {
+            "children": [
+              "5,3",
+              "5,4"
+            ],
+            "coord": "4,3",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "5,5"
+            ],
+            "coord": "4,4",
+            "node_type": "Shop",
+            "visited": false
+          },
+          {
+            "children": [
+              "5,5"
+            ],
+            "coord": "4,6",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "6,0",
+              "6,2"
+            ],
+            "coord": "5,1",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "6,2",
+              "6,4"
+            ],
+            "coord": "5,3",
+            "node_type": "Unknown",
+            "visited": true
+          },
+          {
+            "children": [
+              "6,5"
+            ],
+            "coord": "5,4",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "6,6"
+            ],
+            "coord": "5,5",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "7,0"
+            ],
+            "coord": "6,0",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "7,2",
+              "7,3"
+            ],
+            "coord": "6,2",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "7,5"
+            ],
+            "coord": "6,4",
+            "node_type": "Elite",
+            "visited": true
+          },
+          {
+            "children": [
+              "7,5"
+            ],
+            "coord": "6,5",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "7,5"
+            ],
+            "coord": "6,6",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "8,0"
+            ],
+            "coord": "7,0",
+            "node_type": "Treasure",
+            "visited": false
+          },
+          {
+            "children": [
+              "8,2"
+            ],
+            "coord": "7,2",
+            "node_type": "Treasure",
+            "visited": false
+          },
+          {
+            "children": [
+              "8,3"
+            ],
+            "coord": "7,3",
+            "node_type": "Treasure",
+            "visited": false
+          },
+          {
+            "children": [
+              "8,5"
+            ],
+            "coord": "7,5",
+            "node_type": "Treasure",
+            "visited": false
+          },
+          {
+            "children": [
+              "9,0"
+            ],
+            "coord": "8,0",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "9,3"
+            ],
+            "coord": "8,2",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "9,3"
+            ],
+            "coord": "8,3",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "9,6",
+              "9,4"
+            ],
+            "coord": "8,5",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "10,0"
+            ],
+            "coord": "9,0",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "10,2",
+              "10,3"
+            ],
+            "coord": "9,3",
+            "node_type": "Elite",
+            "visited": false
+          },
+          {
+            "children": [
+              "10,3",
+              "10,5"
+            ],
+            "coord": "9,4",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "10,6"
+            ],
+            "coord": "9,6",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "11,0"
+            ],
+            "coord": "10,0",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "11,2"
+            ],
+            "coord": "10,2",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "11,3"
+            ],
+            "coord": "10,3",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "11,5"
+            ],
+            "coord": "10,5",
+            "node_type": "Elite",
+            "visited": false
+          },
+          {
+            "children": [
+              "11,5",
+              "11,6"
+            ],
+            "coord": "10,6",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "12,0"
+            ],
+            "coord": "11,0",
+            "node_type": "Elite",
+            "visited": false
+          },
+          {
+            "children": [
+              "12,2"
+            ],
+            "coord": "11,2",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "12,3"
+            ],
+            "coord": "11,3",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "12,5"
+            ],
+            "coord": "11,5",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "12,6"
+            ],
+            "coord": "11,6",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "13,1"
+            ],
+            "coord": "12,0",
+            "node_type": "Unknown",
+            "visited": false
+          },
+          {
+            "children": [
+              "13,1"
+            ],
+            "coord": "12,2",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "13,3"
+            ],
+            "coord": "12,3",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "13,5"
+            ],
+            "coord": "12,5",
+            "node_type": "Monster",
+            "visited": false
+          },
+          {
+            "children": [
+              "13,6"
+            ],
+            "coord": "12,6",
+            "node_type": "Elite",
+            "visited": false
+          },
+          {
+            "children": [
+              "14,3"
+            ],
+            "coord": "13,1",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "14,3"
+            ],
+            "coord": "13,3",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "14,3"
+            ],
+            "coord": "13,5",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [
+              "14,3"
+            ],
+            "coord": "13,6",
+            "node_type": "RestSite",
+            "visited": false
+          },
+          {
+            "children": [],
+            "coord": "14,3",
+            "node_type": "Boss",
+            "visited": null
+          }
+        ],
+        "options": [],
+        "second_boss_node": null
+      },
+      "public_state": {
+        "action_revision": 335,
+        "available_actions": [
+          "play_card",
+          "end_turn",
+          "use_potion"
+        ],
+        "combat": {
+          "action_readiness": {
+            "actions_settled": true,
+            "can_use_combat_actions": true,
+            "snapshot_stable": true
+          },
+          "ally_powered_hits_by_target_this_turn": [],
+          "cards_discarded_this_turn": 0,
+          "cards_drawn_by_effect_this_turn": 0,
+          "cards_drawn_this_combat": 5,
+          "cards_exhausted_this_turn": 0,
+          "discard": [
+            {
+              "card_count": 1,
+              "card_id": "BALL_LIGHTNING",
+              "card_ids": [
+                "BALL_LIGHTNING"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 7,
+                  "current_value": 7,
+                  "enchanted_value": 7,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "BALL_LIGHTNING*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "BOOST_AWAY",
+              "card_ids": [
+                "BOOST_AWAY"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "BOOST_AWAY*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DAZED",
+              "card_ids": [
+                "DAZED"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [
+                "Ethereal",
+                "Unplayable"
+              ],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "DAZED*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "GO_FOR_THE_EYES",
+              "card_ids": [
+                "GO_FOR_THE_EYES"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 4,
+                  "current_value": 4,
+                  "enchanted_value": 4,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "GO_FOR_THE_EYES+*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "LIGHTNING_ROD",
+              "card_ids": [
+                "LIGHTNING_ROD"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 4,
+                  "current_value": 4,
+                  "enchanted_value": 4,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "LIGHTNING_ROD*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            }
+          ],
+          "doom_applied_this_turn": false,
+          "draw": [
+            {
+              "card_count": 1,
+              "card_id": "BOOST_AWAY",
+              "card_ids": [
+                "BOOST_AWAY"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 9,
+                  "current_value": 9,
+                  "enchanted_value": 9,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "BOOST_AWAY+*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "CAPACITOR",
+              "card_ids": [
+                "CAPACITOR"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "CAPACITOR*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "CLUMSY",
+              "card_ids": [
+                "CLUMSY"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [
+                "Ethereal",
+                "Unplayable"
+              ],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "CLUMSY*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "DEFEND_DEFECT*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "DEFEND_DEFECT*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "DEFEND_DEFECT*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "DEFEND_DEFECT*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DUALCAST",
+              "card_ids": [
+                "DUALCAST"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [],
+              "enchantment": {
+                "amount": 1,
+                "enchantment_id": "PERFECT_FIT"
+              },
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "DUALCAST+*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "ECHO_FORM_CARD",
+              "card_ids": [
+                "ECHO_FORM_CARD"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [
+                "Ethereal"
+              ],
+              "energy_cost": 3,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "ECHO_FORM_CARD*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "GLASSWORK",
+              "card_ids": [
+                "GLASSWORK"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "name": "Block"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "GLASSWORK*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "GO_FOR_THE_EYES",
+              "card_ids": [
+                "GO_FOR_THE_EYES"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "GO_FOR_THE_EYES*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "HAILSTORM",
+              "card_ids": [
+                "HAILSTORM"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [],
+              "enchantment": {
+                "amount": 2,
+                "enchantment_id": "SWIFT"
+              },
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "HAILSTORM*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "HELIX_DRILL",
+              "card_ids": [
+                "HELIX_DRILL"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "HELIX_DRILL*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "ROCKET_PUNCH",
+              "card_ids": [
+                "ROCKET_PUNCH"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 14,
+                  "current_value": 14,
+                  "enchanted_value": 14,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "ROCKET_PUNCH+*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "SPINNER_CARD",
+              "card_ids": [
+                "SPINNER_CARD"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "SPINNER_CARD*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "STRIKE_DEFECT",
+              "card_ids": [
+                "STRIKE_DEFECT"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "STRIKE_DEFECT*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "STRIKE_DEFECT",
+              "card_ids": [
+                "STRIKE_DEFECT"
+              ],
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "name": "Damage"
+                }
+              ],
+              "effective_keywords": [],
+              "energy_cost": 1,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "STRIKE_DEFECT*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "WHITE_NOISE",
+              "card_ids": [
+                "WHITE_NOISE"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [
+                "Exhaust"
+              ],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "WHITE_NOISE+*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "ZAP",
+              "card_ids": [
+                "ZAP"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [],
+              "energy_cost": 0,
+              "keyword_state_complete": true,
+              "known_instance_ids": [],
+              "line": "ZAP+*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            }
+          ],
+          "draw_knowledge": {
+            "available": true,
+            "bands": [
+              {
+                "cards": [
+                  {
+                    "card_count": 1,
+                    "card_id": "BOOST_AWAY",
+                    "card_ids": [
+                      "BOOST_AWAY"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 9,
+                        "current_value": 9,
+                        "enchanted_value": 9,
+                        "name": "Block"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "BOOST_AWAY+*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": true
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "CAPACITOR",
+                    "card_ids": [
+                      "CAPACITOR"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [],
+                    "energy_cost": 1,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "CAPACITOR*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "CLUMSY",
+                    "card_ids": [
+                      "CLUMSY"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [
+                      "Ethereal",
+                      "Unplayable"
+                    ],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "CLUMSY*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 4,
+                    "card_id": "DEFEND_DEFECT",
+                    "card_ids": [
+                      "DEFEND_DEFECT"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 5,
+                        "current_value": 5,
+                        "enchanted_value": 5,
+                        "name": "Block"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 1,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "DEFEND_DEFECT*4",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "DUALCAST",
+                    "card_ids": [
+                      "DUALCAST"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [],
+                    "enchantment": {
+                      "amount": 1,
+                      "enchantment_id": "PERFECT_FIT"
+                    },
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "DUALCAST+*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": true
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "ECHO_FORM_CARD",
+                    "card_ids": [
+                      "ECHO_FORM_CARD"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [
+                      "Ethereal"
+                    ],
+                    "energy_cost": 3,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "ECHO_FORM_CARD*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "GLASSWORK",
+                    "card_ids": [
+                      "GLASSWORK"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 5,
+                        "current_value": 5,
+                        "enchanted_value": 5,
+                        "name": "Block"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 1,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "GLASSWORK*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "GO_FOR_THE_EYES",
+                    "card_ids": [
+                      "GO_FOR_THE_EYES"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 3,
+                        "current_value": 3,
+                        "enchanted_value": 3,
+                        "name": "Damage"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "GO_FOR_THE_EYES*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "HAILSTORM",
+                    "card_ids": [
+                      "HAILSTORM"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [],
+                    "enchantment": {
+                      "amount": 2,
+                      "enchantment_id": "SWIFT"
+                    },
+                    "energy_cost": 1,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "HAILSTORM*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "HELIX_DRILL",
+                    "card_ids": [
+                      "HELIX_DRILL"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 3,
+                        "current_value": 3,
+                        "enchanted_value": 3,
+                        "name": "Damage"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "HELIX_DRILL*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "ROCKET_PUNCH",
+                    "card_ids": [
+                      "ROCKET_PUNCH"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 14,
+                        "current_value": 14,
+                        "enchanted_value": 14,
+                        "name": "Damage"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "ROCKET_PUNCH+*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": true
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "SPINNER_CARD",
+                    "card_ids": [
+                      "SPINNER_CARD"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [],
+                    "energy_cost": 1,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "SPINNER_CARD*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 2,
+                    "card_id": "STRIKE_DEFECT",
+                    "card_ids": [
+                      "STRIKE_DEFECT"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [
+                      {
+                        "base_value": 6,
+                        "current_value": 6,
+                        "enchanted_value": 6,
+                        "name": "Damage"
+                      }
+                    ],
+                    "effective_keywords": [],
+                    "energy_cost": 1,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "STRIKE_DEFECT*2",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": false
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "WHITE_NOISE",
+                    "card_ids": [
+                      "WHITE_NOISE"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [
+                      "Exhaust"
+                    ],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "WHITE_NOISE+*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": true
+                  },
+                  {
+                    "card_count": 1,
+                    "card_id": "ZAP",
+                    "card_ids": [
+                      "ZAP"
+                    ],
+                    "costs_x": false,
+                    "dynamic_values": [],
+                    "effective_keywords": [],
+                    "energy_cost": 0,
+                    "keyword_state_complete": true,
+                    "known_instance_ids": [],
+                    "line": "ZAP+*1",
+                    "mods": [],
+                    "star_cost": 0,
+                    "star_costs_x": false,
+                    "upgraded": true
+                  }
+                ]
+              }
+            ],
+            "discard_bands": [],
+            "inserted": [],
+            "kind": "public_rule_state",
+            "reason": null,
+            "schema_version": 1,
+            "source": "offline_public_rule_observer"
+          },
+          "enemies": [
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "MechaKnight",
+              "hittable": true,
+              "hp": "279/300",
+              "i": 0,
+              "instance_id": "visible-enemy-2",
+              "intents": [
+                {
+                  "damage": 25,
+                  "hits": 1,
+                  "intent_type": "ATTACK"
+                }
+              ],
+              "power_details": [
+                {
+                  "amount": 2,
+                  "display_amount": 2,
+                  "power_id": "ARTIFACT_POWER"
+                }
+              ],
+              "powers": [
+                "ARTIFACT_POWER 2"
+              ]
+            }
+          ],
+          "energy_spent_this_turn": 2,
+          "energy_wasted_this_combat": 0,
+          "exhaust": [],
+          "generated_cards_this_combat": 1,
+          "hand": [
+            {
+              "card_count": 1,
+              "card_id": "ECHO_FORM_CARD",
+              "card_ids": [
+                "ECHO_FORM_CARD"
+              ],
+              "costs_x": false,
+              "dynamic_values": [],
+              "effective_keywords": [
+                "Ethereal"
+              ],
+              "energy_cost": 3,
+              "i": 0,
+              "instance_id": "visible-1",
+              "keyword_state_complete": true,
+              "line": "ECHO_FORM_CARD*1",
+              "mods": [],
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            }
+          ],
+          "hp_loss_events_this_combat": 0,
+          "hp_loss_events_this_turn": 0,
+          "lightning_orbs_channeled_this_combat": 2,
+          "osty_attacks_this_turn": 0,
+          "play": [],
+          "player": {
+            "block": 12,
+            "energy": 2,
+            "hp": "75/75",
+            "orb_capacity": 3,
+            "orb_details": [
+              {
+                "evoke_value": 9,
+                "orb_id": "Lightning",
+                "passive_value": 4
+              },
+              {
+                "evoke_value": 9,
+                "orb_id": "Lightning",
+                "passive_value": 4
+              }
+            ],
+            "power_details": [
+              {
+                "amount": 3,
+                "display_amount": 3,
+                "power_id": "THORNS_POWER"
+              },
+              {
+                "amount": 1,
+                "display_amount": 1,
+                "power_id": "FOCUS_POWER"
+              },
+              {
+                "amount": 1,
+                "display_amount": 1,
+                "power_id": "DEXTERITY_POWER"
+              },
+              {
+                "amount": 2,
+                "display_amount": 2,
+                "power_id": "LIGHTNING_ROD_POWER"
+              }
+            ],
+            "powers": [
+              "THORNS_POWER 3",
+              "FOCUS_POWER 1",
+              "DEXTERITY_POWER 1",
+              "LIGHTNING_ROD_POWER 2"
+            ],
+            "stars": 0
+          },
+          "players": [],
+          "powered_hits_by_target_this_turn": [
+            {
+              "hits": 2,
+              "instance_id": "visible-enemy-2"
+            }
+          ],
+          "public_card_block_history": {
+            "available": true,
+            "complete": true,
+            "entries": [
+              {
+                "amount": 5,
+                "card_play_index": 1,
+                "this_turn": true
+              },
+              {
+                "amount": 7,
+                "card_play_index": 3,
+                "this_turn": true
+              }
+            ],
+            "scope": "current_combat",
+            "source": "offline_public_card_sourced_block_gains"
+          },
+          "public_card_play_history": {
+            "available": true,
+            "complete": true,
+            "plays": [
+              {
+                "auto_played": true,
+                "card_id": "BALL_LIGHTNING",
+                "card_type": "Attack",
+                "energy_spent": 0,
+                "energy_value": 1,
+                "first_in_series": true,
+                "known_instance_id": null,
+                "sequence": 0,
+                "stars_spent": 0,
+                "this_turn": true,
+                "was_ethereal": false
+              },
+              {
+                "auto_played": true,
+                "card_id": "LIGHTNING_ROD",
+                "card_type": "Skill",
+                "energy_spent": 0,
+                "energy_value": 1,
+                "first_in_series": true,
+                "known_instance_id": null,
+                "sequence": 1,
+                "stars_spent": 0,
+                "this_turn": true,
+                "was_ethereal": false
+              },
+              {
+                "auto_played": true,
+                "card_id": "GO_FOR_THE_EYES",
+                "card_type": "Attack",
+                "energy_spent": 0,
+                "energy_value": 0,
+                "first_in_series": true,
+                "known_instance_id": null,
+                "sequence": 2,
+                "stars_spent": 0,
+                "this_turn": true,
+                "was_ethereal": false
+              },
+              {
+                "auto_played": true,
+                "card_id": "BOOST_AWAY",
+                "card_type": "Skill",
+                "energy_spent": 0,
+                "energy_value": 0,
+                "first_in_series": true,
+                "known_instance_id": null,
+                "sequence": 3,
+                "stars_spent": 0,
+                "this_turn": true,
+                "was_ethereal": false
+              }
+            ],
+            "scope": "current_combat",
+            "source": "offline_public_completed_card_plays"
+          },
+          "stars_gained_this_turn": 0,
+          "status_cards_drawn_this_turn": 0,
+          "unspent_energy_at_turn_end_sum": 0
+        },
+        "public_history": {
+          "combat_cost_origins": [],
+          "encounter_id": "offline-public-combat-16",
+          "enemy_turns": [
+            {
+              "enemies": [
+                {
+                  "alive": true,
+                  "block": 0,
+                  "enemy_id": "MechaKnight",
+                  "hittable": true,
+                  "hp": "279/300",
+                  "i": 0,
+                  "instance_id": "visible-enemy-2",
+                  "intents": [
+                    {
+                      "damage": 25,
+                      "hits": 1,
+                      "intent_type": "ATTACK"
+                    }
+                  ],
+                  "power_details": [
+                    {
+                      "amount": 2,
+                      "display_amount": 2,
+                      "power_id": "ARTIFACT_POWER"
+                    }
+                  ],
+                  "powers": [
+                    "ARTIFACT_POWER 2"
+                  ]
+                }
+              ],
+              "player": {
+                "block": 12,
+                "energy": 2,
+                "hp": "75/75",
+                "orb_capacity": 3,
+                "orb_details": [
+                  {
+                    "evoke_value": 9,
+                    "orb_id": "Lightning",
+                    "passive_value": 4
+                  },
+                  {
+                    "evoke_value": 9,
+                    "orb_id": "Lightning",
+                    "passive_value": 4
+                  }
+                ],
+                "power_details": [
+                  {
+                    "amount": 3,
+                    "display_amount": 3,
+                    "power_id": "THORNS_POWER"
+                  },
+                  {
+                    "amount": 1,
+                    "display_amount": 1,
+                    "power_id": "FOCUS_POWER"
+                  },
+                  {
+                    "amount": 1,
+                    "display_amount": 1,
+                    "power_id": "DEXTERITY_POWER"
+                  },
+                  {
+                    "amount": 2,
+                    "display_amount": 2,
+                    "power_id": "LIGHTNING_ROD_POWER"
+                  }
+                ],
+                "powers": [
+                  "THORNS_POWER 3",
+                  "FOCUS_POWER 1",
+                  "DEXTERITY_POWER 1",
+                  "LIGHTNING_ROD_POWER 2"
+                ],
+                "stars": 0
+              },
+              "turn": 1
+            }
+          ],
+          "history_complete": false,
+          "schema_version": 1,
+          "source": "observed_full_run_public_frames_and_completed_actions"
+        },
+        "run": {
+          "act_count": 3,
+          "act_floor": 7,
+          "act_id": "2",
+          "act_index": 3,
+          "ascension": 0,
+          "awaiting_second_boss": false,
+          "boss_id": "AEONGLASS_BOSS",
+          "character_id": "DEFECT",
+          "deck": [
+            {
+              "card_count": 1,
+              "card_id": "STRIKE_DEFECT",
+              "card_ids": [
+                "STRIKE_DEFECT"
+              ],
+              "line": "STRIKE_DEFECT*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "STRIKE_DEFECT",
+              "card_ids": [
+                "STRIKE_DEFECT"
+              ],
+              "line": "STRIKE_DEFECT*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "line": "DEFEND_DEFECT*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "line": "DEFEND_DEFECT*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "line": "DEFEND_DEFECT*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "DEFEND_DEFECT",
+              "card_ids": [
+                "DEFEND_DEFECT"
+              ],
+              "line": "DEFEND_DEFECT*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "ZAP",
+              "card_ids": [
+                "ZAP"
+              ],
+              "line": "ZAP+*1",
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "DUALCAST",
+              "card_ids": [
+                "DUALCAST"
+              ],
+              "enchantment": {
+                "amount": 1,
+                "enchantment_id": "PERFECT_FIT"
+              },
+              "line": "DUALCAST+*1",
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "BALL_LIGHTNING",
+              "card_ids": [
+                "BALL_LIGHTNING"
+              ],
+              "line": "BALL_LIGHTNING*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "ROCKET_PUNCH",
+              "card_ids": [
+                "ROCKET_PUNCH"
+              ],
+              "line": "ROCKET_PUNCH+*1",
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "LIGHTNING_ROD",
+              "card_ids": [
+                "LIGHTNING_ROD"
+              ],
+              "line": "LIGHTNING_ROD*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "HAILSTORM",
+              "card_ids": [
+                "HAILSTORM"
+              ],
+              "enchantment": {
+                "amount": 2,
+                "enchantment_id": "SWIFT"
+              },
+              "line": "HAILSTORM*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "CLUMSY",
+              "card_ids": [
+                "CLUMSY"
+              ],
+              "line": "CLUMSY*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "WHITE_NOISE",
+              "card_ids": [
+                "WHITE_NOISE"
+              ],
+              "line": "WHITE_NOISE+*1",
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "GLASSWORK",
+              "card_ids": [
+                "GLASSWORK"
+              ],
+              "line": "GLASSWORK*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "ECHO_FORM_CARD",
+              "card_ids": [
+                "ECHO_FORM_CARD"
+              ],
+              "line": "ECHO_FORM_CARD*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "GO_FOR_THE_EYES",
+              "card_ids": [
+                "GO_FOR_THE_EYES"
+              ],
+              "line": "GO_FOR_THE_EYES+*1",
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "CAPACITOR",
+              "card_ids": [
+                "CAPACITOR"
+              ],
+              "line": "CAPACITOR*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "SPINNER_CARD",
+              "card_ids": [
+                "SPINNER_CARD"
+              ],
+              "line": "SPINNER_CARD*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "BOOST_AWAY",
+              "card_ids": [
+                "BOOST_AWAY"
+              ],
+              "line": "BOOST_AWAY*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "GO_FOR_THE_EYES",
+              "card_ids": [
+                "GO_FOR_THE_EYES"
+              ],
+              "line": "GO_FOR_THE_EYES*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "HELIX_DRILL",
+              "card_ids": [
+                "HELIX_DRILL"
+              ],
+              "line": "HELIX_DRILL*1",
+              "upgraded": false
+            },
+            {
+              "card_count": 1,
+              "card_id": "BOOST_AWAY",
+              "card_ids": [
+                "BOOST_AWAY"
+              ],
+              "line": "BOOST_AWAY+*1",
+              "upgraded": true
+            },
+            {
+              "card_count": 1,
+              "card_id": "ECHO_FORM_CARD",
+              "card_ids": [
+                "ECHO_FORM_CARD"
+              ],
+              "line": "ECHO_FORM_CARD*1",
+              "upgraded": false
+            }
+          ],
+          "deck_size": 24,
+          "floor": 40,
+          "gold": 2,
+          "hp": "75/75",
+          "is_last_act": true,
+          "map_coord": {
+            "col": 4,
+            "row": 6
+          },
+          "max_energy": 4,
+          "potions": [
+            {
+              "discard": true,
+              "i": 0,
+              "occupied": true,
+              "potion_id": "LUCKY_TONIC",
+              "usable": true
+            },
+            {
+              "discard": true,
+              "i": 1,
+              "occupied": true,
+              "potion_id": "POTION_SHAPED_ROCK",
+              "usable": true
+            },
+            {
+              "discard": true,
+              "i": 2,
+              "occupied": true,
+              "potion_id": "POTION_SHAPED_ROCK",
+              "usable": true
+            },
+            {
+              "discard": false,
+              "i": 3,
+              "occupied": false,
+              "potion_id": null,
+              "usable": false
+            },
+            {
+              "discard": false,
+              "i": 4,
+              "occupied": false,
+              "potion_id": null,
+              "usable": false
+            }
+          ],
+          "relic_ids": [
+            "CRACKED_CORE",
+            "WINGED_BOOTS",
+            "PETRIFIED_TOAD",
+            "HORN_CLEAT",
+            "BRONZE_SCALES",
+            "DATA_DISK",
+            "CENTENNIAL_PUZZLE",
+            "SEAL_OF_GOLD",
+            "VENERABLE_TEA_SET",
+            "POTION_BELT",
+            "FESTIVE_POPPER",
+            "MR_STRUGGLES",
+            "WHISPERING_EARRING",
+            "MEAL_TICKET",
+            "FORGOTTEN_SOUL",
+            "ODDLY_SMOOTH_STONE"
+          ],
+          "relic_is_melted": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "relic_stacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "relic_statuses": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "room_type": "Elite"
+        },
+        "screen": "COMBAT",
+        "supported": true,
+        "turn": 1
+      }
+    },
+    "support": {
+      "automatic_choice_selection": false,
+      "blocking_reasons": [
+        "s15:ROCKET_PUNCH:card_energy_cost_not_reconstructible:0:core_expected:2"
+      ],
+      "future_enemy_rules": "upstream_weighted_state_machine_cycles_repeat_limits_and_phase_conditions",
+      "hidden_information": "public_rules_and_belief_draw_chance_nodes",
+      "history_support": {
+        "legacy_scope": "current_consumers_are_checked_unobserved_future_generated_consumers_are_not_globally_proved",
+        "missing_value_features": [],
+        "unknown_statistics": [
+          "last_attack_skill_played"
+        ],
+        "unspent_energy_meaning": "original_turn_end_entry_energy_sum_including_carried_energy_not_native_resource_loss"
+      },
+      "level": "partial",
+      "reasons": [
+        "automatic_play_uses_upstream_choice_continuation_native_coverage_is_partial",
+        "draw_order_constraints_restored_from_public_shuffle_and_pile_events",
+        "future_costs_follow_rules_after_root_native_quote_expires",
+        "h0:ECHO_FORM_CARD:automatic_play_choice_path_not_reviewed",
+        "relic_rule_not_reviewed:BRONZE_SCALES",
+        "relic_rule_not_reviewed:CENTENNIAL_PUZZLE",
+        "relic_rule_not_reviewed:CRACKED_CORE",
+        "relic_rule_not_reviewed:DATA_DISK",
+        "relic_rule_not_reviewed:FESTIVE_POPPER",
+        "relic_rule_not_reviewed:FORGOTTEN_SOUL",
+        "relic_rule_not_reviewed:MEAL_TICKET",
+        "relic_rule_not_reviewed:MR_STRUGGLES",
+        "relic_rule_not_reviewed:PETRIFIED_TOAD",
+        "relic_rule_not_reviewed:POTION_BELT",
+        "relic_rule_not_reviewed:SEAL_OF_GOLD",
+        "relic_rule_not_reviewed:WHISPERING_EARRING",
+        "s10:ECHO_FORM_CARD:automatic_play_choice_path_not_reviewed",
+        "s15:ROCKET_PUNCH:card_energy_cost_not_reconstructible:0:core_expected:2"
+      ],
+      "scope": "multi_turn_combat_until_terminal_or_depth_cutoff"
+    }
+  }
+}

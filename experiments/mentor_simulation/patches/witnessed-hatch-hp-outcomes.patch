@@ -1,0 +1,914 @@
+diff --git a/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs b/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs
+index 1feb461..62750a3 100644
+--- a/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs
++++ b/sts2-rs/crates/sts2-bench/benches/bumpalo_arena.rs
+@@ -173,6 +173,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-bench/benches/combat.rs b/sts2-rs/crates/sts2-bench/benches/combat.rs
+index ac1e181..5153784 100644
+--- a/sts2-rs/crates/sts2-bench/benches/combat.rs
++++ b/sts2-rs/crates/sts2-bench/benches/combat.rs
+@@ -175,6 +175,7 @@ fn make_cultist_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     // Walk the setup → PlayerTurnStart → PlayerPlayPhase prologue once
+diff --git a/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs b/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs
+index abda797..7992990 100644
+--- a/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs
++++ b/sts2-rs/crates/sts2-bench/benches/combat_throughput.rs
+@@ -165,6 +165,7 @@ fn make_cultist_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs b/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs
+index 656ed86..9c99c4e 100644
+--- a/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs
++++ b/sts2-rs/crates/sts2-bench/benches/mcts_parallel.rs
+@@ -155,6 +155,7 @@ fn make_power_rich_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs b/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs
+index 3fb3d38..47a7f46 100644
+--- a/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs
++++ b/sts2-rs/crates/sts2-bench/benches/mcts_smoke.rs
+@@ -161,6 +161,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs b/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs
+index 24a95cf..3df2593 100644
+--- a/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs
++++ b/sts2-rs/crates/sts2-bench/benches/p7_throughput.rs
+@@ -144,6 +144,7 @@ fn make_state(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     let r0 = start_combat(&mut state);
+     debug_assert_eq!(r0, StepResult::Advanced);
+diff --git a/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs b/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs
+index 34f2ed4..7b4a827 100644
+--- a/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs
++++ b/sts2-rs/crates/sts2-bench/benches/transitions_per_sec.rs
+@@ -145,6 +145,7 @@ fn make_cultist_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs b/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs
+index ca7344d..a0e1d25 100644
+--- a/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs
++++ b/sts2-rs/crates/sts2-bench/examples/alloc_profile.rs
+@@ -166,6 +166,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     assert_eq!(start_combat(&mut state), StepResult::Advanced);
+     assert_eq!(start_player_turn(&mut state), StepResult::Advanced);
+diff --git a/sts2-rs/crates/sts2-bench/examples/common/mod.rs b/sts2-rs/crates/sts2-bench/examples/common/mod.rs
+index 7d1cc61..b987fc4 100644
+--- a/sts2-rs/crates/sts2-bench/examples/common/mod.rs
++++ b/sts2-rs/crates/sts2-bench/examples/common/mod.rs
+@@ -397,6 +397,7 @@ pub fn build_ironclad_state_with_deck(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs b/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs
+index 0395603..083bfbf 100644
+--- a/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs
++++ b/sts2-rs/crates/sts2-bench/examples/mcts_profile.rs
+@@ -143,6 +143,7 @@ fn make_nibbit_combat(seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs b/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs
+index 6fc654a..695911f 100644
+--- a/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs
++++ b/sts2-rs/crates/sts2-cli/src/bin/corpus_gen.rs
+@@ -3436,6 +3436,7 @@ fn build_combat_state(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs b/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs
+index ad5b2ca..999fdf9 100644
+--- a/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs
++++ b/sts2-rs/crates/sts2-cli/src/sim/scenario/starter.rs
+@@ -220,6 +220,7 @@ pub fn build_state_with_ascension(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     // Monsters are spawned exactly as a real run spawns them (GH #762):
+diff --git a/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs b/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs
+index ce272be..77d6263 100644
+--- a/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs
++++ b/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs
+@@ -825,28 +825,27 @@ fn tough_egg_hatch_effect(state: &mut CombatState, owner: CreatureUid) {
+             c.powers.retain(|u| u.0 != pid);
+         }
+     }
+-    // `HatchlingMinHp => GetValueIfAscension(ToughEnemies, 20, 19)`,
+-    // `HatchlingMaxHp => (.., 23, 22)` on both builds (decomp
+-    // ToughEgg.cs:56-58). One Niche read either way.
+-    use sts2_core::ascension::{get_value_if_ascension, AscensionLevel::ToughEnemies};
+-    let min = get_value_if_ascension(state.ascension, ToughEnemies, 20, 19);
+-    let max = get_value_if_ascension(state.ascension, ToughEnemies, 23, 22);
+-    let hp = if state.game_version >= sts2_core::GameVersion::V0_111_0 {
+-        // v0.111.0: `NextInt(HatchlingMinHp, HatchlingMaxHp + 1)` — the band is
+-        // inclusive, 19..=22 (A8 20..=23) (decomp ToughEgg.cs:172).
+-        state.run_rng.niche.next_int_exclusive(min, max + 1)
+-    } else {
+-        // v0.107.1: `NextInt(HatchlingMinHp, HatchlingMaxHp)` is max-EXCLUSIVE
+-        // → 19..=21, and 20..=22 at A8+ (decomp ToughEgg.cs:172; GH #858 —
+-        // this branch used to ignore ToughEnemies).
+-        state.run_rng.niche.next_int_exclusive(min, max)
+-    };
++    let (min, max_exclusive) = tough_egg_hatch_hp_bounds(state.ascension, state.game_version);
++    // Preserve the original Niche read even when a past public result is witnessed.
++    let sampled = state.run_rng.niche.next_int_exclusive(min, max_exclusive);
++    let hp = sts2_core::witnessed_outcomes::condition_hatch_hp(
++        state, owner, min, max_exclusive, sampled,
++    );
+     if let Some(c) = state.creatures.iter_mut().find(|c| c.id == owner.0) {
+         c.max_hp = hp;
+         c.current_hp = hp;
+     }
+ }
+ 
++/// Half-open support of the original Hatch sample, distinct from shell spawn HP.
++pub fn tough_egg_hatch_hp_bounds(ascension: u8, version: sts2_core::GameVersion) -> (i32, i32) {
++    use sts2_core::ascension::{get_value_if_ascension, AscensionLevel::ToughEnemies};
++    let min = get_value_if_ascension(ascension, ToughEnemies, 20, 19);
++    let max = get_value_if_ascension(ascension, ToughEnemies, 23, 22);
++    // ToughEgg.cs:172 changed from NextInt(min,max) to NextInt(min,max+1) in v0.111.0.
++    (min, max + i32::from(version >= sts2_core::GameVersion::V0_111_0))
++}
++
+ /// Bead `sts2-rs-baxi5`: Myte INFEST adds 2 [`CardId::Toxic`] to the
+ /// player's hand per C# `Myte.cs:ToxicMove`:
+ /// `await CardPileCmd.AddToCombatAndPreview<Toxic>(targets, PileType.Hand, 2, addedByPlayer: false)`.
+diff --git a/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs b/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
+index 6585341..b48adfc 100644
+--- a/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
++++ b/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
+@@ -213,6 +213,7 @@ fn make_combat(seed: u64, idx: u8) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-content/tests/act1_smoke.rs b/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
+index 8b460f6..dc0147a 100644
+--- a/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
++++ b/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
+@@ -182,6 +182,7 @@ fn make_combat(seed: u64, monsters: &[(MonsterKind, MonsterSpawnArgs)]) -> Comba
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
+index 7159680..c71d01c 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
+@@ -215,6 +215,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
+index 6d2528f..3577850 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
+@@ -210,6 +210,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
+index dda52eb..9eae527 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
+@@ -293,6 +293,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
+index 3caa26b..a2f99e3 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
+@@ -206,6 +206,7 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs b/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
+index f57e40c..da30355 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
+@@ -378,6 +378,7 @@ fn build_state(fixture_initial: &Value, encounter: &str, seed: u64) -> CombatSta
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     apply_start_of_combat_powers(&mut state, enemy_uid, encounter);
+     state
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs b/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
+index f07e1ec..5213d21 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
+@@ -358,6 +358,7 @@ fn build_state(fixture_initial: &Value, encounter: &str, seed: u64) -> CombatSta
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+index 27b0305..2e1167b 100644
+--- a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
++++ b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+@@ -90,6 +90,163 @@ fn observed_refill_fixture() -> (CombatState, Vec<CardUid>) {
+     (state, expected)
+ }
+ 
++/// Add real HATCH_MOVE listeners to the witnessed Tyranny cross-refill fixture.
++fn observed_hatch_fixture() -> (CombatState, Vec<CardUid>, Vec<sts2_core::CreatureUid>) {
++    let (mut state, draws) = observed_refill_fixture();
++    let mut eggs = Vec::new();
++    for _ in 0..3 {
++        let egg = state.spawn_enemy(MonsterKind::ToughEgg);
++        state.set_creature_ai(
++            egg,
++            sts2_content::monsters::act2_hive::create_tough_egg_ai(),
++        );
++        // Spawn attachment does not publish a move; this fixture starts at the witnessed HATCH telegraph.
++        state
++            .creatures
++            .iter_mut()
++            .find(|c| c.id == egg.0)
++            .unwrap()
++            .intent = Some(sts2_core::Intent::Summon);
++        sts2_core::card_effects::apply_power_to_creature(&mut state, egg, PowerKind::Hatch, 1);
++        sts2_core::card_effects::apply_power_to_creature(&mut state, egg, PowerKind::Minion, 1);
++        eggs.push(egg);
++    }
++    (state, draws, eggs)
++}
++
++/// Past Hatch results and observed card draws share one original EndTurn and unchanged RNG calls.
++#[test]
++fn observed_hatch_hp_composes_with_cross_refill_draws_and_preserves_other_state() {
++    let (before, draws, eggs) = observed_hatch_fixture();
++    let mut raw = before.clone();
++    sts2_core::draw_knowledge::apply_observed_draws(&mut raw, sts2_core::Action::EndTurn, &draws)
++        .unwrap();
++    assert_eq!(
++        raw.run_rng.niche.counter() - before.run_rng.niche.counter(),
++        3
++    );
++    let evidence: Vec<_> = eggs.iter().copied().zip([19, 20, 21]).collect();
++    let mut witnessed = before.clone();
++    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut witnessed, &evidence, |state| {
++        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
++    })
++    .unwrap();
++    for &(owner, hp) in &evidence {
++        let creature = raw.creatures.iter_mut().find(|c| c.id == owner.0).unwrap();
++        creature.current_hp = hp;
++        creature.max_hp = hp;
++    }
++    assert_eq!(
++        witnessed, raw,
++        "only the observed Hatch results may differ from ordinary sampling"
++    );
++    assert!(witnessed.replay_observations.is_none());
++    assert!(witnessed
++        .player
++        .draw_knowledge
++        .as_ref()
++        .unwrap()
++        .observed_draws
++        .is_none());
++}
++
++/// Owner mismatches, illegal support, missing events and extra evidence cannot commit a prefix.
++#[test]
++fn observed_hatch_hp_rejects_bad_or_incomplete_evidence_atomically() {
++    let (before, draws, eggs) = observed_hatch_fixture();
++    let good: Vec<_> = eggs.iter().copied().zip([19, 20, 21]).collect();
++    let mut wrong_owner = good.clone();
++    wrong_owner.swap(0, 1);
++    let mut unsupported = good.clone();
++    unsupported[0].1 = 22;
++    let mut extra = good.clone();
++    extra.push((before.player.creature_uid.unwrap(), 20));
++    for (evidence, reason) in [
++        (wrong_owner, "observed_hatch_hp_owner_mismatch"),
++        (unsupported, "observed_hatch_hp_outside_positive_support"),
++        (
++            good[..2].to_vec(),
++            "observed_hatch_hp_unwitnessed_extra_event",
++        ),
++        (extra, "observed_hatch_hp_queue_not_consumed"),
++    ] {
++        let mut state = before.clone();
++        assert_eq!(
++            sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &evidence, |state| {
++                sts2_core::draw_knowledge::apply_observed_draws(
++                    state,
++                    sts2_core::Action::EndTurn,
++                    &draws,
++                )
++            }),
++            Err(reason)
++        );
++        assert_eq!(state, before);
++        assert!(state.replay_observations.is_none());
++    }
++    let mut state = before.clone();
++    let mut duplicate = good.clone();
++    duplicate[1].0 = duplicate[0].0;
++    assert_eq!(
++        sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &duplicate, |_| {
++            panic!("duplicate owners must be rejected before executing the prefix")
++        }),
++        Err("observed_hatch_hp_duplicate_owner")
++    );
++    assert_eq!(state, before);
++    let mut wrong_draws = draws.clone();
++    wrong_draws.swap(4, 5);
++    assert_eq!(
++        sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut state, &good, |state| {
++            sts2_core::draw_knowledge::apply_observed_draws(
++                state,
++                sts2_core::Action::EndTurn,
++                &wrong_draws,
++            )
++        }),
++        Err("observed_draw_outside_positive_support")
++    );
++    assert_eq!(state, before);
++}
++
++/// The original version-specific sampler owns support; a shell HP getter is never substituted.
++#[test]
++fn observed_hatch_hp_preserves_versioned_support_and_unarmed_sampling() {
++    use sts2_content::monsters::act2_hive::tough_egg_hatch_hp_bounds;
++    use sts2_core::GameVersion::{V0_107_1, V0_111_0};
++    assert_eq!(tough_egg_hatch_hp_bounds(0, V0_107_1), (19, 22));
++    assert_eq!(tough_egg_hatch_hp_bounds(8, V0_107_1), (20, 23));
++    assert_eq!(tough_egg_hatch_hp_bounds(0, V0_111_0), (19, 23));
++    assert_eq!(tough_egg_hatch_hp_bounds(8, V0_111_0), (20, 24));
++    let (mut before, draws, eggs) = observed_hatch_fixture();
++    let mut rng = before.run_rng.niche.clone();
++    let natural: Vec<_> = eggs
++        .iter()
++        .copied()
++        .map(|owner| (owner, rng.next_int_exclusive(19, 22)))
++        .collect();
++    let mut raw = before.clone();
++    sts2_core::draw_knowledge::apply_observed_draws(&mut raw, sts2_core::Action::EndTurn, &draws)
++        .unwrap();
++    for &(owner, hp) in &natural {
++        let creature = raw.creatures.iter().find(|c| c.id == owner.0).unwrap();
++        assert_eq!((creature.current_hp, creature.max_hp), (hp, hp));
++    }
++    let mut observed = before.clone();
++    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut observed, &natural, |state| {
++        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
++    })
++    .unwrap();
++    assert_eq!(observed, raw);
++    before.game_version = V0_111_0;
++    let evidence: Vec<_> = eggs.into_iter().map(|owner| (owner, 22)).collect();
++    sts2_core::witnessed_outcomes::with_observed_hatch_hp(&mut before, &evidence, |state| {
++        sts2_core::draw_knowledge::apply_observed_draws(state, sts2_core::Action::EndTurn, &draws)
++    })
++    .unwrap();
++    assert!(before.replay_observations.is_none());
++}
++
+ /// Observed draw conditioning crosses the original refill and keeps its native RNG advances.
+ #[test]
+ fn observed_draw_replay_crosses_refill_and_preserves_rng_work() {
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index b1e9b87..c8156ec 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -49,6 +49,7 @@ pub use cards::{Card, CardStore};
+ /// for the canonicalization argument. Bead `sts2-rs-vqckz`.
+ pub mod blindfold;
+ pub mod draw_knowledge;
++pub mod witnessed_outcomes;
+ 
+ /// Per-card afflictions (Devoured, Bound, Entangled, …). Mirrors C#
+ /// `MegaCrit.Sts2.Core.Models.Afflictions/`; scope + decomp at
+@@ -4064,6 +4065,8 @@ pub struct CombatState {
+     /// `None` when the last draw moved no card. Not in the serialized
+     /// parity surface nor the MCTS `state_hash`.
+     pub last_drawn_card: Option<crate::CardUid>,
++    /// Scoped past-outcome evidence; never serialized, hashed or retained by search clones.
++    pub replay_observations: Option<Box<witnessed_outcomes::ReplayObservations>>,
+ }
+ 
+ impl Default for CombatState {
+@@ -4125,6 +4128,7 @@ impl Default for CombatState {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         }
+     }
+ }
+diff --git a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+new file mode 100644
+index 0000000..cc66b1d
+--- /dev/null
++++ b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+@@ -0,0 +1,166 @@
++//! Ephemeral public observations of already executed chance effects.
++//! Rule handlers still sample their original RNG before conditioning that result.
++
++use crate::{CombatState, CreatureUid, StepResult};
++
++/// Typed outcomes keep unrelated random effects from consuming each other's evidence.
++#[derive(Clone, Debug, PartialEq, Eq)]
++enum ObservedOutcome {
++    HatchHp { owner: CreatureUid, hp: i32 },
++}
++
++/// Replay-only scratch; absent from ordinary worlds, wire state and semantic hashes.
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub struct ReplayObservations {
++    expected: Vec<ObservedOutcome>,
++    consumed: usize,
++    error: Option<&'static str>,
++}
++
++/// Run one witnessed prefix atomically; nested scopes, missing evidence and extra events fail.
++pub fn with_observed_hatch_hp(
++    state: &mut CombatState,
++    expected: &[(CreatureUid, i32)],
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> Result<StepResult, &'static str> {
++    if state.replay_observations.is_some() {
++        return Err("observed_hatch_hp_nested_scope");
++    }
++    if expected
++        .iter()
++        .enumerate()
++        .any(|(index, (owner, _))| expected[..index].iter().any(|(prior, _)| prior == owner))
++    {
++        return Err("observed_hatch_hp_duplicate_owner");
++    }
++    let before = state.clone();
++    state.replay_observations = Some(Box::new(ReplayObservations {
++        expected: expected
++            .iter()
++            .map(|&(owner, hp)| ObservedOutcome::HatchHp { owner, hp })
++            .collect(),
++        consumed: 0,
++        error: None,
++    }));
++    let result = apply(state);
++    let observations = state.replay_observations.take();
++    let failure = match observations {
++        None => Some("observed_hatch_hp_scope_lost"),
++        Some(observations) => observations.error.or_else(|| {
++            (observations.consumed != observations.expected.len())
++                .then_some("observed_hatch_hp_queue_not_consumed")
++        }),
++    };
++    let result = result.and_then(|step| {
++        if step == StepResult::InvalidTarget {
++            Err("observed_hatch_hp_prefix_invalid_target")
++        } else if let Some(reason) = failure {
++            Err(reason)
++        } else {
++            Ok(step)
++        }
++    });
++    if result.is_err() {
++        *state = before;
++    }
++    result
++}
++
++/// Condition only the original Hatch HP event, after its original RNG read has occurred.
++pub fn condition_hatch_hp(
++    state: &mut CombatState,
++    owner: CreatureUid,
++    minimum: i32,
++    maximum_exclusive: i32,
++    sampled: i32,
++) -> i32 {
++    let Some(observations) = state.replay_observations.as_mut() else {
++        return sampled;
++    };
++    if observations.error.is_some() {
++        return sampled;
++    }
++    let Some(ObservedOutcome::HatchHp {
++        owner: expected_owner,
++        hp,
++    }) = observations.expected.get(observations.consumed)
++    else {
++        observations.error = Some("observed_hatch_hp_unwitnessed_extra_event");
++        return sampled;
++    };
++    if *expected_owner != owner {
++        observations.error = Some("observed_hatch_hp_owner_mismatch");
++        return sampled;
++    }
++    if !(minimum..maximum_exclusive).contains(hp) {
++        observations.error = Some("observed_hatch_hp_outside_positive_support");
++        return sampled;
++    }
++    observations.consumed += 1;
++    *hp
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    /// A replay scope cannot affect semantic identity, nest, or retain scratch after success.
++    #[test]
++    fn hatch_observation_scope_ignores_hashes_and_cleans_up() {
++        let mut state = CombatState::default();
++        let owner = CreatureUid::new(2).unwrap();
++        let hashes = (
++            crate::state_hash(&state),
++            crate::chance_outcome_hash(&state),
++            crate::hashing::tt_hash_v2(&state),
++        );
++        with_observed_hatch_hp(&mut state, &[(owner, 20)], |state| {
++            assert_eq!(
++                hashes,
++                (
++                    crate::state_hash(state),
++                    crate::chance_outcome_hash(state),
++                    crate::hashing::tt_hash_v2(state)
++                )
++            );
++            assert_eq!(
++                with_observed_hatch_hp(state, &[], |_| Ok(StepResult::Advanced)),
++                Err("observed_hatch_hp_nested_scope")
++            );
++            assert_eq!(condition_hatch_hp(state, owner, 19, 22, 21), 20);
++            Ok(StepResult::Advanced)
++        })
++        .unwrap();
++        assert!(state.replay_observations.is_none());
++        assert_eq!(state, CombatState::default());
++    }
++
++    /// Missing events and caller failures restore all state, not merely the observation queue.
++    #[test]
++    fn hatch_observation_scope_rolls_back_missing_events_and_closure_failure() {
++        let owner = CreatureUid::new(2).unwrap();
++        for caller_fails in [false, true] {
++            let mut state = CombatState::default();
++            let before = state.clone();
++            let result = with_observed_hatch_hp(&mut state, &[(owner, 20)], |state| {
++                state.gold = 999;
++                let _ = state.run_rng.niche.next_int_exclusive(19, 22);
++                if caller_fails {
++                    Err("draw_observation_failed")
++                } else {
++                    Ok(StepResult::Advanced)
++                }
++            });
++            assert_eq!(
++                result,
++                Err(if caller_fails {
++                    "draw_observation_failed"
++                } else {
++                    "observed_hatch_hp_queue_not_consumed"
++                })
++            );
++            assert_eq!(state, before);
++            assert!(state.replay_observations.is_none());
++        }
++    }
++}
+diff --git a/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs b/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
+index ca3b47d..c18e55e 100644
+--- a/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
++++ b/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
+@@ -334,6 +334,7 @@ fn make_combat(seed: u64, variant: CharVariant, ascension: u8, enc_idx: usize) -
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     let _ = start_combat(&mut state);
+     let _ = start_player_turn(&mut state);
+diff --git a/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs b/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
+index 10995ff..bcc7e7d 100644
+--- a/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
++++ b/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
+@@ -268,6 +268,7 @@ fn make_combat(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     let _ = start_combat(&mut state);
+     let _ = start_player_turn(&mut state);
+diff --git a/sts2-rs/crates/sts2-core/tests/card_play_log.rs b/sts2-rs/crates/sts2-core/tests/card_play_log.rs
+index 27a75c5..0a5b89c 100644
+--- a/sts2-rs/crates/sts2-core/tests/card_play_log.rs
++++ b/sts2-rs/crates/sts2-core/tests/card_play_log.rs
+@@ -231,6 +231,7 @@ fn cascade_logs_trigger_then_auto_plays_in_order() {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     // Enable recording, then play Cascade (hand index 0). Cascade is an
+diff --git a/sts2-rs/crates/sts2-core/tests/parity_harness.rs b/sts2-rs/crates/sts2-core/tests/parity_harness.rs
+index dd0b948..577d8a7 100644
+--- a/sts2-rs/crates/sts2-core/tests/parity_harness.rs
++++ b/sts2-rs/crates/sts2-core/tests/parity_harness.rs
+@@ -1547,6 +1547,7 @@ mod vthin1_setup_only {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         }
+     }
+ 
+@@ -1773,6 +1774,7 @@ mod vthin2_vulnerable_damage {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         (state, cultist_uid)
+     }
+@@ -2115,6 +2117,7 @@ mod wave_a_fixtures {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+ 
+         // Power id counter — 1-based to keep `Option<PowerUid>` niche-packed.
+@@ -2932,6 +2935,7 @@ mod zizk_relic_install {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         // Mirror the recorder's `combat.relics = [create_relic_by_name(...)]`
+         // call. The Phase-7 dispatcher attribution machinery
+@@ -3146,6 +3150,7 @@ mod s16y_starter_relics {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         state.relics.push(Relic {
+             id: NonZeroU32::new(1).expect("non-zero"),
+@@ -3397,6 +3402,7 @@ mod vmko_heavenly_drill {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+ 
+         // Enemy: ShrinkerBeetle at 100/100 HP — large enough that the
+@@ -3716,6 +3722,7 @@ mod rggx_act2_tunneler {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         }
+     }
+ 
+diff --git a/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs b/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs
+index ca75bab..6e0ca8f 100644
+--- a/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs
++++ b/sts2-rs/crates/sts2-core/tests/parity_shrinker.rs
+@@ -309,6 +309,7 @@ mod shrinker {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         let _ = start_combat(&mut state);
+         let _ = start_player_turn(&mut state);
+diff --git a/sts2-rs/crates/sts2-core/tests/play_card.rs b/sts2-rs/crates/sts2-core/tests/play_card.rs
+index 293059d..218f3c7 100644
+--- a/sts2-rs/crates/sts2-core/tests/play_card.rs
++++ b/sts2-rs/crates/sts2-core/tests/play_card.rs
+@@ -180,6 +180,7 @@ fn build_handful(cards: &[(CardId, i32, i32, i8, TargetType)]) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-core/tests/prop_determinism.rs b/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
+index b9868df..ac6b388 100644
+--- a/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
++++ b/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
+@@ -154,6 +154,7 @@ fn make_combat(seed: u64, kind: MonsterKind, hp: i32) -> CombatState {
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     assert_eq!(start_combat(&mut state), StepResult::Advanced);
+     assert_eq!(start_player_turn(&mut state), StepResult::Advanced);
+diff --git a/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs b/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
+index d1dc923..829cbce 100644
+--- a/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
++++ b/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
+@@ -154,6 +154,7 @@ fn make_combat(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     let r0 = start_combat(&mut state);
+diff --git a/sts2-rs/crates/sts2-mcts/src/lib.rs b/sts2-rs/crates/sts2-mcts/src/lib.rs
+index 85c0a57..2ac84ca 100644
+--- a/sts2-rs/crates/sts2-mcts/src/lib.rs
++++ b/sts2-rs/crates/sts2-mcts/src/lib.rs
+@@ -2238,6 +2238,8 @@ impl MctsTree {
+         // `MctsSearch::new` and `with_policy` funnel through. The LIVE state
+         // is untouched: this runs on the search's own clone.
+         root_state.combat_log.event_log.disarm_for_search();
++        // Past observations condition only the caller's scoped replay, never hypothetical futures.
++        root_state.replay_observations = None;
+         let root_node = MctsNode::new(None, &root_state, use_lethal_detector);
+         Self {
+             arena: vec![root_node],
+@@ -4165,6 +4167,7 @@ impl<P: Policy> Mcts<P> {
+         let mut root_state = new_state.clone();
+         prepare_search_root(&mut root_state, &mut config);
+         root_state.combat_log.event_log.disarm_for_search();
++        root_state.replay_observations = None;
+         let root_hash = sts2_core::chance_outcome_hash(&root_state);
+         let matches = |id: NodeId| {
+             self.tree
+@@ -7961,6 +7964,7 @@ mod tests {
+                 cards_drawn: 0,
+                 pending_run_gold_loss: 0,
+                 last_drawn_card: None,
++                replay_observations: None,
+             };
+             let r0 = start_combat(&mut state);
+             assert_eq!(r0, StepResult::Advanced);
+@@ -8245,6 +8249,7 @@ mod tests {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         assert_eq!(start_combat(&mut state), StepResult::Advanced);
+         assert_eq!(start_player_turn(&mut state), StepResult::Advanced);
+@@ -8605,6 +8610,7 @@ mod tests {
+                 cards_drawn: 0,
+                 pending_run_gold_loss: 0,
+                 last_drawn_card: None,
++                replay_observations: None,
+             };
+             assert_eq!(start_combat(&mut state), StepResult::Advanced);
+             assert_eq!(start_player_turn(&mut state), StepResult::Advanced);
+@@ -8802,6 +8808,7 @@ mod tests {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         assert_eq!(start_combat(&mut state), StepResult::Advanced);
+         assert_eq!(start_player_turn(&mut state), StepResult::Advanced);
+@@ -8979,6 +8986,7 @@ mod tests {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         };
+         let r0 = start_combat(&mut state);
+         assert_eq!(r0, StepResult::Advanced);
+@@ -12636,6 +12644,7 @@ mod tests {
+             cards_drawn: 0,
+             pending_run_gold_loss: 0,
+             last_drawn_card: None,
++            replay_observations: None,
+         }
+     }
+ 
+diff --git a/sts2-rs/crates/sts2-mcts/tests/common/mod.rs b/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
+index 8988814..608d4fe 100644
+--- a/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
++++ b/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
+@@ -203,6 +203,7 @@ pub fn build_handful(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     }
+ }
+ 
+@@ -359,6 +360,7 @@ pub fn build_vertical_slice_hp(seed: u64, player_hp: i32, cultist_hp: i32) -> Co
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+     let _ = start_combat(&mut state);
+     let _ = start_player_turn(&mut state);
+diff --git a/sts2-rs/crates/sts2-py/src/lib.rs b/sts2-rs/crates/sts2-py/src/lib.rs
+index fbe3c12..27edacd 100644
+--- a/sts2-rs/crates/sts2-py/src/lib.rs
++++ b/sts2-rs/crates/sts2-py/src/lib.rs
+@@ -350,6 +350,7 @@ fn build_encounter_state(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     // Apply on-spawn self-buffs that were skipped because we built
+diff --git a/sts2-rs/crates/sts2-wire/src/scenario.rs b/sts2-rs/crates/sts2-wire/src/scenario.rs
+index 8f031ad..96dcb30 100644
+--- a/sts2-rs/crates/sts2-wire/src/scenario.rs
++++ b/sts2-rs/crates/sts2-wire/src/scenario.rs
+@@ -755,6 +755,7 @@ pub fn build_scenario_state_with_run_rng(
+         cards_drawn: 0,
+         pending_run_gold_loss: 0,
+         last_drawn_card: None,
++        replay_observations: None,
+     };
+ 
+     // Monsters 1..n first, then the player's mirror creature, then every

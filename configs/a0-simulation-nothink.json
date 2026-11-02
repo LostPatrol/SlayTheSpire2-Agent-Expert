@@ -1,0 +1,49 @@
+{
+  "bridge": {
+    "base_url": "http://127.0.0.1:18765",
+    "expected_pid": null,
+    "expected_game_version": "v0.107.1",
+    "require_atomic": true
+  },
+  "provider": {
+    "api_base": "https://api.deepseek.com",
+    "api_key_file": "secrets/apikey-deepseek.txt",
+    "model": "deepseek-flash",
+    "thinking": "disabled",
+    "reasoning_effort": "low",
+    "max_tokens": 32768,
+    "stream": true,
+    "use_env_proxy": false,
+    "compact_simulation_tool_results": true,
+    "model_view": "safe",
+    "context_max_turns": 32,
+    "context_max_characters": 640000,
+    "timeout_seconds": 120,
+    "transient_retries": 2,
+    "format_repair_attempts": 1
+  },
+  "policy": {
+    "mode": "nosl",
+    "deliberation": "public_simulation",
+    "character": "IRONCLAD",
+    "ascension": 0
+  },
+  "simulation": {
+    "enabled": true,
+    "backend": "mentor",
+    "search_strategy": "mcts",
+    "read_access": "public",
+    "candidate_source": "mcts",
+    "search_strength": 3,
+    "prediction_mode": "background",
+    "episode_search_requests": 6,
+    "preview_samples": 6,
+    "timeout_seconds": 10
+  },
+  "limits": {
+    "max_provider_requests_per_run": 1000,
+    "max_run_wall_minutes": 600,
+    "max_actions": 1000
+  },
+  "logging": {"public_observations_only": true}
+}

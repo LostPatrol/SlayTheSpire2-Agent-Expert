@@ -1,0 +1,1208 @@
+diff --git a/sts2-rs/crates/sts2-runai/tests/fixtures/leaf_playouts_identity_corrected_golden.json b/sts2-rs/crates/sts2-runai/tests/fixtures/leaf_playouts_identity_corrected_golden.json
+new file mode 100644
+index 0000000..d88fea1
+--- /dev/null
++++ b/sts2-rs/crates/sts2-runai/tests/fixtures/leaf_playouts_identity_corrected_golden.json
+@@ -0,0 +1,976 @@
++{
++  "rules_identity": "28429066+reviewed-repairs-01-47",
++  "source_tree_before_test_adaptation": "ee09d015a670746e93ea7ff282e870ff7b1504f4",
++  "historical_fixture": {
++    "path": "leaf_playouts_identity_golden.json",
++    "sha256": "8B34D67382773FD453AE5AEE2174324F40643BDF4E8321D48F79D270804C0AFC",
++    "provenance": "Original pre-knob engine pin 2ecc2ba40; unchanged snapshot 28429066 reproduces every historical record."
++  },
++  "scope": "Corrected engine identity, preserving default leaf=1, explicit leaf=1, leaf=4 sensitivity and same-engine BASE versus Ironclad-default distinctions. No model asset changes.",
++  "causal_repairs": [
++    "18/20: full AI runtime and player chance-outcome semantics change every fixture group; restoring the original hash semantics reproduces the historical records.",
++    "46: decision-history and referenced-card bindings additionally change the seed-6 BASE/default policy records."
++  ],
++  "records": {
++    "policy_fight": {
++      "actions": [
++        "PlayCard { hand_idx: 0, target: None }",
++        "PlayCard { hand_idx: 2, target: None }",
++        "PlayCard { hand_idx: 0, target: Some(0) }",
++        "EndTurn",
++        "PlayCard { hand_idx: 0, target: None }",
++        "PlayCard { hand_idx: 0, target: Some(0) }",
++        "PlayCard { hand_idx: 0, target: Some(0) }",
++        "EndTurn",
++        "PlayCard { hand_idx: 1, target: Some(0) }",
++        "PlayCard { hand_idx: 0, target: Some(0) }",
++        "EndTurn",
++        "PlayCard { hand_idx: 0, target: None }",
++        "PlayCard { hand_idx: 1, target: Some(0) }",
++        "PlayCard { hand_idx: 1, target: Some(0) }"
++      ],
++      "budget_spent": [
++        0,
++        0,
++        0,
++        11000
++      ],
++      "player_hp": 80
++    },
++    "policy_fight_ironclad_default": {
++      "fight": {
++        "actions": [
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 0, target: Some(2) }",
++          "PlayCard { hand_idx: 0, target: Some(2) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 2, target: None }",
++          "PlayCard { hand_idx: 2, target: None }",
++          "PlayCard { hand_idx: 0, target: Some(0) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 0, target: None }",
++          "PlayCard { hand_idx: 0, target: None }",
++          "PlayCard { hand_idx: 0, target: None }",
++          "EndTurn",
++          "PlayCard { hand_idx: 0, target: Some(0) }",
++          "PlayCard { hand_idx: 1, target: Some(0) }",
++          "PlayCard { hand_idx: 0, target: None }",
++          "EndTurn",
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 3, target: None }",
++          "PlayCard { hand_idx: 1, target: Some(1) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 0, target: Some(1) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 0, target: Some(1) }",
++          "PlayCard { hand_idx: 0, target: Some(1) }",
++          "PlayCard { hand_idx: 1, target: Some(1) }"
++        ],
++        "budget_spent": [
++          0,
++          0,
++          0,
++          21000
++        ],
++        "player_hp": 80
++      },
++      "searches": [
++        [
++          200,
++          201,
++          210,
++          211,
++          178
++        ],
++        [
++          193,
++          203,
++          211,
++          204,
++          189
++        ],
++        [
++          197,
++          198,
++          211,
++          200,
++          194
++        ],
++        [
++          0
++        ],
++        [
++          170,
++          168,
++          167,
++          166,
++          174,
++          155
++        ],
++        [
++          169,
++          164,
++          168,
++          167,
++          172,
++          160
++        ],
++        [
++          337,
++          334,
++          329
++        ],
++        [
++          0
++        ],
++        [
++          259,
++          253,
++          262,
++          226
++        ],
++        [
++          256,
++          251,
++          259,
++          234
++        ],
++        [
++          246,
++          250,
++          259,
++          245
++        ],
++        [
++          0
++        ],
++        [
++          204,
++          203,
++          200,
++          204,
++          189
++        ],
++        [
++          203,
++          203,
++          200,
++          203,
++          191
++        ],
++        [
++          251,
++          248,
++          255,
++          246
++        ],
++        [
++          0
++        ],
++        [
++          251,
++          268,
++          248,
++          233
++        ],
++        [
++          249,
++          259,
++          250,
++          242
++        ],
++        [
++          334,
++          334,
++          332
++        ],
++        [
++          0
++        ],
++        [
++          198,
++          200,
++          212,
++          199,
++          191
++        ],
++        [
++          199,
++          201,
++          205,
++          200,
++          195
++        ],
++        [
++          336,
++          333,
++          331
++        ],
++        [
++          0
++        ],
++        [
++          257,
++          251,
++          252,
++          240
++        ],
++        [
++          256,
++          249,
++          251,
++          244
++        ],
++        [
++          257,
++          248,
++          248,
++          247
++        ]
++      ]
++    },
++    "policy_fight_seed6_pre_layer": {
++      "fight": {
++        "actions": [
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 0, target: Some(2) }",
++          "PlayCard { hand_idx: 0, target: Some(2) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 2, target: None }",
++          "PlayCard { hand_idx: 2, target: None }",
++          "PlayCard { hand_idx: 0, target: Some(0) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 0, target: None }",
++          "PlayCard { hand_idx: 0, target: None }",
++          "PlayCard { hand_idx: 0, target: None }",
++          "EndTurn",
++          "PlayCard { hand_idx: 0, target: Some(0) }",
++          "PlayCard { hand_idx: 1, target: Some(0) }",
++          "PlayCard { hand_idx: 0, target: None }",
++          "EndTurn",
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 3, target: None }",
++          "PlayCard { hand_idx: 1, target: Some(1) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 1, target: None }",
++          "PlayCard { hand_idx: 0, target: Some(1) }",
++          "EndTurn",
++          "PlayCard { hand_idx: 0, target: Some(1) }",
++          "PlayCard { hand_idx: 0, target: Some(1) }",
++          "PlayCard { hand_idx: 1, target: Some(1) }"
++        ],
++        "budget_spent": [
++          0,
++          0,
++          0,
++          21000
++        ],
++        "player_hp": 80
++      },
++      "searches": [
++        [
++          200,
++          201,
++          210,
++          211,
++          178
++        ],
++        [
++          193,
++          203,
++          211,
++          204,
++          189
++        ],
++        [
++          197,
++          198,
++          211,
++          200,
++          194
++        ],
++        [
++          0
++        ],
++        [
++          170,
++          167,
++          167,
++          167,
++          174,
++          155
++        ],
++        [
++          168,
++          163,
++          168,
++          167,
++          174,
++          160
++        ],
++        [
++          340,
++          331,
++          329
++        ],
++        [
++          0
++        ],
++        [
++          259,
++          253,
++          262,
++          226
++        ],
++        [
++          256,
++          251,
++          259,
++          234
++        ],
++        [
++          246,
++          250,
++          259,
++          245
++        ],
++        [
++          0
++        ],
++        [
++          204,
++          203,
++          200,
++          204,
++          189
++        ],
++        [
++          203,
++          203,
++          200,
++          203,
++          191
++        ],
++        [
++          251,
++          248,
++          255,
++          246
++        ],
++        [
++          0
++        ],
++        [
++          251,
++          268,
++          248,
++          233
++        ],
++        [
++          249,
++          260,
++          249,
++          242
++        ],
++        [
++          334,
++          334,
++          332
++        ],
++        [
++          0
++        ],
++        [
++          198,
++          200,
++          212,
++          199,
++          191
++        ],
++        [
++          199,
++          201,
++          205,
++          200,
++          195
++        ],
++        [
++          336,
++          333,
++          331
++        ],
++        [
++          0
++        ],
++        [
++          257,
++          251,
++          252,
++          240
++        ],
++        [
++          256,
++          249,
++          251,
++          244
++        ],
++        [
++          257,
++          248,
++          248,
++          247
++        ]
++      ]
++    },
++    "searches": [
++      {
++        "chosen": "PlayCard { hand_index: 1, target: None }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 0,
++        "rollouts_total": 300,
++        "root": [
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            78,
++            78,
++            0,
++            0,
++            1120152882,
++            1123468327,
++            1169154048,
++            78
++          ],
++          [
++            "PlayCard { hand_index: 2, target: Some(0) }",
++            78,
++            78,
++            0,
++            0,
++            1120146776,
++            1123452896,
++            1169127424,
++            78
++          ],
++          [
++            "PlayCard { hand_index: 1, target: None }",
++            80,
++            80,
++            0,
++            0,
++            1120504648,
++            1123936115,
++            1169547264,
++            80
++          ],
++          [
++            "EndTurn",
++            64,
++            64,
++            0,
++            0,
++            1117649319,
++            1120077362,
++            1166229504,
++            64
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 0, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 142,
++        "rollouts_total": 158,
++        "root": [
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            81,
++            81,
++            0,
++            0,
++            1118351045,
++            1118807559,
++            1147813888,
++            81
++          ],
++          [
++            "PlayCard { hand_index: 2, target: Some(0) }",
++            81,
++            81,
++            0,
++            0,
++            1118351049,
++            1118807569,
++            1147813888,
++            81
++          ],
++          [
++            "PlayCard { hand_index: 1, target: None }",
++            86,
++            86,
++            0,
++            0,
++            1119090891,
++            1119637571,
++            1150009344,
++            86
++          ],
++          [
++            "EndTurn",
++            52,
++            51,
++            1,
++            0,
++            1112381542,
++            1113543822,
++            1139081216,
++            52
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 0, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 0,
++        "rollouts_total": 300,
++        "root": [
++          [
++            "PlayCard { hand_index: 3, target: Some(0) }",
++            106,
++            106,
++            0,
++            0,
++            1124333308,
++            1126454611,
++            1172529152,
++            106
++          ],
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            107,
++            107,
++            0,
++            0,
++            1124416384,
++            1126560072,
++            1172682752,
++            107
++          ],
++          [
++            "EndTurn",
++            87,
++            87,
++            0,
++            0,
++            1121264991,
++            1124247048,
++            1168863232,
++            87
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 3, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 0,
++        "rollouts_total": 300,
++        "root": [
++          [
++            "PlayCard { hand_index: 3, target: Some(0) }",
++            82,
++            82,
++            0,
++            0,
++            1120789070,
++            1124156586,
++            1169645568,
++            82
++          ],
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            82,
++            82,
++            0,
++            0,
++            1120801237,
++            1124173073,
++            1169698816,
++            82
++          ],
++          [
++            "PlayCard { hand_index: 4, target: None }",
++            74,
++            74,
++            0,
++            0,
++            1119371502,
++            1122335982,
++            1168031744,
++            74
++          ],
++          [
++            "EndTurn",
++            62,
++            62,
++            0,
++            0,
++            1117250581,
++            1119494167,
++            1165250560,
++            62
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 3, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 249,
++        "rollouts_total": 51,
++        "root": [
++          [
++            "PlayCard { hand_index: 3, target: Some(0) }",
++            139,
++            138,
++            1,
++            0,
++            1125064612,
++            1125672262,
++            1155383296,
++            139
++          ],
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            100,
++            98,
++            2,
++            0,
++            1120416505,
++            1121744321,
++            1151254528,
++            100
++          ],
++          [
++            "PlayCard { hand_index: 4, target: None }",
++            51,
++            48,
++            3,
++            0,
++            1111090516,
++            1113833767,
++            1142374400,
++            51
++          ],
++          [
++            "EndTurn",
++            10,
++            8,
++            2,
++            0,
++            1086020352,
++            1094460967,
++            1119617024,
++            10
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 0, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 0,
++        "rollouts_total": 300,
++        "root": [
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            105,
++            105,
++            0,
++            0,
++            1124242897,
++            1126330805,
++            1172312064,
++            105
++          ],
++          [
++            "PlayCard { hand_index: 2, target: None }",
++            97,
++            97,
++            0,
++            0,
++            1123006486,
++            1125393086,
++            1170749440,
++            97
++          ],
++          [
++            "EndTurn",
++            98,
++            98,
++            0,
++            0,
++            1123176445,
++            1125502735,
++            1170919424,
++            98
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 1, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 0,
++        "rollouts_total": 300,
++        "root": [
++          [
++            "PlayCard { hand_index: 1, target: Some(0) }",
++            41,
++            41,
++            0,
++            0,
++            1112632562,
++            1116059890,
++            1162272768,
++            41
++          ],
++          [
++            "PlayCard { hand_index: 1, target: Some(1) }",
++            37,
++            37,
++            0,
++            0,
++            1111149659,
++            1114360804,
++            1160372224,
++            37
++          ],
++          [
++            "PlayCard { hand_index: 1, target: Some(2) }",
++            37,
++            37,
++            0,
++            0,
++            1111159220,
++            1114384262,
++            1160413184,
++            37
++          ],
++          [
++            "PlayCard { hand_index: 4, target: Some(0) }",
++            38,
++            38,
++            0,
++            0,
++            1111495026,
++            1114815382,
++            1160736768,
++            38
++          ],
++          [
++            "PlayCard { hand_index: 4, target: Some(1) }",
++            37,
++            37,
++            0,
++            0,
++            1111149671,
++            1114361332,
++            1160372224,
++            37
++          ],
++          [
++            "PlayCard { hand_index: 4, target: Some(2) }",
++            37,
++            37,
++            0,
++            0,
++            1111130057,
++            1114311980,
++            1160286208,
++            37
++          ],
++          [
++            "PlayCard { hand_index: 0, target: None }",
++            40,
++            40,
++            0,
++            0,
++            1112238981,
++            1115771621,
++            1161699328,
++            40
++          ],
++          [
++            "EndTurn",
++            33,
++            33,
++            0,
++            0,
++            1109664634,
++            1112286347,
++            1158463488,
++            33
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 1, target: Some(0) }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 21,
++        "rollouts_total": 279,
++        "root": [
++          [
++            "PlayCard { hand_index: 1, target: Some(0) }",
++            195,
++            176,
++            19,
++            0,
++            1126067377,
++            1129962088,
++            1154850816,
++            195
++          ],
++          [
++            "PlayCard { hand_index: 1, target: Some(1) }",
++            3,
++            1,
++            2,
++            0,
++            3216945503,
++            1082713062,
++            1093664768,
++            3
++          ],
++          [
++            "PlayCard { hand_index: 1, target: Some(2) }",
++            3,
++            1,
++            2,
++            0,
++            3216815490,
++            1082561956,
++            1091567616,
++            3
++          ],
++          [
++            "PlayCard { hand_index: 4, target: Some(0) }",
++            4,
++            2,
++            2,
++            0,
++            3201913816,
++            1084873066,
++            1102577664,
++            4
++          ],
++          [
++            "PlayCard { hand_index: 4, target: Some(1) }",
++            4,
++            2,
++            2,
++            0,
++            3202669948,
++            1084993614,
++            1102577664,
++            4
++          ],
++          [
++            "PlayCard { hand_index: 4, target: Some(2) }",
++            14,
++            10,
++            4,
++            0,
++            1084876282,
++            1099352782,
++            1118437376,
++            14
++          ],
++          [
++            "PlayCard { hand_index: 0, target: None }",
++            76,
++            65,
++            11,
++            0,
++            1113023723,
++            1118712157,
++            1144029184,
++            76
++          ],
++          [
++            "EndTurn",
++            1,
++            0,
++            1,
++            0,
++            3215492201,
++            1071504413,
++            0,
++            1
++          ]
++        ]
++      },
++      {
++        "chosen": "PlayCard { hand_index: 1, target: None }",
++        "depth_cap_hits": 0,
++        "rollouts_skipped": 0,
++        "rollouts_total": 300,
++        "root": [
++          [
++            "PlayCard { hand_index: 0, target: Some(0) }",
++            64,
++            64,
++            0,
++            0,
++            1117897126,
++            1120695166,
++            1167314944,
++            64
++          ],
++          [
++            "PlayCard { hand_index: 0, target: Some(1) }",
++            59,
++            59,
++            0,
++            0,
++            1116976893,
++            1119417188,
++            1166155776,
++            59
++          ],
++          [
++            "PlayCard { hand_index: 0, target: Some(2) }",
++            61,
++            61,
++            0,
++            0,
++            1117339704,
++            1119915043,
++            1166596096,
++            61
++          ],
++          [
++            "PlayCard { hand_index: 1, target: None }",
++            66,
++            66,
++            0,
++            0,
++            1118249842,
++            1121167672,
++            1167712256,
++            66
++          ],
++          [
++            "EndTurn",
++            50,
++            50,
++            0,
++            0,
++            1115035318,
++            1117220080,
++            1162469376,
++            50
++          ]
++        ]
++      }
++    ]
++  }
++}
+diff --git a/sts2-rs/crates/sts2-runai/tests/leaf_playouts_identity.rs b/sts2-rs/crates/sts2-runai/tests/leaf_playouts_identity.rs
+index 8565bc1..8098f6f 100644
+--- a/sts2-rs/crates/sts2-runai/tests/leaf_playouts_identity.rs
++++ b/sts2-rs/crates/sts2-runai/tests/leaf_playouts_identity.rs
+@@ -1,46 +1,7 @@
+-//! Byte-identity pin for the deployed combat search (GH #830, deep bets
+-//! build 1).
+-//!
+-//! `MctsConfig::leaf_playouts` (default 1) adds extra playouts per search
+-//! leaf. At its default it must leave the search exactly as it was. This
+-//! file pins what the deployed search produced on the engine the knob was
+-//! added to (`2ecc2ba40`), blessed BEFORE the knob existed:
+-//!
+-//! - **Searches.** Fight states from fresh Ironclad runs, each searched at
+-//!   300 sims under the deployed config
+-//!   ([`MctsCombatPolicy::search_config`]): every root child's visit / win /
+-//!   loss / tie counts and the bits of its value, squared-value and HP sums,
+-//!   the chosen action, and the rollout counters.
+-//! - **A fight.** The first combat of a fresh run, played by
+-//!   [`MctsCombatPolicy`] at 1000 sims: every action and the final HP.
+-//!
+-//! Both pin the BASE dialect. The fixture searches take `search_config`
+-//! without a character (`None`), which is Ironclad's search with the off
+-//! switch: these are Ironclad states that play Ironclad's playout net, not
+-//! the other characters' search. The seed-5 policy fight runs under the two
+-//! off switches (`STS2_RUNAI_MCTS_OVERRIDES=<IRONCLAD_SEARCH_KNOBS_OFF>`,
+-//! `STS2_RUNAI_PRIOR_NET=off`) and must still match the golden blessed
+-//! before the Ironclad run-agent layer existed (GH #830). That golden is
+-//! insensitive to the layer: on seed 5 the knobs change no move and no root
+-//! visit, so it matches with or without the switches and only shows that the
+-//! switches change nothing there. The in-tree proof that the off switches
+-//! restore the old search is
+-//! `the_off_switches_play_the_pre_layer_search_where_the_knobs_bind` (seed 6,
+-//! golden key `policy_fight_seed6_pre_layer`), and
+-//! `the_ironclad_default_moves_the_policy_fight` pins that the shipped
+-//! default moved that seed-6 fight.
+-//!
+-//! A comparison of `leaf_playouts: 1` against `MctsConfig::default()` could
+-//! not fail: the default IS 1, so a bug in the `k = 1` path would move both
+-//! sides at once. The golden is what makes this a test. (The fixture
+-//! searches were blessed before `leaf_playouts` existed, so their config is
+-//! "the field not set"; the explicit `leaf_playouts: 1` arm compares against
+-//! the same pin.)
+-//!
+-//! Re-bless only when an engine or content change moves the search on
+-//! purpose (any card, monster or search change in these fights will), never
+-//! to make a `leaf_playouts` change pass:
+-//! `STS2_BLESS_LEAF_PLAYOUTS_GOLDEN=1 cargo nextest run -p sts2-runai --test leaf_playouts_identity`.
++//! Exact search records for corrected rules, separate from the unchanged upstream pre-knob pin.
++//! Default and explicit leaf=1 match; leaf=4 differs; BASE/default use the same corrected rules.
++//! Pristine/current and isolated pre46 diagnostics are in the search-acceptance-47-48 report.
++//! Regenerate only for reviewed rule changes with STS2_BLESS_CORRECTED_LEAF_GOLDEN=1.
+ 
+ use serde_json::{json, Value};
+ use sts2_core::run_manager::{Phase, RunManager};
+@@ -49,11 +10,15 @@ use sts2_mcts::{LeafEval, Mcts, MctsConfig};
+ use sts2_runai::policy::{CombatBudget, HeuristicPolicy, MctsCombatPolicy};
+ use sts2_runai::rollout::ensure_content_installed;
+ 
++// Keep corrected records separate from the unchanged upstream pre-knob artifact.
+ const GOLDEN: &str = concat!(
+     env!("CARGO_MANIFEST_DIR"),
+-    "/tests/fixtures/leaf_playouts_identity_golden.json"
++    "/tests/fixtures/leaf_playouts_identity_corrected_golden.json"
+ );
+ 
++// Rule identity excludes this test-only adaptation and does not alter model assets.
++const CORRECTED_RULES_ID: &str = "28429066+reviewed-repairs-01-47";
++
+ /// Search budget of the fixture searches. Small enough for a debug build,
+ /// large enough that the tree has chance nodes several plies deep.
+ const FIXTURE_SIMS: u32 = 300;
+@@ -237,17 +202,23 @@ fn played_policy_fight_seed(seed: i32) -> (Value, Value) {
+     )
+ }
+ 
++/// Read records only after checking their explicit corrected-rule identity.
+ fn golden() -> Value {
+-    serde_json::from_str(&std::fs::read_to_string(GOLDEN).expect("golden file")).expect("json")
++    let all: Value =
++        serde_json::from_str(&std::fs::read_to_string(GOLDEN).expect("golden file")).expect("json");
++    assert_eq!(all["rules_identity"], CORRECTED_RULES_ID);
++    all["records"].clone()
+ }
+ 
++/// Compare against the corrected pin; explicit regeneration cannot replace the historical file.
+ fn bless_or_compare(key: &str, got: &Value) {
+-    if std::env::var_os("STS2_BLESS_LEAF_PLAYOUTS_GOLDEN").is_some() {
++    if std::env::var_os("STS2_BLESS_CORRECTED_LEAF_GOLDEN").is_some() {
+         let mut all = std::fs::read_to_string(GOLDEN)
+             .ok()
+             .and_then(|t| serde_json::from_str::<Value>(&t).ok())
+             .unwrap_or_else(|| json!({}));
+-        all[key] = got.clone();
++        all["rules_identity"] = json!(CORRECTED_RULES_ID);
++        all["records"][key] = got.clone();
+         std::fs::write(
+             GOLDEN,
+             serde_json::to_string_pretty(&all).expect("json") + "\n",
+@@ -261,8 +232,11 @@ fn bless_or_compare(key: &str, got: &Value) {
+ }
+ 
+ #[test]
+-fn deployed_search_output_matches_the_pre_knob_golden() {
+-    bless_or_compare("searches", &searches(|_| {}));
++/// Both default-one paths must match independently of the corrected golden.
++fn deployed_search_output_matches_the_corrected_golden() {
++    let default = searches(|_| {});
++    assert_eq!(default, searches(|c| c.leaf_playouts = 1));
++    bless_or_compare("searches", &default);
+ }
+ 
+ /// The knob set explicitly to its default is the same search, and the
+@@ -271,7 +245,7 @@ fn deployed_search_output_matches_the_pre_knob_golden() {
+ fn explicit_one_leaf_playout_matches_the_golden_and_four_do_not() {
+     assert_eq!(MctsConfig::default().leaf_playouts, 1);
+     bless_or_compare("searches", &searches(|c| c.leaf_playouts = 1));
+-    if std::env::var_os("STS2_BLESS_LEAF_PLAYOUTS_GOLDEN").is_none() {
++    if std::env::var_os("STS2_BLESS_CORRECTED_LEAF_GOLDEN").is_none() {
+         // Two fixtures suffice (and keep a debug build fast): the opening
+         // and the close fight of the first run.
+         let states = fixture_states();
+@@ -288,9 +262,9 @@ fn explicit_one_leaf_playout_matches_the_golden_and_four_do_not() {
+ }
+ 
+ /// T9 (GH #830): with both off switches, the Ironclad pilot plays the
+-/// golden fight blessed before its run-agent layer existed.
++/// corrected BASE fight, keeping the historical pre-layer fixture separate.
+ #[test]
+-fn deployed_policy_fight_at_1000_sims_matches_the_pre_knob_golden() {
++fn deployed_policy_fight_at_1000_sims_matches_the_corrected_golden() {
+     std::env::set_var(
+         "STS2_RUNAI_MCTS_OVERRIDES",
+         sts2_runai::policy::IRONCLAD_SEARCH_KNOBS_OFF,
+@@ -299,13 +273,8 @@ fn deployed_policy_fight_at_1000_sims_matches_the_pre_knob_golden() {
+     bless_or_compare("policy_fight", &policy_fight());
+ }
+ 
+-/// The off switches restore the old search at a seed where the knobs bind
+-/// (T9 in full, GH #830). The `policy_fight` seed cannot show it: on seed 5
+-/// the knobs do not change a single root visit, so that golden would match
+-/// with or without the switches. On seed 6 they do, so this golden pins every
+-/// root visit of the fight. Its first bless came from the tree just before
+-/// the Ironclad run-agent layer (`451a73fa3`, no env); a later engine change
+-/// re-blesses it here, under the two off switches.
++/// Pin the corrected BASE dialect where the Ironclad knobs bind; the shipped
++/// default below must differ from this same-engine record, not an old-rule record.
+ #[test]
+ fn the_off_switches_play_the_pre_layer_search_where_the_knobs_bind() {
+     std::env::set_var(
+@@ -320,24 +289,14 @@ fn the_off_switches_play_the_pre_layer_search_where_the_knobs_bind() {
+     );
+ }
+ 
+-/// The shipped Ironclad default (no env) reaches the pilot: the same seed-6
+-/// fight searches differently from the pre-layer golden above, and its
+-/// record is pinned in its own golden `policy_fight_ironclad_default`
+-/// (blessed on its own). The record holds the searches because the moves
+-/// cannot show it: these first fights are easy, and on seeds 1-16 the knobs
+-/// never changed a move of one. Seed 6 is the longest of those whose
+-/// searches move. A hallway fight, so the built-in prior (elite and boss
+-/// only) is not in play.
+-///
+-/// The warrant that this play is the gated bundle's is the ship PR's
+-/// full-run identity check (GH #830: the default reproduces the gate's
+-/// bundle arm and the off switches its control arm, seed for seed).
++/// Pin the shipped Ironclad default and distinguish it from corrected BASE searches.
++/// This hallway does not activate the elite/boss prior.
+ #[test]
+ fn the_ironclad_default_moves_the_policy_fight() {
+     std::env::remove_var("STS2_RUNAI_MCTS_OVERRIDES");
+     std::env::remove_var("STS2_RUNAI_PRIOR_NET");
+     let (fight, searches) = played_policy_fight_seed(6);
+-    if std::env::var_os("STS2_BLESS_LEAF_PLAYOUTS_GOLDEN").is_none() {
++    if std::env::var_os("STS2_BLESS_CORRECTED_LEAF_GOLDEN").is_none() {
+         let pre = &golden()["policy_fight_seed6_pre_layer"];
+         assert!(!pre.is_null(), "golden has no pre-layer seed-6 fight");
+         assert_ne!(
+diff --git a/sts2-rs/crates/sts2-runai/tests/tree_reuse.rs b/sts2-rs/crates/sts2-runai/tests/tree_reuse.rs
+index f6f321d..f7dc19e 100644
+--- a/sts2-rs/crates/sts2-runai/tests/tree_reuse.rs
++++ b/sts2-rs/crates/sts2-runai/tests/tree_reuse.rs
+@@ -5,8 +5,8 @@
+ //! The overrides are read when a policy is constructed, so each test sets
+ //! the env var before building one (nextest runs every test in its own
+ //! process). Default-off identity is pinned by `leaf_playouts_identity.rs`
+-//! (the policy fight under the Ironclad off switches is byte-identical to
+-//! its pre-knob golden, and the shipped default to its own); here,
++//! (BASE and the shipped default each match an identified corrected-rule
++//! golden, while the upstream pre-knob artifact stays separate); here,
+ //! `tree_reuse_is_off_by_default` checks that the knob's machinery never
+ //! runs at default.
+ 
+@@ -304,6 +304,30 @@ fn tree_reuse_reads_no_hidden_information_across_turns() {
+     eprintln!("compared {compared} decisions over {rounds} rounds, {reused} reused");
+     assert!(reused >= 1, "no reuse in {compared} compared decisions");
+     assert!(rounds >= 2, "the comparison never crossed an EndTurn");
+-    // Seed 5 reuses across that EndTurn: the chance-edge path is compared.
++    assert_counts_add_up(counts);
++}
++
++/// A longer seed-5 deck leaves an unknown next hand, so the comparison
++/// must actually reuse a chance edge rather than only deterministic children.
++#[test]
++fn tree_reuse_reads_no_hidden_information_across_a_chance_edge() {
++    let seed = 5;
++    let mut rm1 = fresh_run_long_deck(seed);
++    to_first_combat(&mut rm1);
++    let mut rm2 = rm1.clone();
++    let c2 = rm2.combat.as_mut().expect("combat");
++    assert!(c2.player.draw.len() > 5, "the next hand must remain unknown");
++    c2.run_rng.shuffle = sts2_core::dotnet_rng::Rng::new(0x5EED);
++    c2.run_rng.combat_card_generation = sts2_core::dotnet_rng::Rng::new(0x5EEE);
++    c2.run_rng.combat_potion_generation = sts2_core::dotnet_rng::Rng::new(0x5EEF);
++    assert_ne!(
++        sts2_core::state_hash(rm1.combat.as_ref().expect("combat")),
++        sts2_core::state_hash(rm2.combat.as_ref().expect("combat"))
++    );
++    let (compared, reused, rounds, counts) = lockstep(rm1, rm2, seed);
++    eprintln!("compared {compared} decisions over {rounds} rounds, {reused} reused");
++    assert!(reused >= 1, "no reuse in {compared} compared decisions");
++    assert!(rounds >= 2, "the comparison never crossed an EndTurn");
++    assert_counts_add_up(counts);
+     assert!(counts.reused_via_chance >= 1, "{counts:?}");
+ }
+

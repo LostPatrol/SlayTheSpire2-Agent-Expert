@@ -1,0 +1,156 @@
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -9766,8 +9766,8 @@
+ /// **Bead sts2-rs-5if (VTHIN-2):** enemy walk lit up. Previously empty
+ /// because `Creature` was a `{ id }` placeholder; VTHIN-2 enriched
+ /// `Creature` with a `powers: SmallVec<[PowerUid; 8]>` field which this
+-/// iterator now flat-maps over. Powers attached to a non-enemy creature
+-/// (allies' Creature struct, etc.) are not surfaced because Rust's
++/// iterator now flat-maps over. The player's pet is also a hook owner;
++/// powers attached to other non-enemy creatures are not surfaced because Rust's
+ /// per-side state still lives on [`crate::PlayerCombatState`] for
+ /// player + allies; bead sts2-rs-pg5 (P4-3) reconciles when the
+ /// player+ally creatures move into `state.creatures`.
+@@ -9822,10 +9822,27 @@
+             .into_iter()
+             .flatten()
+     });
++    // Native pet powers affect Osty-dealt attacks and damage received by Osty.
++    let pet_powers = pet_listener_uid(state).into_iter().flat_map(move |uid| {
++        crate::creature_by_id(&state.creatures, uid.0)
++            .map(|c| c.powers.iter().copied())
++            .into_iter()
++            .flatten()
++    });
+     player_powers
+         .chain(ally_powers)
+         .chain(enemy_powers)
++        .chain(pet_powers)
+         .map(ListenerRef::Power)
++}
++
++/// Include the pet once, outside co-op seat passes, unless an existing owner walk already has it.
++fn pet_listener_uid(state: &CombatState) -> Option<CreatureUid> {
++    state.player.pet_uid.filter(|uid| {
++        !state.coop.seat_pass
++            && Some(*uid) != state.player.creature_uid
++            && !state.enemy_uids.contains(uid)
++    })
+ }
+ 
+ /// Yield every `ListenerRef::Relic(uid)` in acquisition order. Mirrors
+@@ -11223,6 +11240,7 @@
+ ///       `player_creature_id` discrimination `owner_of_listener` applies on
+ ///       its arena scan (a uid lives in exactly one creature's list, so the
+ ///       resolver's first arena match is this creature).
++///   (d) the player's pet powers, unless the pet already appeared in that walk.
+ ///
+ /// Every uid here IS resolvable (it came from the very lists the resolver
+ /// scans), so the owner equals `Some(owner_of_listener(state, listener))`'s
+@@ -11269,6 +11287,13 @@
+             }
+         }
+     }
++    if let Some(uid) = pet_listener_uid(state) {
++        if let Some(creature) = crate::creature_by_id(&state.creatures, uid.0) {
++            for &power in &creature.powers {
++                rows.push((power, CreatureRef::Enemy(uid)));
++            }
++        }
++    }
+     rows
+ }
+ 
+@@ -11290,9 +11315,8 @@
+ /// recompute the full walk on every call and compare
+ /// ([`damage_power_stage`] and its siblings).
+ ///
+-/// Do not look the wanted creature up instead of walking `enemy_uids`: Osty is
+-/// in `creatures` but not in `enemy_uids`, so this walk never yields its
+-/// powers; the player's legacy `player.powers` must stay deduplicated against
++/// Do not replace the canonical owner walk with arbitrary creature lookup:
++/// the player's pet is appended once; the player's legacy powers stay deduplicated against
+ /// the mirror's; and a uid repeated in `enemy_uids` yields its rows once per
+ /// entry.
+ #[allow(clippy::inline_always)]
+@@ -11350,6 +11374,16 @@
+         if let Some(c) = crate::creature_by_id(&state.creatures, enemy_uid.0) {
+             for &uid in &c.powers {
+                 visit(uid, owner);
++            }
++        }
++    }
++    if let Some(uid) = pet_listener_uid(state) {
++        let owner = CreatureRef::Enemy(uid);
++        if wanted(owner) {
++            if let Some(creature) = crate::creature_by_id(&state.creatures, uid.0) {
++                for &power in &creature.powers {
++                    visit(power, owner);
++                }
+             }
+         }
+     }
+@@ -32783,25 +32817,54 @@
+         );
+     }
+ 
+-    /// The Osty is in `creatures` but not in `enemy_uids`, so the walk never
+-    /// yields its powers: its own Strength and Vulnerable move neither its hit
+-    /// nor a hit on it. The scoped walk must not start finding them.
+-    #[test]
+-    fn the_ostys_own_powers_stay_outside_the_walk() {
++    /// Native upgraded Unleash with Osty HP10 and Strength3 deals 9+10+3=22.
++    /// Pet powers also modify incoming hits without adding the pet to enemy targets.
++    #[test]
++    fn the_ostys_own_powers_modify_outgoing_and_incoming_hits() {
+         let mut state = duel();
+-        let strength = push_power(&mut state, PowerKind::Strength, 5, 0);
++        let strength = push_power(&mut state, PowerKind::Strength, 3, 0);
+         let vulnerable = push_power(&mut state, PowerKind::Vulnerable, 2, 0);
+         state
+             .creatures
+             .push(creature(OSTY, &[strength, vulnerable]));
+         state.player.pet_uid = Some(CreatureUid(id(OSTY)));
+-        for (dealer, target) in [(enemy(OSTY), enemy(2)), (enemy(2), enemy(OSTY))] {
++        for (dealer, target, base, expected) in [
++            (enemy(OSTY), enemy(2), 19, 22),
++            (enemy(2), enemy(OSTY), 10, 15),
++        ] {
+             let ctx = DamageCtx {
+                 dealer,
+                 target,
+                 props: ValueProps::MOVE,
+             };
+-            assert_eq!(super::modify_damage(&state, 10, &ctx), 10, "{ctx:?}");
++            assert_eq!(super::modify_damage(&state, base, &ctx), expected, "{ctx:?}");
++        }
++    }
++
++    /// All three listener paths expose pet debuffs once, even if a fixture also lists its UID as enemy.
++    #[test]
++    fn pet_powers_are_present_once_in_full_cached_and_scoped_walks() {
++        let mut state = duel();
++        let weak = push_power(&mut state, PowerKind::Weak, 1, 0);
++        state.creatures.push(creature(OSTY, &[weak]));
++        state.player.pet_uid = Some(CreatureUid(id(OSTY)));
++        for listed_as_enemy in [false, true] {
++            if listed_as_enemy {
++                state.enemy_uids.push(CreatureUid(id(OSTY)));
++            }
++            let full: Vec<_> = super::iter_power_listeners(&state)
++                .filter(|listener| *listener == super::ListenerRef::Power(weak))
++                .collect();
++            assert_eq!(full.len(), 1);
++            assert_eq!(super::power_listener_owner_rows(&state).iter()
++                .filter(|(uid, _)| *uid == weak).count(), 1);
++            let mut scoped = 0;
++            for_each_power_owned_by(&state, |owner| owner == enemy(OSTY), |power, _| {
++                if power.id == weak.0 { scoped += 1; }
++            });
++            assert_eq!(scoped, 1);
++            let ctx = DamageCtx { dealer: enemy(OSTY), target: enemy(2), props: ValueProps::MOVE };
++            assert_eq!(super::modify_damage(&state, 20, &ctx), 15);
+         }
+     }
+ 

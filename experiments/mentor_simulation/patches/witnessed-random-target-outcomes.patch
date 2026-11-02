@@ -1,0 +1,225 @@
+diff --git a/sts2-rs/crates/sts2-core/src/card_effects.rs b/sts2-rs/crates/sts2-core/src/card_effects.rs
+index 66b8f55..0d2eac2 100644
+--- a/sts2-rs/crates/sts2-core/src/card_effects.rs
++++ b/sts2-rs/crates/sts2-core/src/card_effects.rs
+@@ -425,7 +425,7 @@ pub fn pick_random_alive_enemy(state: &mut CombatState) -> Option<CreatureUid> {
+         .run_rng
+         .combat_targets
+         .next_int_exclusive(0, alive.len() as i32) as usize;
+-    Some(alive[idx])
++    Some(crate::witnessed_outcomes::condition_random_enemy_target(state, alive[idx], &alive))
+ }
+ 
+ /// Derive the originating [`CardId`] from the play pile — the card on top
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index 086daea..fc32bdd 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -4380,7 +4380,7 @@ impl CombatState {
+             .run_rng
+             .combat_targets
+             .next_int_exclusive(0, alive.len() as i32) as usize;
+-        Some(alive[idx])
++        Some(crate::witnessed_outcomes::condition_random_enemy_target(self, alive[idx], &alive))
+     }
+ 
+     /// C# `creature.HpDisplay.IsInfinite()` (`HpDisplayExtensions.cs:8-15`) for
+@@ -19026,6 +19026,58 @@ mod tests {
+         }
+     }
+ 
++    /// Every original picker consumes its RNG even when a witnessed branch chooses another live target.
++    #[test]
++    fn witnessed_random_targets_preserve_rng_and_clear_the_scope() {
++        let mut state = CombatState::default();
++        let left = push_enemy(&mut state, 7, 30);
++        let right = push_enemy(&mut state, 8, 30);
++        state.player.orbs = OrbSlots::with_capacity(1);
++        state.player.orbs.channel(Orb::Lightning);
++        let before_counter = state.run_rng.combat_targets.counter();
++        let (result, support) = witnessed_outcomes::with_observed_outcomes_and_target_prefix(
++            &mut state, &[], &[], &[], Some(&[right, left, right]), |state| {
++                assert_eq!(state.get_random_enemy(), Some(right));
++                assert_eq!(card_effects::pick_random_alive_enemy(state), Some(left));
++                orbs::passive_tick(state);
++                Ok(StepResult::Advanced)
++            });
++        assert_eq!(result, Ok(StepResult::Advanced));
++        assert!(support.is_none());
++        assert_eq!(state.run_rng.combat_targets.counter(), before_counter + 3);
++        assert_eq!(state.creatures.iter().find(|row|row.id == right.0).unwrap().current_hp, 27);
++        assert!(state.replay_observations.is_none());
++    }
++
++    /// Branch support follows deaths; impossible or extra targets cannot commit any prefix mutation.
++    #[test]
++    fn witnessed_random_targets_branch_and_reject_outside_current_support() {
++        let mut state = CombatState::default();
++        let left = push_enemy(&mut state, 7, 30);
++        let right = push_enemy(&mut state, 8, 30);
++        let before = state.clone();
++        let apply = |state: &mut CombatState| {
++            let target = state.get_random_enemy().unwrap();
++            state.creatures.iter_mut().find(|row|row.id == target.0).unwrap().current_hp = 0;
++            let _ = state.get_random_enemy();
++            Ok(StepResult::Advanced)
++        };
++        let (result, support) = witnessed_outcomes::with_observed_outcomes_and_target_prefix(
++            &mut state, &[], &[], &[], Some(&[left]), apply);
++        assert_eq!(result, Err("observed_target_prefix_needs_branch"));
++        assert_eq!(support, Some(vec![right]));
++        assert_eq!(state, before);
++        let (result, support) = witnessed_outcomes::with_observed_outcomes_and_target_prefix(
++            &mut state, &[], &[], &[], Some(&[left, left]), apply);
++        assert_eq!(result, Err("observed_target_outside_positive_support"));
++        assert!(support.is_none());
++        assert_eq!(state, before);
++        let (result, _) = witnessed_outcomes::with_observed_outcomes_and_target_prefix(
++            &mut state, &[], &[], &[], Some(&[left, right, right]), apply);
++        assert_eq!(result, Err("observed_target_prefix_not_consumed"));
++        assert_eq!(state, before);
++    }
++
+     /// Helper: push an enemy Creature + register it in `enemy_uids`.
+     #[cfg(test)]
+     fn push_enemy(state: &mut CombatState, raw_id: u32, hp: i32) -> CreatureUid {
+diff --git a/sts2-rs/crates/sts2-core/src/orbs.rs b/sts2-rs/crates/sts2-core/src/orbs.rs
+index a29f421..d1fe20f 100644
+--- a/sts2-rs/crates/sts2-core/src/orbs.rs
++++ b/sts2-rs/crates/sts2-core/src/orbs.rs
+@@ -922,6 +922,7 @@ pub fn passive_tick(state: &mut CombatState) {
+ // Target selection helpers
+ // ---------------------------------------------------------------------------
+ 
++/// Sample the original alive set, with replay-only conditioning after the RNG read.
+ fn random_alive_enemy(state: &mut CombatState) -> Option<CreatureUid> {
+     let alive: Vec<CreatureUid> = state
+         .enemy_uids
+@@ -941,7 +942,7 @@ fn random_alive_enemy(state: &mut CombatState) -> Option<CreatureUid> {
+         .run_rng
+         .combat_targets
+         .next_int_exclusive(0, alive.len() as i32) as usize;
+-    Some(alive[idx])
++    Some(crate::witnessed_outcomes::condition_random_enemy_target(state, alive[idx], &alive))
+ }
+ 
+ fn lowest_hp_enemy(state: &CombatState) -> Option<CreatureUid> {
+diff --git a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+index 805f030..09c2594 100644
+--- a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
++++ b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+@@ -30,6 +30,9 @@ pub struct ReplayObservations {
+     orbs_consumed: usize,
+     generated_cards: Vec<ObservedGeneratedCard>,
+     generated_consumed: usize,
++    target_prefix: Option<Vec<CreatureUid>>,
++    targets_consumed: usize,
++    next_target_support: Option<Vec<CreatureUid>>,
+     error: Option<&'static str>,
+ }
+ 
+@@ -78,15 +81,35 @@ pub fn with_observed_outcomes_and_generated_cards(
+     generated_cards: &[ObservedGeneratedCard],
+     apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
+ ) -> Result<StepResult, &'static str> {
++    with_observed_outcomes_and_target_prefix(
++        state,
++        hatch_hp,
++        random_orbs,
++        generated_cards,
++        None,
++        apply,
++    )
++    .0
++}
++
++/// Enumerate a past target prefix through the original picker; an incomplete branch rolls back.
++pub fn with_observed_outcomes_and_target_prefix(
++    state: &mut CombatState,
++    hatch_hp: &[(CreatureUid, i32)],
++    random_orbs: &[OrbKind],
++    generated_cards: &[ObservedGeneratedCard],
++    target_prefix: Option<&[CreatureUid]>,
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> (Result<StepResult, &'static str>, Option<Vec<CreatureUid>>) {
+     if state.replay_observations.is_some() {
+-        return Err("observed_hatch_hp_nested_scope");
++        return (Err("observed_hatch_hp_nested_scope"), None);
+     }
+     if hatch_hp
+         .iter()
+         .enumerate()
+         .any(|(index, (owner, _))| hatch_hp[..index].iter().any(|(prior, _)| prior == owner))
+     {
+-        return Err("observed_hatch_hp_duplicate_owner");
++        return (Err("observed_hatch_hp_duplicate_owner"), None);
+     }
+     let before = state.clone();
+     state.replay_observations = Some(Box::new(ReplayObservations {
+@@ -99,10 +122,16 @@ pub fn with_observed_outcomes_and_generated_cards(
+         orbs_consumed: 0,
+         generated_cards: generated_cards.to_vec(),
+         generated_consumed: 0,
++        target_prefix: target_prefix.map(<[CreatureUid]>::to_vec),
++        targets_consumed: 0,
++        next_target_support: None,
+         error: None,
+     }));
+     let result = apply(state);
+     let observations = state.replay_observations.take();
++    let next_target_support = observations
++        .as_ref()
++        .and_then(|row| row.next_target_support.clone());
+     let failure = match observations {
+         None => Some("observed_hatch_hp_scope_lost"),
+         Some(observations) => observations.error.or_else(|| {
+@@ -116,6 +145,12 @@ pub fn with_observed_outcomes_and_generated_cards(
+                     (observations.generated_consumed != observations.generated_cards.len())
+                         .then_some("observed_generated_card_queue_not_consumed")
+                 })
++                .or_else(|| {
++                    observations.target_prefix.as_ref().and_then(|prefix| {
++                        (observations.targets_consumed != prefix.len())
++                            .then_some("observed_target_prefix_not_consumed")
++                    })
++                })
+         }),
+     };
+     let result = result.and_then(|step| {
+@@ -130,7 +165,35 @@ pub fn with_observed_outcomes_and_generated_cards(
+     if result.is_err() {
+         *state = before;
+     }
+-    result
++    (result, next_target_support)
++}
++
++/// Preserve the RNG draw and condition only on the actual positive-support target set.
++pub fn condition_random_enemy_target(
++    state: &mut CombatState,
++    sampled: CreatureUid,
++    support: &[CreatureUid],
++) -> CreatureUid {
++    let Some(observations) = state.replay_observations.as_mut() else {
++        return sampled;
++    };
++    if observations.error.is_some() {
++        return sampled;
++    }
++    let Some(prefix) = &observations.target_prefix else {
++        return sampled;
++    };
++    let Some(&target) = prefix.get(observations.targets_consumed) else {
++        observations.next_target_support = Some(support.to_vec());
++        observations.error = Some("observed_target_prefix_needs_branch");
++        return sampled;
++    };
++    if !support.contains(&target) {
++        observations.error = Some("observed_target_outside_positive_support");
++        return sampled;
++    }
++    observations.targets_consumed += 1;
++    target
+ }
+ 
+ /// Condition only the original Hatch HP event, after its original RNG read has occurred.

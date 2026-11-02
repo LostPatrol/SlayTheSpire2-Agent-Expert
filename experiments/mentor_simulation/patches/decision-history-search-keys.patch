@@ -1,0 +1,442 @@
+diff --git a/sts2-rs/crates/sts2-content/tests/history_search_keys.rs b/sts2-rs/crates/sts2-content/tests/history_search_keys.rs
+new file mode 100644
+index 0000000..06f4e4b
+--- /dev/null
++++ b/sts2-rs/crates/sts2-content/tests/history_search_keys.rs
+@@ -0,0 +1,246 @@
++//! Search keys must distinguish histories that change the original card or power resolver.
++//! Legacy state/run hash contracts remain outside this targeted repair.
++
++use sts2_core::cards::CardId;
++use sts2_core::{Action, CardUid, CombatPhase, CombatState, MonsterKind};
++
++/// Construct two mechanically identical arenas whose only difference will be a public history counter.
++fn fixture(id: CardId) -> CombatState {
++    sts2_content::cards::dispatch::ensure_installed();
++    let mut state = CombatState {
++        phase: CombatPhase::PlayerPlayPhase,
++        ..CombatState::default()
++    };
++    state.player.current_hp = 80;
++    state.player.max_hp = 80;
++    state.player.energy = 3;
++    state.init_player_creature();
++    let enemy = state.spawn_enemy(MonsterKind::Nibbit);
++    let creature = state
++        .creatures
++        .iter_mut()
++        .find(|c| c.id == enemy.0)
++        .unwrap();
++    creature.current_hp = 200;
++    creature.max_hp = 200;
++    let mut card = sts2_content::cards::spec_index::card_pod_from_id(id, false).unwrap();
++    card.uid = CardUid::new(1).unwrap();
++    state.player.hand.push(card.uid);
++    state.cards.push(card);
++    state
++}
++
++/// Invoke the real card handler and measure HP loss rather than duplicating its formula.
++fn damage(mut state: CombatState) -> i32 {
++    let uid = state.enemy_uids[0];
++    let before = state
++        .creatures
++        .iter()
++        .find(|c| c.id == uid.0)
++        .unwrap()
++        .current_hp;
++    sts2_core::apply(
++        &mut state,
++        Action::PlayCard {
++            hand_index: 0,
++            target: Some(0),
++        },
++    );
++    before
++        - state
++            .creatures
++            .iter()
++            .find(|c| c.id == uid.0)
++            .unwrap()
++            .current_hp
++}
++
++/// Different Helix Drill damage requires distinct search keys, while legacy hashes remain unchanged.
++#[test]
++fn history_keys_distinguish_helix_energy_spent() {
++    let zero = fixture(CardId::HelixDrill);
++    let mut one = zero.clone();
++    one.combat_log.energy_spent_this_turn = 1;
++    let keys_zero = (
++        sts2_core::tt_hash_v2(&zero),
++        sts2_core::chance_outcome_hash(&zero),
++    );
++    let keys_one = (
++        sts2_core::tt_hash_v2(&one),
++        sts2_core::chance_outcome_hash(&one),
++    );
++    assert_eq!(sts2_core::state_hash(&zero), sts2_core::state_hash(&one));
++    assert_eq!(sts2_core::search_hash(&zero), sts2_core::search_hash(&one));
++    assert_eq!(
++        keys_zero,
++        (
++            sts2_core::tt_hash_v2(&zero.clone()),
++            sts2_core::chance_outcome_hash(&zero.clone())
++        )
++    );
++    let outcomes = (damage(zero), damage(one));
++    assert_eq!(outcomes, (0, 3));
++    assert_ne!(keys_zero.0, keys_one.0);
++    assert_ne!(keys_zero.1, keys_one.1);
++}
++
++/// Generation and lost-HP history affect independent original handlers, not just Helix's hit loop.
++#[test]
++fn history_keys_distinguish_supermassive_and_spite_effects() {
++    for (id, expected) in [(CardId::Supermassive, (5, 8)), (CardId::Spite, (5, 10))] {
++        let zero = fixture(id);
++        let mut one = zero.clone();
++        if id == CardId::Supermassive {
++            one.player.generated_cards_this_combat = 1;
++        } else {
++            one.combat_log.hp_lost_this_turn = 1;
++        }
++        assert_ne!(sts2_core::tt_hash_v2(&zero), sts2_core::tt_hash_v2(&one));
++        assert_ne!(
++            sts2_core::chance_outcome_hash(&zero),
++            sts2_core::chance_outcome_hash(&one)
++        );
++        assert_eq!((damage(zero), damage(one)), expected);
++    }
++}
++
++/// Completed non-auto history changes the native Scarf free-cost window.
++#[test]
++fn history_keys_distinguish_scarf_completed_non_auto_history() {
++    let mut three = fixture(CardId::DefendIronclad);
++    three.relics.push(sts2_core::Relic {
++        id: std::num::NonZeroU32::new(1).unwrap(),
++        kind: sts2_core::RelicKind::BrilliantScarf,
++        counter: 0,
++        is_wax: false,
++        is_melted: false,
++    });
++    three.player.non_auto_card_plays_finished_this_turn = 3;
++    let mut four = three.clone();
++    four.player.non_auto_card_plays_finished_this_turn = 4;
++    let uid = three.player.hand[0];
++    assert_eq!(
++        (
++            sts2_core::hooks::effective_card_cost(&three, uid),
++            sts2_core::hooks::effective_card_cost(&four, uid)
++        ),
++        (1, 0)
++    );
++    assert_ne!(sts2_core::tt_hash_v2(&three), sts2_core::tt_hash_v2(&four));
++    assert_ne!(
++        sts2_core::chance_outcome_hash(&three),
++        sts2_core::chance_outcome_hash(&four)
++    );
++}
++
++/// Retain names a concrete card: swapping its mechanics cannot hide behind the same pile multiset.
++#[test]
++fn history_keys_bind_referenced_card_mechanics_to_uid() {
++    let mut left = fixture(CardId::DefendIronclad);
++    let mut attack =
++        sts2_content::cards::spec_index::card_pod_from_id(CardId::StrikeIronclad, false).unwrap();
++    attack.uid = CardUid::new(2).unwrap();
++    left.player.hand.push(attack.uid);
++    left.cards.push(attack);
++    left.player.retain_this_turn.push(CardUid::new(1).unwrap());
++    let mut right = left.clone();
++    right.cards.swap(0, 1);
++    right.cards[0].uid = CardUid::new(1).unwrap();
++    right.cards[1].uid = CardUid::new(2).unwrap();
++    assert_ne!(
++        sts2_core::chance_outcome_hash(&left),
++        sts2_core::chance_outcome_hash(&right)
++    );
++    for state in [&mut left, &mut right] {
++        sts2_core::combat_loop::end_player_turn_phase_one(state);
++        sts2_core::combat_loop::end_player_turn_phase_two(state);
++        assert_eq!(state.player.hand.len(), 1);
++    }
++    assert_eq!(
++        left.cards[left.player.hand[0].get() as usize - 1].card_id,
++        CardId::DefendIronclad
++    );
++    assert_eq!(
++        right.cards[right.player.hand[0].get() as usize - 1].card_id,
++        CardId::StrikeIronclad
++    );
++}
++
++/// A referenced same-face copy's replay count changes the actual retained card's later block.
++#[test]
++fn history_keys_bind_replay_count_for_referenced_copy() {
++    let mut left = fixture(CardId::DefendIronclad);
++    let mut duplicate = left.cards[0];
++    duplicate.uid = CardUid::new(2).unwrap();
++    duplicate.base_replay_count = 1;
++    left.player.hand.push(duplicate.uid);
++    left.cards.push(duplicate);
++    left.player.retain_this_turn.push(CardUid::new(1).unwrap());
++    let mut right = left.clone();
++    right.cards.swap(0, 1);
++    right.cards[0].uid = CardUid::new(1).unwrap();
++    right.cards[1].uid = CardUid::new(2).unwrap();
++    let keys_left = (
++        sts2_core::tt_hash_v2(&left),
++        sts2_core::chance_outcome_hash(&left),
++    );
++    let keys_right = (
++        sts2_core::tt_hash_v2(&right),
++        sts2_core::chance_outcome_hash(&right),
++    );
++    let mut outcomes = Vec::new();
++    for mut state in [left, right] {
++        sts2_core::apply(&mut state, Action::EndTurn);
++        assert_eq!(state.player.hand[0], CardUid::new(1).unwrap());
++        let block = state.player.block;
++        sts2_core::apply(
++            &mut state,
++            Action::PlayCard {
++                hand_index: 0,
++                target: None,
++            },
++        );
++        outcomes.push(state.player.block - block);
++    }
++    println!(
++        "referenced_copy keys_left={keys_left:?} keys_right={keys_right:?} block={outcomes:?}"
++    );
++    assert_eq!(outcomes, vec![5, 10]);
++    assert_ne!(keys_left.0, keys_right.0);
++    assert_ne!(keys_left.1, keys_right.1);
++}
++
++/// Public recording flags and replay-only scratch cannot split an otherwise identical search state.
++#[test]
++fn history_keys_ignore_recorders_and_replay_observations() {
++    let plain = fixture(CardId::HelixDrill);
++    let keys = (
++        sts2_core::tt_hash_v2(&plain),
++        sts2_core::chance_outcome_hash(&plain),
++    );
++    let mut recorded = plain.clone();
++    recorded.combat_log.event_log.set_recording(true);
++    recorded
++        .combat_log
++        .event_log
++        .set_public_history_recording(true);
++    recorded.combat_log.record_card_play_log = true;
++    assert_eq!(
++        keys,
++        (
++            sts2_core::tt_hash_v2(&recorded),
++            sts2_core::chance_outcome_hash(&recorded)
++        )
++    );
++    sts2_core::witnessed_outcomes::with_observed_outcomes(&mut recorded, &[], &[], |state| {
++        assert_eq!(
++            keys,
++            (
++                sts2_core::tt_hash_v2(state),
++                sts2_core::chance_outcome_hash(state)
++            )
++        );
++        Ok(sts2_core::StepResult::Advanced)
++    })
++    .unwrap();
++}
+diff --git a/sts2-rs/crates/sts2-core/src/hashing.rs b/sts2-rs/crates/sts2-core/src/hashing.rs
+index 7ab6ae6..86fe9c0 100644
+--- a/sts2-rs/crates/sts2-core/src/hashing.rs
++++ b/sts2-rs/crates/sts2-core/src/hashing.rs
+@@ -217,6 +217,7 @@ pub fn chance_outcome_hash(state: &CombatState) -> u64 {
+     hash_enemies_cards_items_pending_skipping::<TtV2Encoding, _>(state, &mut h, |c| {
+         uid_bound.binary_search(&c.uid.get()).is_err()
+     });
++    hash_decision_history(state, &mut h);
+     h.finish()
+ }
+ 
+@@ -268,7 +269,17 @@ fn chance_dedup_arena_split(
+                 .map(|u| u.get()),
+         );
+     }
++    // Historical UID references must keep the card's mechanics bound to that UID.
++    append_player_history_uids(p, &mut uid_bound);
++    append_turn_history_uids(&state.combat_log, &mut uid_bound);
++    for ally in &state.allies {
++        append_player_history_uids(ally, &mut uid_bound);
++    }
++    for seat in &state.coop.stash {
++        append_turn_history_uids(&seat.combat_log, &mut uid_bound);
++    }
+     uid_bound.sort_unstable();
++    uid_bound.dedup();
+     let mut in_player_pile: smallvec::SmallVec<[u32; 64]> = p
+         .hand
+         .iter()
+@@ -784,9 +795,150 @@ impl HashEncoding for TtV2Encoding {
+ pub fn tt_hash_v2(state: &CombatState) -> u64 {
+     let mut h = new_hasher();
+     hash_game_state::<TtV2Encoding, _>(state, &mut h);
++    hash_decision_history(state, &mut h);
+     h.finish()
+ }
+ 
++/// Domain tag for the appended history section; legacy state/search/run layouts remain unchanged.
++const DECISION_HISTORY_TAG: &str = "decision_history_v1";
++
++/// Hash real history and budgets used by card effects, powers, legal actions or the leaf evaluator.
++fn hash_decision_history<H: Hasher>(state: &CombatState, h: &mut H) {
++    DECISION_HISTORY_TAG.hash(h);
++    (state.gold, state.energy_wasted, state.cards_drawn).hash(h);
++    hash_player_history(&state.player, h);
++    hash_turn_history(&state.combat_log, h);
++    for ally in &state.allies {
++        hash_player_history(ally, h);
++    }
++    if state.coop.full {
++        for seat in &state.coop.stash {
++            seat.seat.hash(h);
++            hash_turn_history(&seat.combat_log, h);
++        }
++    }
++    hash_referenced_history_cards(state, h);
++}
++
++/// Bind every history-referenced UID to full card mechanics, including keywords and replay modifiers.
++fn hash_referenced_history_cards<H: Hasher>(state: &CombatState, h: &mut H) {
++    let mut referenced = smallvec::SmallVec::<[u32; 8]>::new();
++    append_player_history_uids(&state.player, &mut referenced);
++    append_turn_history_uids(&state.combat_log, &mut referenced);
++    for ally in &state.allies {
++        append_player_history_uids(ally, &mut referenced);
++    }
++    for seat in &state.coop.stash {
++        append_turn_history_uids(&seat.combat_log, &mut referenced);
++    }
++    referenced.sort_unstable();
++    referenced.dedup();
++    referenced.len().hash(h);
++    for uid in referenced {
++        uid.hash(h);
++        state.cards
++            .get(uid as usize - 1)
++            .filter(|card| card.uid.get() == uid)
++            .map(card_observational_key)
++            .hash(h);
++    }
++}
++
++/// Keep per-player play/generation history independent of observer flags and recording buffers.
++fn hash_player_history<H: Hasher>(p: &PlayerCombatState, h: &mut H) {
++    (
++        p.cards_played_this_turn,
++        p.card_plays_started_this_turn,
++        p.cards_first_in_series_this_turn,
++        p.manual_card_series_this_turn,
++        p.non_auto_card_plays_finished_this_turn,
++        p.shivs_played_this_turn,
++        p.stars_gained_this_turn,
++        p.generated_cards_this_combat,
++        p.powered_hits_this_turn,
++        p.request_end_turn_after_play,
++        p.pending_retain_count,
++    )
++        .hash(h);
++    hash_card_uid_set(&p.retain_this_turn, h);
++    hash_card_uid_set(&p.sly_this_turn, h);
++    hash_card_uid_set(&p.sly_this_combat, h);
++    let mut targets = p.powered_hits_by_target_this_turn.clone();
++    targets.sort_unstable_by_key(|(uid, count)| (uid.get(), *count));
++    targets.as_slice().hash(h);
++}
++
++/// Include public rule history, retaining repeated block gains while excluding diagnostic logs and scratch.
++fn hash_turn_history<H: Hasher>(log: &crate::TurnEvents, h: &mut H) {
++    (
++        log.energy_spent_this_turn,
++        log.hp_lost_this_turn,
++        log.unblocked_damage_received_this_combat,
++        log.cards_exhausted_this_turn,
++        log.cards_discarded_this_turn,
++        log.cards_drawn_by_effect_this_turn,
++        log.status_cards_drawn_this_turn,
++        log.zero_cost_attacks_played_this_turn,
++        log.card_plays_finished_this_turn,
++        log.card_plays_finished_last_player_turn,
++    )
++        .hash(h);
++    (
++        log.lightning_orbs_channeled_this_combat,
++        log.player_card_plays_this_combat,
++        log.ethereal_cards_played_this_combat,
++        log.bound_cards_afflicted_by_chains_this_turn,
++        log.exhaust_sweep_ethereal,
++        log.joss_paper_ethereal_count,
++        log.block_zero_at_turn_end,
++        log.block_before_late_turn_end,
++        log.extra_turns_taken_this_combat,
++    )
++        .hash(h);
++    hash_card_uid_set(&log.fetch_played_this_turn, h);
++    let mut targets = log.osty_powered_hits_by_target_this_turn.clone();
++    targets.sort_unstable_by_key(|(uid, count)| (uid.get(), *count));
++    targets.as_slice().hash(h);
++    log.last_attack_skill_played.hash(h);
++    log.prev_round_last_attack_skill_played.hash(h);
++    let mut blocks = log.unmovable_card_block_plays.clone();
++    blocks.sort_unstable();
++    blocks.as_slice().hash(h);
++}
++
++/// Membership-only card sets have no rule-relevant insertion order.
++fn hash_card_uid_set<H: Hasher>(uids: &[crate::CardUid], h: &mut H) {
++    let mut members: smallvec::SmallVec<[u32; 8]> = uids.iter().map(|uid| uid.get()).collect();
++    members.sort_unstable();
++    members.dedup();
++    members.as_slice().hash(h);
++}
++
++/// Add the concrete cards named by per-player history before observational chance-pile folding.
++fn append_player_history_uids(p: &PlayerCombatState, uids: &mut smallvec::SmallVec<[u32; 8]>) {
++    uids.extend(
++        p.retain_this_turn
++            .iter()
++            .chain(&p.sly_this_turn)
++            .chain(&p.sly_this_combat)
++            .map(|uid| uid.get()),
++    );
++}
++
++/// Fetch and HistoryCourse can consult the exact card instance, even after it leaves a current pile.
++fn append_turn_history_uids(log: &crate::TurnEvents, uids: &mut smallvec::SmallVec<[u32; 8]>) {
++    uids.extend(log.fetch_played_this_turn.iter().map(|uid| uid.get()));
++    uids.extend(
++        [
++            log.last_attack_skill_played,
++            log.prev_round_last_attack_skill_played,
++        ]
++        .into_iter()
++        .flatten()
++        .filter_map(|(_, _, uid)| uid.map(|uid| uid.get())),
++    );
++}
++
+ /// Fast-path encodings (fixed-seed ahash hashes, [`state_hash`] /
+ /// [`search_hash`]): sort-free [`pile_mix`] pile fingerprint, direct
+ /// `RelicKind` enum hash, direct arena iteration.
+@@ -1123,7 +1275,7 @@ fn hash_pile_observational<H: Hasher>(pile: &[crate::CardUid], state: &CombatSta
+ /// so it now hashes the struct directly — same equality classes (both
+ /// encodings are injective over the non-uid fields up to hash collision),
+ /// different hash VALUES, which only ever feed the chance-outcome dedup
+-/// comparison. Used only by [`hash_pile_observational`].
++/// comparison. Also binds full card mechanics to history-referenced UIDs.
+ fn card_observational_key(card: &crate::Card) -> u64 {
+     let sentinel = crate::CardUid::new(1).expect("1 is a valid non-zero CardUid");
+     let mut c = *card;

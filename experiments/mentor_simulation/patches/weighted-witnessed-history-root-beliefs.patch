@@ -1,0 +1,1262 @@
+diff --git a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+--- a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
++++ b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+@@ -19,6 +19,13 @@
+ #[derive(Clone, Debug, PartialEq, Eq)]
+ enum ObservedOutcome {
+     HatchHp { owner: CreatureUid, hp: i32 },
++}
++
++/// Original ordered supports expose changes between an exploratory and draw-conditioned replay.
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub enum ObservedRandomSupport {
++    EnemyTargets(Vec<CreatureUid>),
++    Cards(Vec<CardUid>),
+ }
+ 
+ /// Replay-only scratch; absent from ordinary worlds, wire state and semantic hashes.
+@@ -33,6 +40,11 @@
+     target_prefix: Option<Vec<CreatureUid>>,
+     targets_consumed: usize,
+     next_target_support: Option<Vec<CreatureUid>>,
++    card_prefix: Option<Vec<CardUid>>,
++    cards_consumed: usize,
++    next_card_support: Option<Vec<CardUid>>,
++    random_likelihood_bits: u64,
++    random_supports: Vec<ObservedRandomSupport>,
+     error: Option<&'static str>,
+ }
+ 
+@@ -101,15 +113,81 @@
+     target_prefix: Option<&[CreatureUid]>,
+     apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
+ ) -> (Result<StepResult, &'static str>, Option<Vec<CreatureUid>>) {
++    let (result, targets, _) = with_observed_outcomes_and_random_prefixes(
++        state,
++        hatch_hp,
++        random_orbs,
++        generated_cards,
++        target_prefix,
++        None,
++        apply,
++    );
++    (result, targets)
++}
++
++/// Enumerate typed past target and card picks; incomplete branches roll back the whole action.
++pub fn with_observed_outcomes_and_random_prefixes(
++    state: &mut CombatState,
++    hatch_hp: &[(CreatureUid, i32)],
++    random_orbs: &[OrbKind],
++    generated_cards: &[ObservedGeneratedCard],
++    target_prefix: Option<&[CreatureUid]>,
++    card_prefix: Option<&[CardUid]>,
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> (
++    Result<StepResult, &'static str>,
++    Option<Vec<CreatureUid>>,
++    Option<Vec<CardUid>>,
++) {
++    let (result, targets, cards, _, _) = with_observed_outcomes_and_random_prefixes_likelihood(
++        state,
++        hatch_hp,
++        random_orbs,
++        generated_cards,
++        target_prefix,
++        card_prefix,
++        apply,
++    );
++    (result, targets, cards)
++}
++
++/// Return the actual target/card mass and ordered supports before clearing replay-only scratch.
++pub fn with_observed_outcomes_and_random_prefixes_likelihood(
++    state: &mut CombatState,
++    hatch_hp: &[(CreatureUid, i32)],
++    random_orbs: &[OrbKind],
++    generated_cards: &[ObservedGeneratedCard],
++    target_prefix: Option<&[CreatureUid]>,
++    card_prefix: Option<&[CardUid]>,
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> (
++    Result<StepResult, &'static str>,
++    Option<Vec<CreatureUid>>,
++    Option<Vec<CardUid>>,
++    f64,
++    Vec<ObservedRandomSupport>,
++) {
+     if state.replay_observations.is_some() {
+-        return (Err("observed_hatch_hp_nested_scope"), None);
++        return (
++            Err("observed_hatch_hp_nested_scope"),
++            None,
++            None,
++            1.0,
++            vec![],
++        );
+     }
+     if hatch_hp
+         .iter()
+         .enumerate()
+         .any(|(index, (owner, _))| hatch_hp[..index].iter().any(|(prior, _)| prior == owner))
+     {
+-        return (Err("observed_hatch_hp_duplicate_owner"), None);
++        return (
++            Err("observed_hatch_hp_duplicate_owner"),
++            None,
++            None,
++            1.0,
++            vec![],
++        );
+     }
+     let before = state.clone();
+     state.replay_observations = Some(Box::new(ReplayObservations {
+@@ -125,6 +203,11 @@
+         target_prefix: target_prefix.map(<[CreatureUid]>::to_vec),
+         targets_consumed: 0,
+         next_target_support: None,
++        card_prefix: card_prefix.map(<[CardUid]>::to_vec),
++        cards_consumed: 0,
++        next_card_support: None,
++        random_likelihood_bits: 1.0_f64.to_bits(),
++        random_supports: Vec::new(),
+         error: None,
+     }));
+     let result = apply(state);
+@@ -132,6 +215,15 @@
+     let next_target_support = observations
+         .as_ref()
+         .and_then(|row| row.next_target_support.clone());
++    let next_card_support = observations
++        .as_ref()
++        .and_then(|row| row.next_card_support.clone());
++    let random_likelihood = observations
++        .as_ref()
++        .map_or(1.0, |row| f64::from_bits(row.random_likelihood_bits));
++    let random_supports = observations
++        .as_ref()
++        .map_or_else(Vec::new, |row| row.random_supports.clone());
+     let failure = match observations {
+         None => Some("observed_hatch_hp_scope_lost"),
+         Some(observations) => observations.error.or_else(|| {
+@@ -151,6 +243,12 @@
+                             .then_some("observed_target_prefix_not_consumed")
+                     })
+                 })
++                .or_else(|| {
++                    observations.card_prefix.as_ref().and_then(|prefix| {
++                        (observations.cards_consumed != prefix.len())
++                            .then_some("observed_card_prefix_not_consumed")
++                    })
++                })
+         }),
+     };
+     let result = result.and_then(|step| {
+@@ -165,7 +263,13 @@
+     if result.is_err() {
+         *state = before;
+     }
+-    (result, next_target_support)
++    (
++        result,
++        next_target_support,
++        next_card_support,
++        random_likelihood,
++        random_supports,
++    )
+ }
+ 
+ /// Preserve the RNG draw and condition only on the actual positive-support target set.
+@@ -183,6 +287,9 @@
+     let Some(prefix) = &observations.target_prefix else {
+         return sampled;
+     };
++    observations
++        .random_supports
++        .push(ObservedRandomSupport::EnemyTargets(support.to_vec()));
+     let Some(&target) = prefix.get(observations.targets_consumed) else {
+         observations.next_target_support = Some(support.to_vec());
+         observations.error = Some("observed_target_prefix_needs_branch");
+@@ -193,7 +300,42 @@
+         return sampled;
+     }
+     observations.targets_consumed += 1;
++    observations.random_likelihood_bits =
++        (f64::from_bits(observations.random_likelihood_bits) / support.len() as f64).to_bits();
+     target
++}
++
++/// Condition a card picker only after its original RNG read, using its actual filtered support.
++pub fn condition_random_card_pick(
++    state: &mut CombatState,
++    sampled: CardUid,
++    support: &[CardUid],
++) -> CardUid {
++    let Some(observations) = state.replay_observations.as_mut() else {
++        return sampled;
++    };
++    if observations.error.is_some() {
++        return sampled;
++    }
++    let Some(prefix) = &observations.card_prefix else {
++        return sampled;
++    };
++    observations
++        .random_supports
++        .push(ObservedRandomSupport::Cards(support.to_vec()));
++    let Some(&card) = prefix.get(observations.cards_consumed) else {
++        observations.next_card_support = Some(support.to_vec());
++        observations.error = Some("observed_card_prefix_needs_branch");
++        return sampled;
++    };
++    if !support.contains(&card) {
++        observations.error = Some("observed_card_outside_positive_support");
++        return sampled;
++    }
++    observations.cards_consumed += 1;
++    observations.random_likelihood_bits =
++        (f64::from_bits(observations.random_likelihood_bits) / support.len() as f64).to_bits();
++    card
+ }
+ 
+ /// Condition only the original Hatch HP event, after its original RNG read has occurred.
+@@ -295,6 +437,167 @@
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++
++    /// Only consumed forced picks contribute mass; even a missing pick exposes its original support.
++    #[test]
++    fn observed_random_likelihood_records_ordered_support_and_consumed_mass() {
++        let targets = [CreatureUid::new(2).unwrap(), CreatureUid::new(3).unwrap()];
++        let cards = [
++            CardUid::new(1).unwrap(),
++            CardUid::new(2).unwrap(),
++            CardUid::new(3).unwrap(),
++        ];
++        for complete in [false, true] {
++            let mut state = CombatState::default();
++            let before = state.clone();
++            let card_prefix = if complete { vec![cards[1]] } else { vec![] };
++            let (result, next_targets, next_cards, mass, supports) =
++                with_observed_outcomes_and_random_prefixes_likelihood(
++                    &mut state,
++                    &[],
++                    &[],
++                    &[],
++                    Some(&[targets[1]]),
++                    Some(&card_prefix),
++                    |state| {
++                        state.gold = 123;
++                        assert_eq!(
++                            condition_random_enemy_target(state, targets[0], &targets),
++                            targets[1]
++                        );
++                        let _ = condition_random_card_pick(state, cards[0], &cards);
++                        Ok(StepResult::Advanced)
++                    },
++                );
++            assert!(next_targets.is_none());
++            assert_eq!(
++                supports,
++                vec![
++                    ObservedRandomSupport::EnemyTargets(targets.to_vec()),
++                    ObservedRandomSupport::Cards(cards.to_vec()),
++                ]
++            );
++            assert!(state.replay_observations.is_none());
++            if complete {
++                assert_eq!(result, Ok(StepResult::Advanced));
++                assert!(next_cards.is_none());
++                assert_eq!(mass, 1.0 / 6.0);
++                assert_eq!(state.gold, 123);
++            } else {
++                assert_eq!(result, Err("observed_card_prefix_needs_branch"));
++                assert_eq!(next_cards, Some(cards.to_vec()));
++                assert_eq!(mass, 1.0 / 2.0);
++                assert_eq!(state, before);
++            }
++        }
++    }
++
++    /// Target and card prefixes remain independent and do not replace the original RNG draws.
++    #[test]
++    fn observed_card_and_target_prefixes_preserve_rng_and_clear_scope() {
++        let mut state = CombatState::default();
++        let cards = [CardUid::new(1).unwrap(), CardUid::new(2).unwrap()];
++        let targets = [CreatureUid::new(2).unwrap(), CreatureUid::new(3).unwrap()];
++        let mut original_rng = state.run_rng.clone();
++        let _ = original_rng.combat_card_generation.next_int_exclusive(0, 2);
++        let result = with_observed_outcomes_and_random_prefixes(
++            &mut state,
++            &[],
++            &[],
++            &[],
++            Some(&[targets[1]]),
++            Some(&[cards[1]]),
++            |state| {
++                let sampled = state
++                    .run_rng
++                    .combat_card_generation
++                    .next_int_exclusive(0, 2);
++                assert_eq!(
++                    condition_random_card_pick(state, cards[sampled as usize], &cards),
++                    cards[1]
++                );
++                assert_eq!(
++                    condition_random_enemy_target(state, targets[0], &targets),
++                    targets[1]
++                );
++                Ok(StepResult::Advanced)
++            },
++        );
++        assert_eq!(result, (Ok(StepResult::Advanced), None, None));
++        assert_eq!(state.run_rng, original_rng);
++        assert!(state.replay_observations.is_none());
++
++        // Without the card channel, the old target-only wrapper keeps the sampled card.
++        let (result, support) = with_observed_outcomes_and_target_prefix(
++            &mut state,
++            &[],
++            &[],
++            &[],
++            Some(&[]),
++            |state| {
++                assert_eq!(
++                    condition_random_card_pick(state, cards[0], &cards),
++                    cards[0]
++                );
++                Ok(StepResult::Advanced)
++            },
++        );
++        assert_eq!(result, Ok(StepResult::Advanced));
++        assert!(support.is_none());
++        assert!(state.replay_observations.is_none());
++    }
++
++    /// Missing, impossible and unused card evidence cannot leak any partial state changes.
++    #[test]
++    fn observed_card_prefix_failures_return_support_and_roll_back() {
++        let supported = CardUid::new(1).unwrap();
++        let impossible = CardUid::new(2).unwrap();
++        for (prefix, should_pick, expected_error, expected_support) in [
++            (
++                Vec::new(),
++                true,
++                "observed_card_prefix_needs_branch",
++                Some(vec![supported]),
++            ),
++            (
++                vec![impossible],
++                true,
++                "observed_card_outside_positive_support",
++                None,
++            ),
++            (
++                vec![supported],
++                false,
++                "observed_card_prefix_not_consumed",
++                None,
++            ),
++        ] {
++            let mut state = CombatState::default();
++            let before = state.clone();
++            let result = with_observed_outcomes_and_random_prefixes(
++                &mut state,
++                &[],
++                &[],
++                &[],
++                Some(&[]),
++                Some(&prefix),
++                |state| {
++                    state.gold = 999;
++                    if should_pick {
++                        let _ = state
++                            .run_rng
++                            .combat_card_generation
++                            .next_int_exclusive(0, 1);
++                        let _ = condition_random_card_pick(state, supported, &[supported]);
++                    }
++                    Ok(StepResult::Advanced)
++                },
++            );
++            assert_eq!(result, (Err(expected_error), None, expected_support));
++            assert_eq!(state, before);
++            assert!(state.replay_observations.is_none());
++        }
++    }
+ 
+     /// Different typed event channels cannot consume each other's evidence when interleaved.
+     #[test]
+diff --git a/sts2-rs/crates/sts2-core/src/draw_knowledge.rs b/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
+--- a/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
++++ b/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
+@@ -12,6 +12,8 @@
+ pub struct ObservedDraws {
+     expected: Vec<CardUid>,
+     consumed: usize,
++    equivalents: Option<Vec<Vec<CardUid>>>,
++    likelihood_bits: u64,
+     error: Option<&'static str>,
+ }
+ 
+@@ -82,6 +84,38 @@
+     action: crate::Action,
+     expected: &[CardUid],
+ ) -> Result<crate::StepResult, &'static str> {
++    apply_observed_draws_inner(state, action, expected, None).map(|(step, _)| step)
++}
++
++/// Replay observed faces and return their joint likelihood under the original public draw law.
++/// Each row includes the expected UID and only mechanically interchangeable public identities.
++pub fn apply_observed_draws_with_likelihood(
++    state: &mut crate::CombatState,
++    action: crate::Action,
++    expected: &[CardUid],
++    equivalents: &[Vec<CardUid>],
++) -> Result<(crate::StepResult, f64), &'static str> {
++    if expected.len() != equivalents.len()
++        || expected.iter().zip(equivalents).any(|(uid, group)| {
++            !group.contains(uid)
++                || group
++                    .iter()
++                    .enumerate()
++                    .any(|(index, member)| group[..index].contains(member))
++        })
++    {
++        return Err("observed_draw_invalid_equivalence_groups");
++    }
++    apply_observed_draws_inner(state, action, expected, Some(equivalents))
++}
++
++/// Share atomic replay and cleanup while leaving the legacy identity-only API unchanged.
++fn apply_observed_draws_inner(
++    state: &mut crate::CombatState,
++    action: crate::Action,
++    expected: &[CardUid],
++    equivalents: Option<&[Vec<CardUid>]>,
++) -> Result<(crate::StepResult, f64), &'static str> {
+     if state.player.deferred_draw_order {
+         return Err("observed_draw_replay_requires_materialized_public_prefix");
+     }
+@@ -99,6 +133,8 @@
+     let before = state.clone();
+     knowledge_mut(&mut state.player).observed_draws = Some(Box::new(ObservedDraws {
+         expected: expected.to_vec(),
++        equivalents: equivalents.map(<[Vec<CardUid>]>::to_vec),
++        likelihood_bits: 1.0_f64.to_bits(),
+         ..ObservedDraws::default()
+     }));
+     let result = crate::apply(state, action);
+@@ -134,7 +170,12 @@
+     {
+         state.player.draw_knowledge = None;
+     }
+-    Ok(result)
++    Ok((
++        result,
++        witness
++            .as_ref()
++            .map_or(1.0, |w| f64::from_bits(w.likelihood_bits)),
++    ))
+ }
+ 
+ /// Consume an observed top only when it has positive support in the current public draw law.
+@@ -144,6 +185,11 @@
+         return None;
+     }
+     let next = witness.expected.get(witness.consumed).copied();
++    let equivalents = witness
++        .equivalents
++        .as_ref()
++        .and_then(|groups| groups.get(witness.consumed))
++        .cloned();
+     normalize(player);
+     let error = unsupported_reason(player)
+         .or_else(|| {
+@@ -165,17 +211,90 @@
+     }
+     let uid = next?;
+     let index = player.draw.iter().position(|candidate| *candidate == uid)?;
+-    player
+-        .draw_knowledge
+-        .as_mut()?
+-        .observed_draws
+-        .as_mut()?
+-        .consumed += 1;
++    let probability = equivalents
++        .as_ref()
++        .map_or(1.0, |group| next_observation_probability(player, group));
++    if probability <= 0.0 || !probability.is_finite() {
++        player
++            .draw_knowledge
++            .as_mut()?
++            .observed_draws
++            .as_mut()?
++            .error = Some("observed_draw_likelihood_outside_positive_support");
++        return None;
++    }
++    let witness = player.draw_knowledge.as_mut()?.observed_draws.as_mut()?;
++    witness.consumed += 1;
++    if equivalents.is_some() {
++        witness.likelihood_bits = (f64::from_bits(witness.likelihood_bits) * probability).to_bits();
++    }
+     // This is a top observation, not a directed removal at an unknown non-top position.
+     consumed_top(player, uid);
+     player.pinned_top.retain(|pin| *pin != uid);
+     player.pinned_bottom.retain(|pin| *pin != uid);
+     Some(player.draw.remove(index))
++}
++
++/// Sum face probabilities from the same pins, priority bands and insertion kernel as sampling.
++fn next_observation_probability(player: &PlayerCombatState, equivalents: &[CardUid]) -> f64 {
++    if let Some(uid) = player
++        .pinned_top
++        .first()
++        .filter(|uid| player.draw.contains(uid))
++    {
++        return if equivalents.contains(uid) { 1.0 } else { 0.0 };
++    }
++    let middle: SmallVec<[CardUid; 32]> = player
++        .draw
++        .iter()
++        .copied()
++        .filter(|uid| !player.pinned_top.contains(uid) && !player.pinned_bottom.contains(uid))
++        .collect();
++    if middle.is_empty() {
++        return if player
++            .draw
++            .first()
++            .is_some_and(|uid| equivalents.contains(uid))
++        {
++            1.0
++        } else {
++            0.0
++        };
++    }
++    let priority = player.draw_knowledge.as_ref().and_then(|knowledge| {
++        knowledge
++            .groups
++            .iter()
++            .find(|group| group.iter().any(|uid| middle.contains(uid)))
++    });
++    let Some(priority) = priority else {
++        return middle
++            .iter()
++            .filter(|uid| equivalents.contains(uid))
++            .count() as f64
++            / middle.len() as f64;
++    };
++    let knowledge = player
++        .draw_knowledge
++        .as_ref()
++        .expect("priority has knowledge");
++    let inserted_count = middle
++        .iter()
++        .filter(|uid| knowledge.inserted.contains(uid))
++        .count();
++    let inserted_matches = middle
++        .iter()
++        .filter(|uid| knowledge.inserted.contains(uid) && equivalents.contains(uid))
++        .count();
++    let priority_count = middle.iter().filter(|uid| priority.contains(uid)).count();
++    let priority_matches = middle
++        .iter()
++        .filter(|uid| priority.contains(uid) && equivalents.contains(uid))
++        .count();
++    // Each inserted card gets 1/N; the first band shares all remaining base probability.
++    (inserted_matches as f64
++        + (middle.len() - inserted_count) as f64 * priority_matches as f64 / priority_count as f64)
++        / middle.len() as f64
+ }
+ 
+ /// Allocate knowledge only for the rare enchanted-card path.
+@@ -971,6 +1090,131 @@
+         CardUid::new(number).expect("nonzero")
+     }
+ 
++    /// Repeated observed faces consume only their representative and retain hypergeometric mass.
++    #[test]
++    fn observed_face_likelihood_counts_remaining_equivalent_cards() {
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(3), uid(5)];
++        knowledge_mut(&mut state.player).observed_draws = Some(Box::new(ObservedDraws {
++            expected: vec![uid(1), uid(3)],
++            equivalents: Some(vec![vec![uid(1), uid(3)], vec![uid(1), uid(3)]]),
++            likelihood_bits: 1.0_f64.to_bits(),
++            ..ObservedDraws::default()
++        }));
++        assert_eq!(pop_observed_next(&mut state.player), Some(uid(1)));
++        let likelihood = f64::from_bits(
++            state
++                .player
++                .draw_knowledge
++                .as_ref()
++                .unwrap()
++                .observed_draws
++                .as_ref()
++                .unwrap()
++                .likelihood_bits,
++        );
++        assert_eq!(likelihood, 2.0 / 3.0);
++        assert!(state.player.draw.contains(&uid(3)));
++        assert_eq!(pop_observed_next(&mut state.player), Some(uid(3)));
++        let likelihood = f64::from_bits(
++            state
++                .player
++                .draw_knowledge
++                .as_ref()
++                .unwrap()
++                .observed_draws
++                .as_ref()
++                .unwrap()
++                .likelihood_bits,
++        );
++        assert_eq!(likelihood, (2.0 / 3.0) * (1.0 / 2.0));
++        assert_eq!(state.player.draw.as_slice(), &[uid(5)]);
++    }
++
++    /// Insertions share mass by base size, not by the number of supported next cards.
++    #[test]
++    fn observed_face_likelihood_uses_insertion_kernel_and_known_pins() {
++        let mut state = fixture();
++        state.player.draw = (1..=4).map(uid).collect();
++        set_root_knowledge(
++            &mut state.player,
++            vec![vec![uid(1), uid(2)]],
++            vec![uid(4)],
++            vec![],
++        )
++        .unwrap();
++        assert_eq!(
++            next_observation_probability(&state.player, &[uid(1)]),
++            3.0 / 8.0
++        );
++        assert_eq!(
++            next_observation_probability(&state.player, &[uid(2)]),
++            3.0 / 8.0
++        );
++        assert_eq!(next_observation_probability(&state.player, &[uid(3)]), 0.0);
++        assert_eq!(
++            next_observation_probability(&state.player, &[uid(4)]),
++            1.0 / 4.0
++        );
++        assert_eq!(
++            next_observation_probability(&state.player, &[uid(1), uid(2)]),
++            3.0 / 4.0
++        );
++
++        let mut pinned = fixture();
++        pinned.player.draw = smallvec::smallvec![uid(1), uid(3), uid(5)];
++        crate::cards::pin_top(&mut pinned.player, uid(3));
++        knowledge_mut(&mut pinned.player).observed_draws = Some(Box::new(ObservedDraws {
++            expected: vec![uid(3)],
++            equivalents: Some(vec![vec![uid(1), uid(3)]]),
++            likelihood_bits: 1.0_f64.to_bits(),
++            ..ObservedDraws::default()
++        }));
++        assert_eq!(pop_observed_next(&mut pinned.player), Some(uid(3)));
++        assert_eq!(
++            f64::from_bits(
++                pinned
++                    .player
++                    .draw_knowledge
++                    .as_ref()
++                    .unwrap()
++                    .observed_draws
++                    .as_ref()
++                    .unwrap()
++                    .likelihood_bits
++            ),
++            1.0
++        );
++    }
++
++    /// The likelihood wrapper clears temporary state on success and restores the entire failed action.
++    #[test]
++    fn observed_face_likelihood_wrapper_cleans_up_and_rolls_back() {
++        let mut state = CombatState::default();
++        state.player.orbs = crate::OrbSlots::with_default_capacity();
++        let action = crate::Action::Channel {
++            orb: crate::orbs::Orb::lightning(),
++            target: None,
++        };
++        let before = state.clone();
++        assert_eq!(
++            apply_observed_draws_with_likelihood(
++                &mut state,
++                action.clone(),
++                &[uid(1)],
++                &[vec![uid(1)]]
++            ),
++            Err("observed_draw_replay_queue_not_consumed")
++        );
++        assert_eq!(state, before);
++        let (step, likelihood) =
++            apply_observed_draws_with_likelihood(&mut state, action, &[], &[]).unwrap();
++        assert_eq!(step, crate::StepResult::Advanced);
++        assert_eq!(likelihood, 1.0);
++        assert!(state.player.draw_knowledge.is_none());
++        assert_eq!(state.player.orbs.filled_len(), 1);
++    }
++
+     /// Paired materialized shuffles consume identical RNG while receiver order decides PF.
+     #[test]
+     fn native_receiver_order_before_draw_matches_discard_and_mixed_cases() {
+diff --git a/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs b/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs
+--- a/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs
++++ b/sts2-rs/crates/sts2-content/src/monsters/act2_hive.rs
+@@ -638,7 +638,9 @@
+         .run_rng
+         .combat_card_generation
+         .next_int_exclusive(0, len) as usize;
+-    let stolen = items[idx];
++    // Past public evidence may condition this draw, but cannot change its filtered support.
++    let stolen =
++        sts2_core::witnessed_outcomes::condition_random_card_pick(state, items[idx], &items);
+ 
+     // `CardPileCmd.RemoveFromCombat(cardToSteal)` — removes the card from its
+     // (Draw/Discard) combat pile entirely (`CardPileCmd.cs:78-106`). C# ALSO
+@@ -3677,6 +3679,92 @@
+             assert_eq!(ai.current_move().id, "ESCAPE_MOVE");
+             ai.on_move_performed();
+             ai.roll_move_seeded(0);
++        }
++    }
++
++    /// Historical theft branches use only the original rarity bucket and retain its RNG draw.
++    #[test]
++    fn thieving_hopper_observed_card_prefix_uses_filtered_support() {
++        use crate::cards::spec_index::card_pod_from_id;
++        use sts2_core::cards::{CardId, VarKey};
++        use sts2_core::witnessed_outcomes::with_observed_outcomes_and_random_prefixes;
++        use sts2_core::{CardUid, StepResult};
++
++        let mut state = CombatState::default();
++        for (id, upgraded) in [
++            (CardId::StrikeIronclad, false),
++            (CardId::FlameBarrierCard, false),
++            (CardId::FlameBarrierCard, true),
++            (CardId::FlameBarrierCard, false),
++        ] {
++            let mut card = card_pod_from_id(id, upgraded).expect("spec");
++            card.uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++            state.cards.push(card);
++        }
++        let strike = state.cards[0].uid;
++        let flame = state.cards[1].uid;
++        let upgraded_flame = state.cards[2].uid;
++        let generated = state.cards[3].uid;
++        state.cards[3].set_combat_var(VarKey::GeneratedInCombat, 1);
++        state.player.draw.extend([strike, flame, generated]);
++        state.player.discard.push(upgraded_flame);
++        let owner = CreatureUid::new(1).unwrap();
++        let before = state.clone();
++
++        let probe = with_observed_outcomes_and_random_prefixes(
++            &mut state,
++            &[],
++            &[],
++            &[],
++            Some(&[]),
++            Some(&[]),
++            |state| {
++                thieving_hopper_thievery_effect(state, owner);
++                Ok(StepResult::Advanced)
++            },
++        );
++        assert_eq!(
++            probe,
++            (
++                Err("observed_card_prefix_needs_branch"),
++                None,
++                Some(vec![flame, upgraded_flame]),
++            )
++        );
++        assert_eq!(state, before);
++
++        for selected in [flame, upgraded_flame, strike] {
++            let mut branch = before.clone();
++            let result = with_observed_outcomes_and_random_prefixes(
++                &mut branch,
++                &[],
++                &[],
++                &[],
++                Some(&[]),
++                Some(&[selected]),
++                |state| {
++                    thieving_hopper_thievery_effect(state, owner);
++                    Ok(StepResult::Advanced)
++                },
++            );
++            if selected == strike {
++                assert_eq!(result.0, Err("observed_card_outside_positive_support"));
++                assert_eq!(branch, before);
++                continue;
++            }
++            assert_eq!(result, (Ok(StepResult::Advanced), None, None));
++            assert!(!branch.player.draw.contains(&selected));
++            assert!(!branch.player.discard.contains(&selected));
++            assert!(branch.player.draw.contains(&strike));
++            assert!(branch.player.draw.contains(&generated));
++            assert_eq!(branch.swipe_stolen.len(), 1);
++            assert_eq!(branch.swipe_stolen[0].card_id, CardId::FlameBarrierCard);
++            assert_eq!(branch.swipe_stolen[0].upgraded, selected == upgraded_flame);
++            assert_eq!(
++                branch.run_rng.combat_card_generation.counter(),
++                before.run_rng.combat_card_generation.counter() + 1
++            );
++            assert!(branch.replay_observations.is_none());
+         }
+     }
+ 
+diff --git a/sts2-rs/crates/sts2-mcts/src/lib.rs b/sts2-rs/crates/sts2-mcts/src/lib.rs
+--- a/sts2-rs/crates/sts2-mcts/src/lib.rs
++++ b/sts2-rs/crates/sts2-mcts/src/lib.rs
+@@ -1754,6 +1754,9 @@
+ /// first child's. See the collision note at the use site.
+ const CRN_CHANCE_SALT: u64 = 0xC121_5A17_0000_0001;
+ 
++/// Separate posterior draws from the action's combat-randomness stream.
++const ROOT_BELIEF_SAMPLE_SALT: u64 = 0xB311_EF00_51A7_0001;
++
+ // ─── Tree ───────────────────────────────────────────────────────────────────
+ 
+ /// Arena index into [`MctsTree::arena`].
+@@ -2353,6 +2356,8 @@
+     sim_index: u32,
+     /// Preserve imported game RNG paths when every hidden stream is explicitly authorized.
+     exact_rng: bool,
++    /// Compatible hidden roots and normalized posterior mass; one public action tree is shared.
++    root_beliefs: Vec<(CombatState, f64)>,
+     /// Observation-only host quotes expire in core apply, outside the phase prefix shortcut.
+     endturn_prefix_cache: bool,
+     /// Require actual terminal rollouts for reported win/loss and final-HP observations.
+@@ -2770,6 +2775,7 @@
+             rng,
+             sim_index: 0,
+             exact_rng: false,
++            root_beliefs: Vec::new(),
+             endturn_prefix_cache: true,
+             terminal_rollouts: false,
+             root_stats: Vec::new(),
+@@ -2810,6 +2816,7 @@
+     pub fn with_exact_rng(mut self, enabled: bool) -> Self {
+         assert_eq!(self.sim_index, 0, "exact RNG must be selected before searching");
+         if enabled {
++            assert!(self.root_beliefs.is_empty(), "exact RNG cannot sample root beliefs");
+             assert_eq!(self.config.hidden_info, HiddenInfoMode::Clairvoyant,
+                 "exact RNG requires an unscrambled, clairvoyant root");
+             // Search hashes omit RNG cursors, so their merges are invalid for exact paths.
+@@ -2822,10 +2829,70 @@
+         self
+     }
+ 
++    /// Sample compatible hidden roots behind shared public action edges (fresh trees only).
++    /// Continuations use the existing determinized search, not a full information-set tree.
++    pub fn with_root_beliefs(mut self, beliefs: Vec<(CombatState, f64)>) -> Result<Self, &'static str> {
++        self.set_root_beliefs(beliefs)?;
++        Ok(self)
++    }
++
++    /// Attach validated posterior roots in place for fallible host tree transforms.
++    pub fn set_root_beliefs(&mut self, mut beliefs: Vec<(CombatState, f64)>) -> Result<(), &'static str> {
++        if beliefs.is_empty() {
++            return Ok(());
++        }
++        if self.sim_index != 0 || self.tree.arena.len() != 1 || self.exact_rng {
++            return Err("root beliefs require a fresh search without exact RNG");
++        }
++        if beliefs.iter().any(|(_, weight)| !weight.is_finite() || *weight <= 0.0) {
++            return Err("root belief weights must be positive and finite");
++        }
++        let root_actions = legal_actions(&self.tree.root_state);
++        let root_edges = decision_edges(&self.tree.root_state, false);
++        if root_actions.is_empty() || belief_cutoff(&self.tree.root_state) {
++            return Err("root beliefs require a supported nonterminal public root");
++        }
++        // Scaling before summing also accepts large finite, unnormalized weights.
++        let scale = beliefs.iter().map(|(_, weight)| *weight).fold(0.0, f64::max);
++        let total: f64 = beliefs.iter().map(|(_, weight)| *weight / scale).sum();
++        for (state, weight) in &mut beliefs {
++            apply_hidden_info_root(state, self.config.hidden_info, self.config.seed);
++            state.combat_log.event_log.disarm_for_search();
++            state.replay_observations = None;
++            let actions = legal_actions(state);
++            if is_terminal(state) || belief_cutoff(state)
++                || actions.len() != root_actions.len()
++                || !root_actions.iter().all(|action| actions.contains(action))
++                || root_edges.iter().any(|edge| {
++                    edge.resolve(state) != edge.resolve(&self.tree.root_state)
++                })
++            {
++                return Err("root beliefs must share supported public actions and card identities");
++            }
++            *weight = (*weight / scale) / total;
++            self.config.max_rollout_depth = effective_rollout_depth(state, &self.config);
++        }
++        // A representative world cannot supply proofs, priors, or reusable hidden-state keys.
++        self.config.use_lethal_detector = false;
++        self.config.root_guards = false;
++        self.config.use_puct_prior = false;
++        self.config.chance_closed_stops_widening = false;
++        self.config.chance_prove_wins = false;
++        self.config.use_transposition_table = false;
++        self.transposition = None;
++        self.endturn_prefix_cache = false;
++        self.prior_cache.clear();
++        let root = self.tree.node_mut(self.tree.root);
++        root.proven_win = false;
++        root.proven_loss = false;
++        self.root_beliefs = beliefs;
++        Ok(())
++    }
++
+     /// Disable phase-prefix shortcuts when the host attaches observation-only action wrappers.
+     #[must_use]
+     pub fn with_endturn_prefix_cache(mut self, enabled: bool) -> Self {
+-        self.endturn_prefix_cache = enabled;
++        self.endturn_prefix_cache = enabled && self.root_beliefs.is_empty();
+         self
+     }
+ 
+@@ -3736,7 +3803,9 @@
+             return Ok(self.legalize_root_action(won));
+         }
+         self.refresh_root_stats();
+-        let idx = pick_from_root_stats(&self.tree.root_state, &self.config, &self.root_stats)
++        let idx = pick_from_root_stats_with_hints(
++            &self.tree.root_state, &self.config, &self.root_stats, self.root_beliefs.is_empty(),
++        )
+             .ok_or(SearchError::TerminalRoot)?;
+         let action = self.root_stats[idx].0.clone();
+         Ok(self.legalize_root_action(action))
+@@ -3925,6 +3994,9 @@
+     /// engines (e.g. Hearthstone-AI, Spire-AI) make to recover the
+     /// compute cost of re-search from scratch each turn.
+     pub fn reroot(&mut self, action: &Action, mut new_root_state: CombatState) -> bool {
++        if !self.root_beliefs.is_empty() {
++            return false; // The host must condition a new posterior on the observed successor.
++        }
+         // Bead `sts2-rs-vqckz` (F0): `reroot` installs `new_root_state`
+         // VERBATIM — it never blindfolds. Under an honest mode the caller's
+         // state carries the true hidden pile order / RNG cursors, so tree
+@@ -4156,7 +4228,8 @@
+         new_state: &CombatState,
+         mut config: MctsConfig,
+     ) -> Result<RerootKept, RerootMiss> {
+-        if config.hidden_info != self.config.hidden_info
++        if !self.root_beliefs.is_empty()
++            || config.hidden_info != self.config.hidden_info
+             || !matches!(
+                 config.hidden_info,
+                 HiddenInfoMode::BeliefDraw | HiddenInfoMode::Clairvoyant
+@@ -4942,7 +5015,23 @@
+                 && !leaf.is_terminal
+                 && !leaf.realized.as_deref().is_some_and(belief_cutoff)
+                 && !leaf.untried_actions.is_empty();
+-            if do_expand {
++            if do_expand && node_id == self.tree.root && !self.root_beliefs.is_empty() {
++                let edge = self.tree.node_mut(node_id).untried_actions.remove(0);
++                // Even a deterministic public action can reveal different hidden worlds.
++                let pre = self.tree.root_state.clone();
++                let chance_id = self.alloc_chance_node(node_id, &edge, &pre);
++                incoming.push(u32::try_from(self.tree.node(node_id).children.len())
++                    .unwrap_or(CHANCE_HOP));
++                self.tree.node_mut(node_id).children.push((edge, chance_id));
++                self.tree.node_mut(node_id).child_visits.push(0);
++                path.push(chance_id);
++                let (outcome, _) = self.sample_root_belief_outcome(chance_id, &path);
++                path.push(outcome);
++                incoming.push(CHANCE_HOP);
++                node_id = outcome;
++                fresh_leaf = true;
++            }
++            if do_expand && !fresh_leaf {
+                 let edge = self.tree.node_mut(node_id).untried_actions.remove(0);
+                 // Single clone: resolve + stochastic detection + the realized
+                 // outcome-0 state all happen on one working copy (`work` is
+@@ -5514,7 +5603,12 @@
+         edge: &EdgeAction,
+         pre: &CombatState,
+     ) -> NodeId {
+-        let parent_hash = self.tree.node(parent).state_hash;
++        let parent_hash = if parent == self.tree.root && !self.root_beliefs.is_empty() {
++            // Posterior sampling must not depend on imported game RNG or the representative.
++            self.config.seed
++        } else {
++            self.tree.node(parent).state_hash
++        };
+         let salt = if self.config.common_random_numbers {
+             // Same constant for every sibling. Deliberately OUTSIDE the
+             // non-CRN range (`1 ..= children.len()+1`): the obvious choice
+@@ -5845,11 +5939,66 @@
+         cache[idx]
+     }
+ 
++    /// Draw a posterior index independently of combat randomness and prior outcome visits.
++    fn root_belief_index(&self, base: u64, ordinal: u32) -> usize {
++        use rand::Rng as _;
++        let seed = sts2_core::run_rng_set::splitmix64(
++            base ^ ROOT_BELIEF_SAMPLE_SALT ^ sts2_core::run_rng_set::splitmix64(u64::from(ordinal)),
++        );
++        let mut rng = Xoshiro256PlusPlus::seed_from_u64(seed);
++        let mut draw = rng.gen::<f64>();
++        for (index, (_, weight)) in self.root_beliefs.iter().enumerate() {
++            if draw < *weight {
++                return index;
++            }
++            draw -= weight;
++        }
++        self.root_beliefs.len() - 1
++    }
++
++    /// Reapply the chosen public action to a fresh posterior draw on every root-edge visit.
++    fn sample_root_belief_outcome(&mut self, chance_id: NodeId, path: &[NodeId]) -> (NodeId, bool) {
++        let chance = self.tree.node(chance_id);
++        let base = chance.randomness_base;
++        let ordinal = chance.chance_draws;
++        let edge = chance.chance_action.clone().expect("root chance has an action");
++        self.tree.node_mut(chance_id).chance_draws = ordinal.saturating_add(1);
++        let belief = self.root_belief_index(base, ordinal);
++        let pre = self.root_beliefs[belief].0.clone();
++        let state = self.realize_chance_outcome(
++            pre, &edge, base, ordinal, self.config.hidden_info == HiddenInfoMode::DrawChance,
++        );
++        let dedup_hash = sts2_core::chance_outcome_hash(&state);
++        // Keep different hidden roots distinct even when the ordinary search key aliases them.
++        let duplicate = self.tree.node(chance_id).chance_outcomes.iter().find_map(|outcome| {
++            (self.root_belief_index(base, outcome.n) == belief
++                && outcome.dedup_hash == Some(dedup_hash)).then_some(outcome.child)
++        });
++        if let Some(child) = duplicate {
++            return (child, false);
++        }
++        // The ordinary node hash remains separate from the power/belt/history-aware dedup key.
++        let hash = sts2_core::search_hash(&state);
++        let child = self.chance_alloc_decision_with_hash(Some(chance_id), state, path, hash, 0);
++        self.tree.node_mut(chance_id).chance_outcomes.push(ChanceOutcome {
++            n: ordinal,
++            child,
++            dedup_hash: Some(dedup_hash),
++        });
++        // DPW caps and sampled closure cannot replace the supplied posterior distribution.
++        (child, true)
++    }
++
+     /// Double Progressive Widening at chance node `chance_id`. Returns the
+     /// selected outcome's decision-node child plus a flag that is `true` only
+     /// when a brand-new outcome was drawn (the caller treats it as the
+     /// simulation leaf and rolls out from it).
+     fn chance_widen_or_sample(&mut self, chance_id: NodeId, path: &[NodeId]) -> (NodeId, bool) {
++        if !self.root_beliefs.is_empty()
++            && self.tree.node(chance_id).parent == Some(self.tree.root)
++        {
++            return self.sample_root_belief_outcome(chance_id, path);
++        }
+         let visits = self.tree.node(chance_id).visits;
+         let n_outcomes = self.tree.node(chance_id).chance_outcomes.len();
+         // Always `false` outside `DrawChance`/`BeliefDraw`.
+@@ -6837,7 +6986,17 @@
+     config: &MctsConfig,
+     root_stats: &[(Action, u32, f32)],
+ ) -> Option<usize> {
+-    let draw_window_live = crate::expert::has_live_draw_window(root_state);
++    pick_from_root_stats_with_hints(root_state, config, root_stats, true)
++}
++
++/// Pick from empirical root values, optionally applying hints from a single known root.
++fn pick_from_root_stats_with_hints(
++    root_state: &CombatState,
++    config: &MctsConfig,
++    root_stats: &[(Action, u32, f32)],
++    state_hints: bool,
++) -> Option<usize> {
++    let draw_window_live = state_hints && crate::expert::has_live_draw_window(root_state);
+     let scored: Vec<(Action, u32, f32)> = root_stats
+         .iter()
+         .map(|(a, v, q)| {
+@@ -6880,7 +7039,7 @@
+     // Rule 5: in-band EndTurn guards. Candidates must themselves be
+     // inside the band — a real Q signal outside `tie_eps` is never
+     // overridden. Within a guard, visits then rule 6's first-max.
+-    if config.root_guards && matches!(scored[idx].0, Action::EndTurn) {
++    if state_hints && config.root_guards && matches!(scored[idx].0, Action::EndTurn) {
+         let state = root_state;
+         let band_pick = |satisfies: &dyn Fn(&sts2_core::cards::Card) -> bool| {
+             let mut best: Option<(usize, u32)> = None;
+@@ -6921,7 +7080,7 @@
+         }
+     }
+     // Rule 5c: in-band junk-dispose guard.
+-    if config.root_guards {
++    if state_hints && config.root_guards {
+         if let Some(i) = junk_dispose_band_pick(root_state, &scored, idx, best_score - eps) {
+             idx = i;
+         }
+@@ -12142,6 +12301,165 @@
+         let _ = m.search_n(50);
+     }
+ 
++    /// Two public-identical roots differ only in a hidden Strike's retained energy cost.
++    fn hidden_cost_roots(with_defend: bool, hp: i32) -> (CombatState, CombatState) {
++        use sts2_core::cards::{CardId, CardType, TargetType};
++        let mut cheap = build_pommel_strike_state(&[(CardId::StrikeIronclad, false)]);
++        cheap.player.current_hp = hp;
++        cheap.player.max_hp = hp;
++        cheap.creatures[0].current_hp = 15;
++        cheap.creatures[0].max_hp = 15;
++        cheap.creatures[0].intent = Some(sts2_core::Intent::Attack { damage: 4 });
++        cheap.cards[1].cost = 0;
++        if with_defend {
++            // A small shield buys a certain three-HP win; drawing first risks the enemy hit.
++            let uid = sts2_core::CardUid::new(3).unwrap();
++            cheap.cards.push(sts2_core::Card {
++                uid,
++                card_id: CardId::DefendIronclad,
++                cost: 1,
++                card_type: CardType::Skill,
++                target_type: TargetType::Self_,
++                base_block: 2,
++                ..sts2_core::Card::pod_defaults()
++            });
++            cheap.player.hand.push(uid);
++        }
++        let mut expensive = cheap.clone();
++        expensive.cards[1].cost = 2;
++        assert_eq!(legal_actions(&cheap), legal_actions(&expensive));
++        (cheap, expensive)
++    }
++
++    /// Nonuniform hidden-cost mass changes the shared action's expected HP and final pick.
++    #[test]
++    fn root_beliefs_weight_hidden_costs_before_selecting_one_public_action() {
++        let (cheap, expensive) = hidden_cost_roots(true, 5);
++        let draw = Action::PlayCard { hand_index: 0, target: Some(0) };
++        let defend = Action::PlayCard { hand_index: 1, target: None };
++        for (cheap_mass, expected_pick) in [(0.9, draw.clone()), (0.1, defend.clone())] {
++            let config = MctsConfig { tie_eps: 0.0, ..chance_cfg(901, 0) };
++            let mut search = Mcts::new(cheap.clone(), config)
++                .with_root_beliefs(vec![(cheap.clone(), cheap_mass), (expensive.clone(), 1.0 - cheap_mass)])
++                .unwrap()
++                .with_root_allowed(&[draw.clone(), defend.clone()])
++                .with_terminal_rollouts(true);
++            let draw_result = search.search_forced(&draw, 2048).unwrap();
++            let defend_result = search.search_forced(&defend, 2048).unwrap();
++            // Cheap draw wins at five HP; expensive draw takes four damage before the kill.
++            let expected_hp = cheap_mass * 5.0 + (1.0 - cheap_mass);
++            let actual_hp = f64::from(draw_result.hp_sum) / f64::from(draw_result.hp_n);
++            assert!((actual_hp - expected_hp).abs() < 0.2,
++                "posterior {cheap_mass}: draw HP {actual_hp}, expected {expected_hp}");
++            let safe_hp = f64::from(defend_result.hp_sum) / f64::from(defend_result.hp_n);
++            assert!((safe_hp - 3.0).abs() < 0.2, "shield HP {safe_hp}");
++            assert_eq!(search.pick_root_action().unwrap(), expected_pick);
++            assert_eq!(search.tree.node(search.tree.root).children.len(), 2);
++            assert!(search.tree.node(search.tree.root).children.iter()
++                .all(|(_, child)| search.tree.node(*child).kind == NodeKind::Chance));
++        }
++    }
++
++    /// Actual mixed wins and deaths follow posterior mass without sampled certainty or DPW lock-in.
++    #[test]
++    fn root_beliefs_mixed_terminals_remain_unproven_after_closed_dpw() {
++        let (cheap, expensive) = hidden_cost_roots(false, 4);
++        let draw = Action::PlayCard { hand_index: 0, target: Some(0) };
++        let config = MctsConfig {
++            use_lethal_detector: true,
++            chance_closed_stops_widening: true,
++            chance_widening_c: 1.0,
++            chance_widening_alpha: 0.0,
++            ..chance_cfg(902, 0)
++        };
++        let mut search = Mcts::new(cheap.clone(), config)
++            .with_root_beliefs(vec![(cheap, 3.0), (expensive, 1.0)]).unwrap()
++            .with_root_allowed(&[draw.clone()])
++            .with_terminal_rollouts(true);
++        let result = search.search_forced(&draw, 2048).unwrap();
++        let win_rate = f64::from(result.wins) / f64::from(result.visits);
++        assert!((win_rate - 0.75).abs() < 0.05, "posterior win rate {win_rate}");
++        assert!(result.wins > 0 && result.losses > 0);
++        assert_eq!(result.hp_n, result.visits);
++        assert!(!search.root_proven_win() && !search.root_proven_loss());
++        assert!(search.root_proven_win_action().is_none());
++        assert!(search.lost_position_override().is_none());
++        let chance = search.tree.node(search.root_child_for(&draw).unwrap());
++        assert_eq!(chance.chance_draws, chance.visits);
++        assert!(chance.chance_outcomes.len() >= 2);
++        assert!(!chance.proven_win && !chance.proven_loss && !chance.chance_closed);
++        assert!(!search.config.use_transposition_table && search.tt_hits() == 0);
++        assert!(!search.config.use_lethal_detector && !search.config.root_guards);
++        assert!(!search.config.use_puct_prior && !search.endturn_prefix_cache);
++    }
++
++    /// Random potion generation must not collapse onto the legacy key's first belt.
++    #[test]
++    fn root_beliefs_keep_different_random_potion_belts_within_the_same_belief() {
++        let (mut state, _) = hidden_cost_roots(false, 4);
++        let mut alchemize = sts2_core::build_card_for_version(sts2_core::cards::CardId::Alchemize,
++            false, sts2_core::GameVersion::V0_107_1).unwrap();
++        alchemize.uid = state.player.hand[0];
++        state.cards[0] = alchemize;
++        state.player.character = Some(sts2_core::CharacterId::Silent);
++        state.player.potion_slots = 3;
++        let action = Action::PlayCard { hand_index: 0, target: None };
++        let mut search = Mcts::new(state.clone(), chance_cfg(905, 1))
++            .with_root_beliefs(vec![(state, 1.0)]).unwrap()
++            .with_root_allowed(&[action.clone()]);
++        let _ = search.search();
++        let chance = search.root_child_for(&action).unwrap();
++        let path = [search.tree.root, chance];
++        for _ in 0..64 {
++            let _ = search.sample_root_belief_outcome(chance, &path);
++        }
++        let outcomes = &search.tree.node(chance).chance_outcomes;
++        assert!(outcomes.len() > 1, "Alchemize must retain different potion outcomes");
++        let first = search.tree.node(outcomes[0].child);
++        assert!(outcomes.iter().all(|outcome|
++            search.tree.node(outcome.child).search_hash == first.search_hash),
++            "the legacy key omits actual potion belts; this fixture must expose that alias");
++        let belts: std::collections::BTreeSet<_> = outcomes.iter().map(|outcome|
++            format!("{:?}", search.tree.node(outcome.child).realized.as_deref().unwrap().player.potions))
++            .collect();
++        assert_eq!(outcomes.len(), belts.len(), "one outcome per distinct realized belt");
++    }
++
++    /// Imported private RNG changes cannot alter posterior sampling or the first action outcome.
++    #[test]
++    fn root_beliefs_ignore_imported_rng_and_empty_beliefs_preserve_original_search() {
++        let (cheap, expensive) = hidden_cost_roots(false, 4);
++        let config = chance_cfg(903, 128);
++        let mut changed = cheap.clone();
++        changed.rng = sts2_core::dotnet_rng::Rng::new(9876);
++        changed.run_rng = sts2_core::run_rng_set::RunRngSet::new(9876);
++        let mut left = Mcts::new(cheap.clone(), config.clone())
++            .with_root_beliefs(vec![(cheap.clone(), 3.0), (expensive.clone(), 1.0)]).unwrap();
++        let mut right = Mcts::new(changed.clone(), config.clone())
++            .with_root_beliefs(vec![(changed, 3.0), (expensive, 1.0)]).unwrap();
++        assert_eq!(left.search(), right.search());
++        assert_eq!(left.root_visits(), right.root_visits());
++        let mut plain = Mcts::new(cheap.clone(), config.clone());
++        let mut empty = Mcts::new(cheap, config).with_root_beliefs(Vec::new()).unwrap();
++        assert_eq!(plain.search(), empty.search());
++        assert_eq!(plain.root_visits(), empty.root_visits());
++        assert_eq!(plain.tree.arena.len(), empty.tree.arena.len());
++    }
++
++    /// Invalid weights or incompatible public actions fail before any posterior search runs.
++    #[test]
++    fn root_beliefs_validate_mass_and_public_action_compatibility() {
++        let (cheap, expensive) = hidden_cost_roots(false, 4);
++        for weight in [0.0, -1.0, f64::NAN, f64::INFINITY] {
++            assert!(Mcts::new(cheap.clone(), chance_cfg(904, 0))
++                .with_root_beliefs(vec![(expensive.clone(), weight)]).is_err());
++        }
++        let mut incompatible = expensive;
++        incompatible.player.energy = 0;
++        assert!(Mcts::new(cheap, chance_cfg(904, 0))
++            .with_root_beliefs(vec![(incompatible, 1.0)]).is_err());
++    }
++
+     /// Authorized exact paths retain the same RNG continuation as an ordinary core transition.
+     #[test]
+     fn exact_rng_retains_real_shuffle_outcomes_without_chance_or_tt() {

@@ -1,0 +1,364 @@
+diff --git a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+index 323399b..27b0305 100644
+--- a/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
++++ b/sts2-rs/crates/sts2-content/tests/public_combat_history.rs
+@@ -51,6 +51,141 @@ fn skill(state: &mut CombatState, id: CardId, replay: i32) -> CardUid {
+     uid
+ }
+ 
++/// Build a small real Tyranny turn: four old draw cards, then PF plus an ordinary refill draw.
++fn observed_refill_fixture() -> (CombatState, Vec<CardUid>) {
++    let mut state = fixture();
++    state.player.character = Some(CharacterId::Regent);
++    let mut add = |id, upgraded| {
++        let mut card = sts2_content::cards::spec_index::card_pod_from_id(id, upgraded).unwrap();
++        let uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++        card.uid = uid;
++        state.cards.push(card);
++        uid
++    };
++    let old_hand = add(CardId::Venerate, false);
++    let old_draw = [
++        add(CardId::SovereignBlade, false),
++        add(CardId::FallingStar, false),
++        add(CardId::RefineBlade, true),
++        add(CardId::Bulwark, true),
++    ];
++    let photon = add(CardId::PhotonCut, true);
++    let ordinary = add(CardId::DefendRegent, false);
++    let other = add(CardId::Glow, true);
++    state.cards[photon.get() as usize - 1]
++        .set_enchantment(sts2_core::cards::EnchantmentId::PerfectFit, 1);
++    state.player.hand.push(old_hand);
++    state.player.draw.extend(old_draw.iter().rev().copied());
++    state.player.discard.extend([photon, ordinary, other]);
++    sts2_core::draw_knowledge::set_root_knowledge(
++        &mut state.player,
++        vec![old_draw.to_vec()],
++        vec![],
++        vec![vec![photon]],
++    )
++    .unwrap();
++    let player = state.player.creature_uid.unwrap();
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Tyranny, 1);
++    let expected = old_draw.into_iter().chain([photon, ordinary]).collect();
++    (state, expected)
++}
++
++/// Observed draw conditioning crosses the original refill and keeps its native RNG advances.
++#[test]
++fn observed_draw_replay_crosses_refill_and_preserves_rng_work() {
++    let (mut state, expected) = observed_refill_fixture();
++    let mut unconditioned = state.clone();
++    let _ = sts2_core::apply(&mut unconditioned, sts2_core::Action::EndTurn);
++    sts2_core::draw_knowledge::apply_observed_draws(
++        &mut state,
++        sts2_core::Action::EndTurn,
++        &expected,
++    )
++    .unwrap();
++    assert_eq!(state.player.hand.as_slice(), expected.as_slice());
++    assert!(state.pending_choice.is_some());
++    assert!(state.player.discard.is_empty());
++    assert_eq!(state.player.draw.len(), 2);
++    assert_eq!(
++        state.run_rng.shuffle.counter(),
++        unconditioned.run_rng.shuffle.counter()
++    );
++    assert_eq!(
++        state.run_rng.combat_counter_fingerprint(),
++        unconditioned.run_rng.combat_counter_fingerprint()
++    );
++    assert!(state
++        .player
++        .draw_knowledge
++        .as_ref()
++        .unwrap()
++        .observed_draws
++        .is_none());
++}
++
++/// Wrong PF support and incomplete/extra evidence cannot commit any guessed prefix state.
++#[test]
++fn observed_draw_replay_rejects_bad_support_and_queue_lengths_atomically() {
++    let (before, expected) = observed_refill_fixture();
++    let mut bad_pf = expected.clone();
++    bad_pf.swap(4, 5);
++    let mut extra = expected.clone();
++    extra.push(before.player.hand[0]);
++    for (evidence, reason) in [
++        (bad_pf, "observed_draw_outside_positive_support"),
++        (
++            expected[..5].to_vec(),
++            "observed_draw_replay_unwitnessed_extra_draw",
++        ),
++        (extra, "observed_draw_replay_queue_not_consumed"),
++    ] {
++        let mut state = before.clone();
++        assert_eq!(
++            sts2_core::draw_knowledge::apply_observed_draws(
++                &mut state,
++                sts2_core::Action::EndTurn,
++                &evidence
++            ),
++            Err(reason)
++        );
++        assert_eq!(state, before);
++        assert!(state
++            .player
++            .draw_knowledge
++            .as_ref()
++            .unwrap()
++            .observed_draws
++            .is_none());
++    }
++}
++
++/// A no-draw observation leaves ordinary state/RNG unchanged and no recorder scratch behind.
++#[test]
++fn observed_draw_replay_cleans_an_ordinary_world_and_rejects_deferred_mode() {
++    sts2_content::potions::dispatch::ensure_installed();
++    let mut state = fixture();
++    state
++        .player
++        .potions
++        .push(sts2_core::potions::PotionKind::BlockPotion);
++    let action = sts2_core::Action::DrinkPotion {
++        potion_slot: 0,
++        target: None,
++    };
++    let mut raw = state.clone();
++    let _ = sts2_core::apply(&mut raw, action.clone());
++    sts2_core::draw_knowledge::apply_observed_draws(&mut state, action.clone(), &[]).unwrap();
++    assert_eq!(state, raw);
++    assert!(state.player.draw_knowledge.is_none());
++    state.player.deferred_draw_order = true;
++    let before = state.clone();
++    assert_eq!(
++        sts2_core::draw_knowledge::apply_observed_draws(&mut state, action, &[]),
++        Err("observed_draw_replay_requires_materialized_public_prefix")
++    );
++    assert_eq!(state, before);
++}
++
+ /// Opt-in is visible from the initial draw, and cannot change game state or RNG.
+ #[test]
+ fn public_history_factory_records_from_birth_without_changing_the_world() {
+diff --git a/sts2-rs/crates/sts2-core/src/cards.rs b/sts2-rs/crates/sts2-core/src/cards.rs
+index 22e14ad..05b8ab4 100644
+--- a/sts2-rs/crates/sts2-core/src/cards.rs
++++ b/sts2-rs/crates/sts2-core/src/cards.rs
+@@ -2093,6 +2093,9 @@ pub fn unknown_middle_uids(player: &PlayerCombatState) -> SmallVec<[CardUid; 32]
+ /// Panics if `player.draw` is empty — callers check first, mirroring the
+ /// unchecked `draw.remove(0)` this replaces.
+ pub(crate) fn pop_next_card(player: &mut PlayerCombatState, rng: &mut CombatRng) -> CardUid {
++    if player.draw_knowledge.as_ref().is_some_and(|k| k.observed_draws.is_some()) {
++        if let Some(uid) = crate::draw_knowledge::pop_observed_next(player) { return uid; }
++    }
+     if !player.deferred_draw_order {
+         let uid = player.draw.remove(0);
+         crate::draw_knowledge::consumed_top(player, uid);
+diff --git a/sts2-rs/crates/sts2-core/src/draw_knowledge.rs b/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
+index b8adb55..52b6289 100644
+--- a/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
++++ b/sts2-rs/crates/sts2-core/src/draw_knowledge.rs
+@@ -7,6 +7,14 @@ use crate::dotnet_rng::Rng;
+ use crate::{CardUid, PlayerCombatState};
+ use smallvec::SmallVec;
+ 
++/// Replay-only observations of past top draws; never serialized, hashed, or retained for search.
++#[derive(Clone, Debug, Default, PartialEq, Eq)]
++pub struct ObservedDraws {
++    expected: Vec<CardUid>,
++    consumed: usize,
++    error: Option<&'static str>,
++}
++
+ /// A nonterminal limitation of the finite draw-order representation.
+ #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+ pub enum UnsupportedDrawOrder {
+@@ -62,6 +70,112 @@ pub struct DrawKnowledge {
+     pub prepared: bool,
+     /// Honest-search cutoff reason; never a game-terminal marker.
+     pub unsupported: Option<UnsupportedDrawOrder>,
++    /// Scoped public-witness scratch, cleared before this state can become a search root.
++    pub observed_draws: Option<Box<ObservedDraws>>,
++}
++
++/// Replay a complete publicly observed draw prefix through the real action and refill pipeline.
++/// Caller must exclude hidden intermediate draws; this is not a general posterior reconstruction.
++/// Only a public materialized prefix is conditioned; current private RNG is restored later by its owner.
++pub fn apply_observed_draws(
++    state: &mut crate::CombatState,
++    action: crate::Action,
++    expected: &[CardUid],
++) -> Result<crate::StepResult, &'static str> {
++    if state.player.deferred_draw_order {
++        return Err("observed_draw_replay_requires_materialized_public_prefix");
++    }
++    if state
++        .player
++        .draw_knowledge
++        .as_ref()
++        .is_some_and(|k| k.observed_draws.is_some())
++    {
++        return Err("observed_draw_replay_already_active");
++    }
++    if let Some(reason) = unsupported_reason(&state.player) {
++        return Err(reason);
++    }
++    let before = state.clone();
++    knowledge_mut(&mut state.player).observed_draws = Some(Box::new(ObservedDraws {
++        expected: expected.to_vec(),
++        ..ObservedDraws::default()
++    }));
++    let result = crate::apply(state, action);
++    normalize(&mut state.player);
++    let witness = state
++        .player
++        .draw_knowledge
++        .as_mut()
++        .and_then(|k| k.observed_draws.take());
++    let error = witness
++        .as_ref()
++        .and_then(|w| w.error)
++        .or_else(|| unsupported_reason(&state.player))
++        .or_else(|| {
++            witness
++                .as_ref()
++                .is_none_or(|w| w.consumed != w.expected.len())
++                .then_some("observed_draw_replay_queue_not_consumed")
++        });
++    if let Some(reason) = error {
++        *state = before;
++        return Err(reason);
++    }
++    // A temporary observation must not leave an empty allocation on an ordinary search path.
++    if before.player.draw_knowledge.is_none()
++        && !state
++            .cards
++            .iter()
++            .any(|c| c.has_enchantment(EnchantmentId::PerfectFit))
++        && state.player.draw_knowledge.as_ref().is_some_and(|k| {
++            k.groups.is_empty() && k.inserted.is_empty() && k.discard_groups.is_empty()
++        })
++    {
++        state.player.draw_knowledge = None;
++    }
++    Ok(result)
++}
++
++/// Consume an observed top only when it has positive support in the current public draw law.
++pub(crate) fn pop_observed_next(player: &mut PlayerCombatState) -> Option<CardUid> {
++    let witness = player.draw_knowledge.as_ref()?.observed_draws.as_ref()?;
++    if witness.error.is_some() {
++        return None;
++    }
++    let next = witness.expected.get(witness.consumed).copied();
++    normalize(player);
++    let error = unsupported_reason(player)
++        .or_else(|| {
++            next.is_none()
++                .then_some("observed_draw_replay_unwitnessed_extra_draw")
++        })
++        .or_else(|| {
++            next.filter(|uid| !possible_next(player).contains(uid))
++                .map(|_| "observed_draw_outside_positive_support")
++        });
++    if let Some(reason) = error {
++        player
++            .draw_knowledge
++            .as_mut()?
++            .observed_draws
++            .as_mut()?
++            .error = Some(reason);
++        return None;
++    }
++    let uid = next?;
++    let index = player.draw.iter().position(|candidate| *candidate == uid)?;
++    player
++        .draw_knowledge
++        .as_mut()?
++        .observed_draws
++        .as_mut()?
++        .consumed += 1;
++    // This is a top observation, not a directed removal at an unknown non-top position.
++    consumed_top(player, uid);
++    player.pinned_top.retain(|pin| *pin != uid);
++    player.pinned_bottom.retain(|pin| *pin != uid);
++    Some(player.draw.remove(index))
+ }
+ 
+ /// Allocate knowledge only for the rare enchanted-card path.
+@@ -553,6 +667,7 @@ pub(crate) fn prepare_shuffle(player: &mut PlayerCombatState, cards: &[Card]) ->
+     if let Some(k) = player.draw_knowledge.as_mut() {
+         if fresh_refill
+             && !player.deferred_draw_order
++            && k.observed_draws.is_none()
+             && k.unsupported != Some(UnsupportedDrawOrder::UnknownDiscardInsertion)
+         {
+             k.unsupported = None;
+@@ -1144,4 +1259,50 @@ mod tests {
+         removed_from_draw(&mut state.player, uid(1));
+         assert_eq!(unsupported_reason(&state.player), None);
+     }
++
++    /// Public top observations retain insertion support and do not become non-top removals.
++    #[test]
++    fn observed_top_draws_preserve_inserted_belief_and_do_not_enter_hash() {
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(2), uid(3)];
++        set_root_knowledge(&mut state.player, vec![vec![uid(2)]], vec![uid(3)], vec![]).unwrap();
++        let hash = crate::search_hash(&state);
++        state.player.draw_knowledge.as_mut().unwrap().observed_draws =
++            Some(Box::new(ObservedDraws {
++                expected: vec![uid(3), uid(2)],
++                ..ObservedDraws::default()
++            }));
++        assert_eq!(crate::search_hash(&state), hash);
++        assert_eq!(pop_observed_next(&mut state.player), Some(uid(3)));
++        assert_eq!(pop_observed_next(&mut state.player), Some(uid(2)));
++        assert_eq!(state.player.draw.as_slice(), &[uid(1)]);
++        assert_eq!(unsupported_reason(&state.player), None);
++    }
++
++    /// A witnessed outcome cannot override a previously certified exact top card.
++    #[test]
++    fn observed_top_draw_cannot_contradict_a_public_pin() {
++        let mut state = fixture();
++        state.player.draw = smallvec::smallvec![uid(1), uid(2), uid(3)];
++        crate::cards::pin_top(&mut state.player, uid(2));
++        knowledge_mut(&mut state.player).observed_draws = Some(Box::new(ObservedDraws {
++            expected: vec![uid(1)],
++            ..ObservedDraws::default()
++        }));
++        let before = state.player.draw.clone();
++        assert_eq!(pop_observed_next(&mut state.player), None);
++        assert_eq!(state.player.draw, before);
++        assert_eq!(
++            state
++                .player
++                .draw_knowledge
++                .as_ref()
++                .unwrap()
++                .observed_draws
++                .as_ref()
++                .unwrap()
++                .error,
++            Some("observed_draw_outside_positive_support")
++        );
++    }
+ }
+diff --git a/sts2-rs/crates/sts2-wire/src/state_dict.rs b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+index e41fef7..38875dd 100644
+--- a/sts2-rs/crates/sts2-wire/src/state_dict.rs
++++ b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+@@ -3592,6 +3592,7 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+                 g.iter().map(|&i|discard_uids[i]).collect()).collect(),
+             prepared: false,
+             unsupported: k.unsupported,
++            observed_draws: None,
+         }));
+     }
+ 
+

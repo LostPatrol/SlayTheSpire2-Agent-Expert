@@ -1,0 +1,313 @@
+diff --git a/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs b/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
+index 2a40dda..6585341 100644
+--- a/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
++++ b/sts2-rs/crates/sts2-content/tests/act1_fuzz.rs
+@@ -144,6 +144,9 @@ fn make_combat(seed: u64, idx: u8) -> CombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // This Setup fixture has not started or completed any card series.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/act1_smoke.rs b/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
+index 283e34c..8b460f6 100644
+--- a/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
++++ b/sts2-rs/crates/sts2-content/tests/act1_smoke.rs
+@@ -113,6 +113,9 @@ fn make_combat(seed: u64, monsters: &[(MonsterKind, MonsterSpawnArgs)]) -> Comba
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
+index 1c5106e..7159680 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_bygone_effigy.rs
+@@ -129,6 +129,9 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
+index 39227b5..6d2528f 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_byrdonis.rs
+@@ -124,6 +124,9 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
+index 3c778e9..dda52eb 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_mawler.rs
+@@ -204,6 +204,9 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs b/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
+index da2b418..3caa26b 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act1_parafright.rs
+@@ -120,6 +120,9 @@ fn build_state(fixture_initial: &Value, seed: u64) -> CombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs b/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
+index de91983..f57e40c 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_act23_encounters.rs
+@@ -287,6 +287,9 @@ fn build_state(fixture_initial: &Value, encounter: &str, seed: u64) -> CombatSta
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs b/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
+index 49717c9..f07e1ec 100644
+--- a/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
++++ b/sts2-rs/crates/sts2-content/tests/parity_multi_enemy_dsl.rs
+@@ -258,6 +258,9 @@ fn build_state(fixture_initial: &Value, encounter: &str, seed: u64) -> CombatSta
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs b/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
+index 9ccc90d..ca3b47d 100644
+--- a/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
++++ b/sts2-rs/crates/sts2-core/tests/act1_fuzz_a0_a20.rs
+@@ -200,6 +200,9 @@ fn build_player(deck: &[CardSpec]) -> (PlayerCombatState, Vec<Card>) {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs b/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
+index 62b5749..10995ff 100644
+--- a/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
++++ b/sts2-rs/crates/sts2-core/tests/act1_fuzz_p7.rs
+@@ -128,6 +128,9 @@ fn build_player(deck: &[CardSpec]) -> (PlayerCombatState, Vec<Card>) {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/card_play_log.rs b/sts2-rs/crates/sts2-core/tests/card_play_log.rs
+index 719fe3b..27a75c5 100644
+--- a/sts2-rs/crates/sts2-core/tests/card_play_log.rs
++++ b/sts2-rs/crates/sts2-core/tests/card_play_log.rs
+@@ -144,6 +144,9 @@ fn cascade_logs_trigger_then_auto_plays_in_order() {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs b/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs
+index 3eee019..fefc629 100644
+--- a/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs
++++ b/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs
+@@ -23,7 +23,11 @@ use proptest::prelude::*;
+ use sts2_core::cards::{CardEnchantments, CombatVars, EnchantmentId, VarKey};
+ use sts2_core::inline_kv::{InlineKv, InlineKvKey};
+ 
+-const VAR_KEYS: [VarKey; 26] = [
++/// Match the real CombatVars alias, including the two observed-cost quote slots.
++const COMBAT_VAR_SLOTS: usize = 18;
++
++/// Exercise every key, including the added quote keys and deliberate mask aliases.
++const VAR_KEYS: [VarKey; 28] = [
+     VarKey::RampageDamage,
+     VarKey::ClawBuff,
+     VarKey::GeneticAlgorithmBlock,
+@@ -49,6 +53,8 @@ const VAR_KEYS: [VarKey; 26] = [
+     VarKey::WireTransientCostThisTurn,
+     VarKey::WireCostExpiringOnPlay,
+     VarKey::WireCostStable,
++    VarKey::ObservedEnergyCost,
++    VarKey::ObservedStarCost,
+     VarKey::Generic,
+ ];
+ 
+@@ -201,12 +207,12 @@ fn run<K: InlineKvKey + Hash, const N: usize>(keys: &[K], ops: &[Op]) -> Result<
+ proptest! {
+     #![proptest_config(ProptestConfig::with_cases(512))]
+ 
+-    /// `Card::combat_vars` (16 slots, 26 keys over a 24-bit mask).
++    /// `Card::combat_vars` has 18 slots after the two observed-cost quote keys were added.
+     #[test]
+     fn combat_vars_mask_is_a_superset_of_nonzero_keys(ops in ops(VAR_KEYS.len())) {
+         // The alias the mask relies on: the type is the real `CombatVars`.
+-        let _: fn() -> CombatVars = InlineKv::<VarKey, 16>::new;
+-        run::<VarKey, 16>(&VAR_KEYS, &ops)?;
++        let _: fn() -> CombatVars = InlineKv::<VarKey, COMBAT_VAR_SLOTS>::new;
++        run::<VarKey, COMBAT_VAR_SLOTS>(&VAR_KEYS, &ops)?;
+     }
+ 
+     /// `Card::enchantments` (6 slots, 23 keys).
+diff --git a/sts2-rs/crates/sts2-core/tests/parity_harness.rs b/sts2-rs/crates/sts2-core/tests/parity_harness.rs
+index 4d1d661..dd0b948 100644
+--- a/sts2-rs/crates/sts2-core/tests/parity_harness.rs
++++ b/sts2-rs/crates/sts2-core/tests/parity_harness.rs
+@@ -1479,6 +1479,9 @@ mod vthin1_setup_only {
+             generated_cards_this_combat: 0,
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
++            // Match the fixture's existing zeroed play-history counters.
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: smallvec::SmallVec::new(),
+@@ -1664,6 +1667,9 @@ mod vthin2_vulnerable_damage {
+             generated_cards_this_combat: 0,
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
++            // Match the fixture's existing zeroed play-history counters.
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: smallvec::SmallVec::new(),
+@@ -2054,6 +2060,9 @@ mod wave_a_fixtures {
+                 generated_cards_this_combat: 0,
+                 skills_played_this_turn: 0,
+                 card_plays_started_this_turn: 0,
++                // Match the fixture's existing zeroed play-history counters.
++                manual_card_series_this_turn: 0,
++                non_auto_card_plays_finished_this_turn: 0,
+                 cards_first_in_series_this_turn: 0,
+                 request_end_turn_after_play: false,
+                 retain_this_turn: smallvec::SmallVec::new(),
+@@ -2855,6 +2864,9 @@ mod zizk_relic_install {
+             generated_cards_this_combat: 0,
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
++            // Match the fixture's existing zeroed play-history counters.
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: smallvec::SmallVec::new(),
+@@ -3066,6 +3078,9 @@ mod s16y_starter_relics {
+             generated_cards_this_combat: 0,
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
++            // Match the fixture's existing zeroed play-history counters.
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: smallvec::SmallVec::new(),
+@@ -3327,6 +3342,9 @@ mod vmko_heavenly_drill {
+                 generated_cards_this_combat: 0,
+                 skills_played_this_turn: 0,
+                 card_plays_started_this_turn: 0,
++                // Match the fixture's existing zeroed play-history counters.
++                manual_card_series_this_turn: 0,
++                non_auto_card_plays_finished_this_turn: 0,
+                 cards_first_in_series_this_turn: 0,
+                 request_end_turn_after_play: false,
+                 retain_this_turn: smallvec::SmallVec::new(),
+@@ -3612,6 +3630,9 @@ mod rggx_act2_tunneler {
+             generated_cards_this_combat: 0,
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
++            // Match the fixture's existing zeroed play-history counters.
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/play_card.rs b/sts2-rs/crates/sts2-core/tests/play_card.rs
+index 85c4d57..293059d 100644
+--- a/sts2-rs/crates/sts2-core/tests/play_card.rs
++++ b/sts2-rs/crates/sts2-core/tests/play_card.rs
+@@ -94,6 +94,9 @@ fn build_handful(cards: &[(CardId, i32, i32, i8, TargetType)]) -> CombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/prop_determinism.rs b/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
+index f8387dc..b9868df 100644
+--- a/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
++++ b/sts2-rs/crates/sts2-core/tests/prop_determinism.rs
+@@ -65,6 +65,9 @@ fn make_player() -> PlayerCombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs b/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
+index 22a37cc..d1dc923 100644
+--- a/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
++++ b/sts2-rs/crates/sts2-core/tests/random_playout_fuzz.rs
+@@ -64,6 +64,9 @@ fn make_player() -> PlayerCombatState {
+         generated_cards_this_combat: 0,
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
++        // Match the fixture's existing zeroed play-history counters.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+

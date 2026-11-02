@@ -1,0 +1,3384 @@
+{
+  "scope": "unchanged offline actual-core public trajectory, not a native UI capture",
+  "source": "agent\\codex\\network-alignment-20261030\\validation\\pilot-v16-public\\frontiers\\public-regent-1458832210.json",
+  "source_sha256": "c069eb0e72f474f4a3fb862d4aca20f272c50cd593a5d4115a15e4d34c889798",
+  "pointer": "/last_decision/projection/public_state",
+  "state": {
+    "action_revision": 342,
+    "available_actions": [
+      "select_deck_card"
+    ],
+    "combat": {
+      "action_readiness": {
+        "actions_settled": false,
+        "can_use_combat_actions": false,
+        "snapshot_stable": true
+      },
+      "discard": [],
+      "draw": [
+        {
+          "card_count": 1,
+          "card_id": "DAZED",
+          "card_ids": [
+            "DAZED"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Ethereal",
+            "Unplayable"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DAZED*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DAZED",
+          "card_ids": [
+            "DAZED"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Ethereal",
+            "Unplayable"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DAZED*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DAZED",
+          "card_ids": [
+            "DAZED"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Ethereal",
+            "Unplayable"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DAZED*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DAZED",
+          "card_ids": [
+            "DAZED"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Ethereal",
+            "Unplayable"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DAZED*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DAZED",
+          "card_ids": [
+            "DAZED"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Ethereal",
+            "Unplayable"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DAZED*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DAZED",
+          "card_ids": [
+            "DAZED"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Ethereal",
+            "Unplayable"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [],
+          "line": "DAZED*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-15"
+          ],
+          "line": "DEFEND_REGENT*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-16"
+          ],
+          "line": "DEFEND_REGENT*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 5,
+              "current_value": 5,
+              "enchanted_value": 5,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-17"
+          ],
+          "line": "DEFEND_REGENT*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "FALLING_STAR",
+          "card_ids": [
+            "FALLING_STAR"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 8,
+              "current_value": 8,
+              "enchanted_value": 8,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-14"
+          ],
+          "line": "FALLING_STAR*1",
+          "mods": [],
+          "star_cost": 2,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GAMMA_BLAST",
+          "card_ids": [
+            "GAMMA_BLAST"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 18,
+              "current_value": 18,
+              "enchanted_value": 18,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-9"
+          ],
+          "line": "GAMMA_BLAST+*1",
+          "mods": [],
+          "star_cost": 3,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "GLITTERSTREAM",
+          "card_ids": [
+            "GLITTERSTREAM"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 11,
+              "current_value": 11,
+              "enchanted_value": 11,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-2"
+          ],
+          "line": "GLITTERSTREAM*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GLITTERSTREAM",
+          "card_ids": [
+            "GLITTERSTREAM"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 11,
+              "current_value": 11,
+              "enchanted_value": 11,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-7"
+          ],
+          "line": "GLITTERSTREAM*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GLOW",
+          "card_ids": [
+            "GLOW"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-6"
+          ],
+          "line": "GLOW+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "REFINE_BLADE",
+          "card_ids": [
+            "REFINE_BLADE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-12"
+          ],
+          "line": "REFINE_BLADE+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "REFLECT_CARD",
+          "card_ids": [
+            "REFLECT_CARD"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 15,
+              "current_value": 15,
+              "enchanted_value": 15,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-1"
+          ],
+          "line": "REFLECT_CARD*1",
+          "mods": [],
+          "star_cost": 3,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "SOVEREIGN_BLADE",
+          "card_ids": [
+            "SOVEREIGN_BLADE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 33,
+              "current_value": 33,
+              "enchanted_value": 33,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [
+            "Retain"
+          ],
+          "energy_cost": 2,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-21"
+          ],
+          "line": "SOVEREIGN_BLADE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_REGENT",
+          "card_ids": [
+            "STRIKE_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-19"
+          ],
+          "line": "STRIKE_REGENT*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "VENERATE",
+          "card_ids": [
+            "VENERATE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-13"
+          ],
+          "line": "VENERATE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        }
+      ],
+      "draw_knowledge": {
+        "available": true,
+        "bands": [
+          {
+            "cards": [
+              {
+                "card_count": 6,
+                "card_id": "DAZED",
+                "card_ids": [
+                  "DAZED"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Ethereal",
+                  "Unplayable"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [],
+                "line": "DAZED*6",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 3,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 5,
+                    "current_value": 5,
+                    "enchanted_value": 5,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-15",
+                  "visible-16",
+                  "visible-17"
+                ],
+                "line": "DEFEND_REGENT*3",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "FALLING_STAR",
+                "card_ids": [
+                  "FALLING_STAR"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 8,
+                    "current_value": 8,
+                    "enchanted_value": 8,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-14"
+                ],
+                "line": "FALLING_STAR*1",
+                "mods": [],
+                "star_cost": 2,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GAMMA_BLAST",
+                "card_ids": [
+                  "GAMMA_BLAST"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 18,
+                    "current_value": 18,
+                    "enchanted_value": 18,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-9"
+                ],
+                "line": "GAMMA_BLAST+*1",
+                "mods": [],
+                "star_cost": 3,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 2,
+                "card_id": "GLITTERSTREAM",
+                "card_ids": [
+                  "GLITTERSTREAM"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 11,
+                    "current_value": 11,
+                    "enchanted_value": 11,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 2,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-2",
+                  "visible-7"
+                ],
+                "line": "GLITTERSTREAM*2",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLOW",
+                "card_ids": [
+                  "GLOW"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-6"
+                ],
+                "line": "GLOW+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "REFINE_BLADE",
+                "card_ids": [
+                  "REFINE_BLADE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-12"
+                ],
+                "line": "REFINE_BLADE+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "REFLECT_CARD",
+                "card_ids": [
+                  "REFLECT_CARD"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 15,
+                    "current_value": 15,
+                    "enchanted_value": 15,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-1"
+                ],
+                "line": "REFLECT_CARD*1",
+                "mods": [],
+                "star_cost": 3,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "SOVEREIGN_BLADE",
+                "card_ids": [
+                  "SOVEREIGN_BLADE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 33,
+                    "current_value": 33,
+                    "enchanted_value": 33,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [
+                  "Retain"
+                ],
+                "energy_cost": 2,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-21"
+                ],
+                "line": "SOVEREIGN_BLADE*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "STRIKE_REGENT",
+                "card_ids": [
+                  "STRIKE_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 6,
+                    "current_value": 6,
+                    "enchanted_value": 6,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-19"
+                ],
+                "line": "STRIKE_REGENT*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "VENERATE",
+                "card_ids": [
+                  "VENERATE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-13"
+                ],
+                "line": "VENERATE*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              }
+            ]
+          }
+        ],
+        "discard_bands": [],
+        "inserted": [],
+        "kind": "public_rule_state",
+        "reason": null,
+        "schema_version": 1,
+        "source": "offline_public_rule_observer"
+      },
+      "enemies": [
+        {
+          "alive": true,
+          "block": 0,
+          "enemy_id": "Chomper",
+          "hittable": true,
+          "hp": "1/62",
+          "i": 0,
+          "instance_id": "visible-enemy-3",
+          "intents": [
+            {
+              "damage": 6,
+              "hits": 2,
+              "intent_type": "MULTI_ATTACK"
+            }
+          ],
+          "power_details": [
+            {
+              "amount": 2,
+              "display_amount": 2,
+              "power_id": "WEAK_POWER"
+            },
+            {
+              "amount": 2,
+              "display_amount": 2,
+              "power_id": "VULNERABLE_POWER"
+            }
+          ],
+          "powers": [
+            "WEAK_POWER 2",
+            "VULNERABLE_POWER 2"
+          ]
+        }
+      ],
+      "exhaust": [
+        {
+          "card_count": 1,
+          "card_id": "KNOW_THY_PLACE",
+          "card_ids": [
+            "KNOW_THY_PLACE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-10"
+          ],
+          "line": "KNOW_THY_PLACE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "KNOW_THY_PLACE",
+          "card_ids": [
+            "KNOW_THY_PLACE"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 0,
+          "keyword_state_complete": true,
+          "known_instance_ids": [
+            "visible-5"
+          ],
+          "line": "KNOW_THY_PLACE*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        }
+      ],
+      "hand": [
+        {
+          "card_count": 1,
+          "card_id": "DARK_SHACKLES",
+          "card_ids": [
+            "DARK_SHACKLES"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 0,
+          "i": 0,
+          "instance_id": "visible-25",
+          "keyword_state_complete": true,
+          "line": "DARK_SHACKLES*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "BULWARK",
+          "card_ids": [
+            "BULWARK"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 15,
+              "current_value": 15,
+              "enchanted_value": 15,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "i": 1,
+          "instance_id": "visible-4",
+          "keyword_state_complete": true,
+          "line": "BULWARK+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "PHOTON_CUT",
+          "card_ids": [
+            "PHOTON_CUT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 13,
+              "current_value": 13,
+              "enchanted_value": 13,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "enchantment": {
+            "amount": 1,
+            "enchantment_id": "PERFECT_FIT"
+          },
+          "energy_cost": 1,
+          "i": 2,
+          "instance_id": "visible-11",
+          "keyword_state_complete": true,
+          "line": "PHOTON_CUT+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_REGENT",
+          "card_ids": [
+            "STRIKE_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 3,
+          "instance_id": "visible-20",
+          "keyword_state_complete": true,
+          "line": "STRIKE_REGENT*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "MANIFEST_AUTHORITY",
+          "card_ids": [
+            "MANIFEST_AUTHORITY"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 7,
+              "current_value": 7,
+              "enchanted_value": 7,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 4,
+          "instance_id": "visible-3",
+          "keyword_state_complete": true,
+          "line": "MANIFEST_AUTHORITY*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 8,
+              "current_value": 8,
+              "enchanted_value": 8,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 5,
+          "instance_id": "visible-18",
+          "keyword_state_complete": true,
+          "line": "DEFEND_REGENT+*1",
+          "mods": [],
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        }
+      ],
+      "play": [],
+      "player": {
+        "block": 0,
+        "energy": 4,
+        "hp": "18/75",
+        "orb_capacity": null,
+        "orb_details": [],
+        "power_details": [
+          {
+            "amount": 3,
+            "display_amount": 3,
+            "power_id": "THORNS_POWER"
+          },
+          {
+            "amount": 1,
+            "display_amount": 1,
+            "power_id": "TYRANNY_POWER"
+          }
+        ],
+        "powers": [
+          "THORNS_POWER 3",
+          "TYRANNY_POWER 1"
+        ],
+        "stars": 0
+      },
+      "players": [],
+      "public_card_block_history": {
+        "available": true,
+        "complete": true,
+        "entries": [
+          {
+            "amount": 5,
+            "card_play_index": 0,
+            "this_turn": false
+          },
+          {
+            "amount": 11,
+            "card_play_index": 2,
+            "this_turn": false
+          },
+          {
+            "amount": 11,
+            "card_play_index": 3,
+            "this_turn": false
+          },
+          {
+            "amount": 7,
+            "card_play_index": 9,
+            "this_turn": false
+          }
+        ],
+        "scope": "current_combat",
+        "source": "offline_public_card_sourced_block_gains"
+      },
+      "public_card_play_history": {
+        "available": true,
+        "complete": true,
+        "plays": [
+          {
+            "auto_played": false,
+            "card_id": "DEFEND_REGENT",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-16",
+            "sequence": 0,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "GLOW",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-6",
+            "sequence": 1,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "GLITTERSTREAM",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-2",
+            "sequence": 2,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "GLITTERSTREAM",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-7",
+            "sequence": 3,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "REFINE_BLADE",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-12",
+            "sequence": 4,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "FALLING_STAR",
+            "card_type": "Attack",
+            "first_in_series": true,
+            "known_instance_id": "visible-14",
+            "sequence": 5,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "SOVEREIGN_BLADE",
+            "card_type": "Attack",
+            "first_in_series": true,
+            "known_instance_id": "visible-21",
+            "sequence": 6,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "KNOW_THY_PLACE",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-10",
+            "sequence": 7,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "KNOW_THY_PLACE",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-5",
+            "sequence": 8,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "MANIFEST_AUTHORITY",
+            "card_type": "Skill",
+            "first_in_series": true,
+            "known_instance_id": "visible-3",
+            "sequence": 9,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "STRIKE_REGENT",
+            "card_type": "Attack",
+            "first_in_series": true,
+            "known_instance_id": "visible-20",
+            "sequence": 10,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "PHOTON_CUT",
+            "card_type": "Attack",
+            "first_in_series": true,
+            "known_instance_id": "visible-11",
+            "sequence": 11,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "TYRANNY_CARD",
+            "card_type": "Power",
+            "first_in_series": true,
+            "known_instance_id": "visible-8",
+            "sequence": 12,
+            "this_turn": false
+          },
+          {
+            "auto_played": false,
+            "card_id": "GAMMA_BLAST",
+            "card_type": "Attack",
+            "first_in_series": true,
+            "known_instance_id": "visible-9",
+            "sequence": 13,
+            "this_turn": false
+          }
+        ],
+        "scope": "current_combat",
+        "source": "offline_public_completed_card_plays"
+      }
+    },
+    "modal": {
+      "underlying_screen": "COMBAT"
+    },
+    "public_history": {
+      "combat_cost_origins": [],
+      "combat_selection_origin": {
+        "actions": [
+          {
+            "type": "end_turn"
+          }
+        ],
+        "before": {
+          "action_revision": 341,
+          "available_actions": [
+            "play_card",
+            "end_turn",
+            "use_potion"
+          ],
+          "combat": {
+            "action_readiness": {
+              "actions_settled": true,
+              "can_use_combat_actions": true,
+              "snapshot_stable": true
+            },
+            "discard": [
+              {
+                "card_count": 1,
+                "card_id": "DAZED",
+                "card_ids": [
+                  "DAZED"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Ethereal",
+                  "Unplayable"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [],
+                "line": "DAZED*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DAZED",
+                "card_ids": [
+                  "DAZED"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Ethereal",
+                  "Unplayable"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [],
+                "line": "DAZED*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DAZED",
+                "card_ids": [
+                  "DAZED"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Ethereal",
+                  "Unplayable"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [],
+                "line": "DAZED*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 5,
+                    "current_value": 5,
+                    "enchanted_value": 5,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-15"
+                ],
+                "line": "DEFEND_REGENT*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 5,
+                    "current_value": 5,
+                    "enchanted_value": 5,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-16"
+                ],
+                "line": "DEFEND_REGENT*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 5,
+                    "current_value": 5,
+                    "enchanted_value": 5,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-17"
+                ],
+                "line": "DEFEND_REGENT*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 8,
+                    "current_value": 8,
+                    "enchanted_value": 8,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-18"
+                ],
+                "line": "DEFEND_REGENT+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "FALLING_STAR",
+                "card_ids": [
+                  "FALLING_STAR"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 8,
+                    "current_value": 8,
+                    "enchanted_value": 8,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-14"
+                ],
+                "line": "FALLING_STAR*1",
+                "mods": [],
+                "star_cost": 2,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GAMMA_BLAST",
+                "card_ids": [
+                  "GAMMA_BLAST"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 18,
+                    "current_value": 18,
+                    "enchanted_value": 18,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-9"
+                ],
+                "line": "GAMMA_BLAST+*1",
+                "mods": [],
+                "star_cost": 3,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLITTERSTREAM",
+                "card_ids": [
+                  "GLITTERSTREAM"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 11,
+                    "current_value": 11,
+                    "enchanted_value": 11,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 2,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-2"
+                ],
+                "line": "GLITTERSTREAM*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLITTERSTREAM",
+                "card_ids": [
+                  "GLITTERSTREAM"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 11,
+                    "current_value": 11,
+                    "enchanted_value": 11,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 2,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-7"
+                ],
+                "line": "GLITTERSTREAM*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLOW",
+                "card_ids": [
+                  "GLOW"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-6"
+                ],
+                "line": "GLOW+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "MANIFEST_AUTHORITY",
+                "card_ids": [
+                  "MANIFEST_AUTHORITY"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 7,
+                    "current_value": 7,
+                    "enchanted_value": 7,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-3"
+                ],
+                "line": "MANIFEST_AUTHORITY*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "PHOTON_CUT",
+                "card_ids": [
+                  "PHOTON_CUT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 13,
+                    "current_value": 13,
+                    "enchanted_value": 13,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "enchantment": {
+                  "amount": 1,
+                  "enchantment_id": "PERFECT_FIT"
+                },
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-11"
+                ],
+                "line": "PHOTON_CUT+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "REFINE_BLADE",
+                "card_ids": [
+                  "REFINE_BLADE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-12"
+                ],
+                "line": "REFINE_BLADE+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "SOVEREIGN_BLADE",
+                "card_ids": [
+                  "SOVEREIGN_BLADE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 33,
+                    "current_value": 33,
+                    "enchanted_value": 33,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [
+                  "Retain"
+                ],
+                "energy_cost": 2,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-21"
+                ],
+                "line": "SOVEREIGN_BLADE*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "STRIKE_REGENT",
+                "card_ids": [
+                  "STRIKE_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 6,
+                    "current_value": 6,
+                    "enchanted_value": 6,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-19"
+                ],
+                "line": "STRIKE_REGENT*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "STRIKE_REGENT",
+                "card_ids": [
+                  "STRIKE_REGENT"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 6,
+                    "current_value": 6,
+                    "enchanted_value": 6,
+                    "name": "Damage"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-20"
+                ],
+                "line": "STRIKE_REGENT*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "VENERATE",
+                "card_ids": [
+                  "VENERATE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-13"
+                ],
+                "line": "VENERATE*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              }
+            ],
+            "draw": [
+              {
+                "card_count": 1,
+                "card_id": "BULWARK",
+                "card_ids": [
+                  "BULWARK"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 15,
+                    "current_value": 15,
+                    "enchanted_value": 15,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 2,
+                "keyword_state_complete": true,
+                "known_instance_ids": [],
+                "line": "BULWARK+*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "DARK_SHACKLES",
+                "card_ids": [
+                  "DARK_SHACKLES"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Exhaust"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-25"
+                ],
+                "line": "DARK_SHACKLES*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              }
+            ],
+            "draw_knowledge": {
+              "available": true,
+              "bands": [
+                {
+                  "cards": [
+                    {
+                      "card_count": 1,
+                      "card_id": "DARK_SHACKLES",
+                      "card_ids": [
+                        "DARK_SHACKLES"
+                      ],
+                      "costs_x": false,
+                      "dynamic_values": [],
+                      "effective_keywords": [
+                        "Exhaust"
+                      ],
+                      "energy_cost": 0,
+                      "keyword_state_complete": true,
+                      "known_instance_ids": [
+                        "visible-25"
+                      ],
+                      "line": "DARK_SHACKLES*1",
+                      "mods": [],
+                      "star_cost": 0,
+                      "star_costs_x": false,
+                      "upgraded": false
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "card_count": 1,
+                      "card_id": "BULWARK",
+                      "card_ids": [
+                        "BULWARK"
+                      ],
+                      "costs_x": false,
+                      "dynamic_values": [
+                        {
+                          "base_value": 15,
+                          "current_value": 15,
+                          "enchanted_value": 15,
+                          "name": "Block"
+                        }
+                      ],
+                      "effective_keywords": [],
+                      "energy_cost": 2,
+                      "keyword_state_complete": true,
+                      "known_instance_ids": [],
+                      "line": "BULWARK+*1",
+                      "mods": [],
+                      "star_cost": 0,
+                      "star_costs_x": false,
+                      "upgraded": true
+                    }
+                  ]
+                }
+              ],
+              "discard_bands": [
+                {
+                  "cards": [
+                    {
+                      "card_count": 1,
+                      "card_id": "PHOTON_CUT",
+                      "card_ids": [
+                        "PHOTON_CUT"
+                      ],
+                      "costs_x": false,
+                      "dynamic_values": [
+                        {
+                          "base_value": 13,
+                          "current_value": 13,
+                          "enchanted_value": 13,
+                          "name": "Damage"
+                        }
+                      ],
+                      "effective_keywords": [],
+                      "enchantment": {
+                        "amount": 1,
+                        "enchantment_id": "PERFECT_FIT"
+                      },
+                      "energy_cost": 1,
+                      "keyword_state_complete": true,
+                      "known_instance_ids": [
+                        "visible-11"
+                      ],
+                      "line": "PHOTON_CUT+*1",
+                      "mods": [],
+                      "star_cost": 0,
+                      "star_costs_x": false,
+                      "upgraded": true
+                    }
+                  ]
+                }
+              ],
+              "inserted": [],
+              "kind": "public_rule_state",
+              "reason": null,
+              "schema_version": 1,
+              "source": "offline_public_rule_observer"
+            },
+            "enemies": [
+              {
+                "alive": true,
+                "block": 0,
+                "enemy_id": "Chomper",
+                "hittable": true,
+                "hp": "1/62",
+                "i": 0,
+                "instance_id": "visible-enemy-3",
+                "intents": [
+                  {
+                    "damage": null,
+                    "hits": 1,
+                    "intent_type": "STATUS_CARD"
+                  }
+                ],
+                "power_details": [
+                  {
+                    "amount": 3,
+                    "display_amount": 3,
+                    "power_id": "WEAK_POWER"
+                  },
+                  {
+                    "amount": 3,
+                    "display_amount": 3,
+                    "power_id": "VULNERABLE_POWER"
+                  }
+                ],
+                "powers": [
+                  "WEAK_POWER 3",
+                  "VULNERABLE_POWER 3"
+                ]
+              }
+            ],
+            "exhaust": [
+              {
+                "card_count": 1,
+                "card_id": "KNOW_THY_PLACE",
+                "card_ids": [
+                  "KNOW_THY_PLACE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Exhaust"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-10"
+                ],
+                "line": "KNOW_THY_PLACE*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "KNOW_THY_PLACE",
+                "card_ids": [
+                  "KNOW_THY_PLACE"
+                ],
+                "costs_x": false,
+                "dynamic_values": [],
+                "effective_keywords": [
+                  "Exhaust"
+                ],
+                "energy_cost": 0,
+                "keyword_state_complete": true,
+                "known_instance_ids": [
+                  "visible-5"
+                ],
+                "line": "KNOW_THY_PLACE*1",
+                "mods": [],
+                "star_cost": 0,
+                "star_costs_x": false,
+                "upgraded": false
+              }
+            ],
+            "hand": [
+              {
+                "card_count": 1,
+                "card_id": "REFLECT_CARD",
+                "card_ids": [
+                  "REFLECT_CARD"
+                ],
+                "costs_x": false,
+                "dynamic_values": [
+                  {
+                    "base_value": 15,
+                    "current_value": 15,
+                    "enchanted_value": 15,
+                    "name": "Block"
+                  }
+                ],
+                "effective_keywords": [],
+                "energy_cost": 1,
+                "i": 0,
+                "instance_id": "visible-1",
+                "keyword_state_complete": true,
+                "line": "REFLECT_CARD*1",
+                "mods": [],
+                "star_cost": 3,
+                "star_costs_x": false,
+                "upgraded": false
+              }
+            ],
+            "play": [],
+            "player": {
+              "block": 12,
+              "energy": 1,
+              "hp": "18/75",
+              "orb_capacity": null,
+              "orb_details": [],
+              "power_details": [
+                {
+                  "amount": 3,
+                  "display_amount": 3,
+                  "power_id": "THORNS_POWER"
+                },
+                {
+                  "amount": 1,
+                  "display_amount": 1,
+                  "power_id": "TYRANNY_POWER"
+                }
+              ],
+              "powers": [
+                "THORNS_POWER 3",
+                "TYRANNY_POWER 1"
+              ],
+              "stars": 0
+            },
+            "players": [],
+            "public_card_block_history": {
+              "available": true,
+              "complete": true,
+              "entries": [
+                {
+                  "amount": 5,
+                  "card_play_index": 0,
+                  "this_turn": false
+                },
+                {
+                  "amount": 11,
+                  "card_play_index": 2,
+                  "this_turn": false
+                },
+                {
+                  "amount": 11,
+                  "card_play_index": 3,
+                  "this_turn": false
+                },
+                {
+                  "amount": 7,
+                  "card_play_index": 9,
+                  "this_turn": true
+                }
+              ],
+              "scope": "current_combat",
+              "source": "offline_public_card_sourced_block_gains"
+            },
+            "public_card_play_history": {
+              "available": true,
+              "complete": true,
+              "plays": [
+                {
+                  "auto_played": false,
+                  "card_id": "DEFEND_REGENT",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-16",
+                  "sequence": 0,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "GLOW",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-6",
+                  "sequence": 1,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "GLITTERSTREAM",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-2",
+                  "sequence": 2,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "GLITTERSTREAM",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-7",
+                  "sequence": 3,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "REFINE_BLADE",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-12",
+                  "sequence": 4,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "FALLING_STAR",
+                  "card_type": "Attack",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-14",
+                  "sequence": 5,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "SOVEREIGN_BLADE",
+                  "card_type": "Attack",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-21",
+                  "sequence": 6,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "KNOW_THY_PLACE",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-10",
+                  "sequence": 7,
+                  "this_turn": false
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "KNOW_THY_PLACE",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-5",
+                  "sequence": 8,
+                  "this_turn": true
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "MANIFEST_AUTHORITY",
+                  "card_type": "Skill",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-3",
+                  "sequence": 9,
+                  "this_turn": true
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "STRIKE_REGENT",
+                  "card_type": "Attack",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-20",
+                  "sequence": 10,
+                  "this_turn": true
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "PHOTON_CUT",
+                  "card_type": "Attack",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-11",
+                  "sequence": 11,
+                  "this_turn": true
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "TYRANNY_CARD",
+                  "card_type": "Power",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-8",
+                  "sequence": 12,
+                  "this_turn": true
+                },
+                {
+                  "auto_played": false,
+                  "card_id": "GAMMA_BLAST",
+                  "card_type": "Attack",
+                  "first_in_series": true,
+                  "known_instance_id": "visible-9",
+                  "sequence": 13,
+                  "this_turn": true
+                }
+              ],
+              "scope": "current_combat",
+              "source": "offline_public_completed_card_plays"
+            }
+          },
+          "public_history": {
+            "combat_cost_origins": [],
+            "encounter_id": "offline-public-combat-15",
+            "enemy_turns": [
+              {
+                "enemies": [
+                  {
+                    "alive": true,
+                    "block": 0,
+                    "enemy_id": "Chomper",
+                    "hittable": true,
+                    "hp": "45/60",
+                    "i": 0,
+                    "instance_id": "visible-enemy-2",
+                    "intents": [
+                      {
+                        "damage": 8,
+                        "hits": 2,
+                        "intent_type": "MULTI_ATTACK"
+                      }
+                    ],
+                    "power_details": [
+                      {
+                        "amount": 2,
+                        "display_amount": 2,
+                        "power_id": "ARTIFACT_POWER"
+                      }
+                    ],
+                    "powers": [
+                      "ARTIFACT_POWER 2"
+                    ]
+                  },
+                  {
+                    "alive": true,
+                    "block": 0,
+                    "enemy_id": "Chomper",
+                    "hittable": true,
+                    "hp": "62/62",
+                    "i": 1,
+                    "instance_id": "visible-enemy-3",
+                    "intents": [
+                      {
+                        "damage": null,
+                        "hits": 1,
+                        "intent_type": "STATUS_CARD"
+                      }
+                    ],
+                    "power_details": [
+                      {
+                        "amount": 2,
+                        "display_amount": 2,
+                        "power_id": "ARTIFACT_POWER"
+                      }
+                    ],
+                    "powers": [
+                      "ARTIFACT_POWER 2"
+                    ]
+                  }
+                ],
+                "player": {
+                  "block": 16,
+                  "energy": 0,
+                  "hp": "18/75",
+                  "orb_capacity": null,
+                  "orb_details": [],
+                  "power_details": [
+                    {
+                      "amount": 3,
+                      "display_amount": 3,
+                      "power_id": "THORNS_POWER"
+                    },
+                    {
+                      "amount": 1,
+                      "display_amount": 1,
+                      "power_id": "DRAW_CARDS_NEXT_TURN_POWER"
+                    },
+                    {
+                      "amount": 5,
+                      "display_amount": 5,
+                      "power_id": "BLOCK_NEXT_TURN_POWER"
+                    }
+                  ],
+                  "powers": [
+                    "THORNS_POWER 3",
+                    "DRAW_CARDS_NEXT_TURN_POWER 1",
+                    "BLOCK_NEXT_TURN_POWER 5"
+                  ],
+                  "stars": 5
+                },
+                "turn": 1
+              },
+              {
+                "enemies": [
+                  {
+                    "alive": true,
+                    "block": 0,
+                    "enemy_id": "Chomper",
+                    "hittable": true,
+                    "hp": "62/62",
+                    "i": 0,
+                    "instance_id": "visible-enemy-3",
+                    "intents": [
+                      {
+                        "damage": 8,
+                        "hits": 2,
+                        "intent_type": "MULTI_ATTACK"
+                      }
+                    ],
+                    "power_details": [],
+                    "powers": []
+                  }
+                ],
+                "player": {
+                  "block": 16,
+                  "energy": 0,
+                  "hp": "18/75",
+                  "orb_capacity": null,
+                  "orb_details": [],
+                  "power_details": [
+                    {
+                      "amount": 3,
+                      "display_amount": 3,
+                      "power_id": "THORNS_POWER"
+                    },
+                    {
+                      "amount": 5,
+                      "display_amount": 5,
+                      "power_id": "BLOCK_NEXT_TURN_POWER"
+                    },
+                    {
+                      "amount": 1,
+                      "display_amount": 1,
+                      "power_id": "ENERGY_NEXT_TURN_POWER"
+                    }
+                  ],
+                  "powers": [
+                    "THORNS_POWER 3",
+                    "BLOCK_NEXT_TURN_POWER 5",
+                    "ENERGY_NEXT_TURN_POWER 1"
+                  ],
+                  "stars": 3
+                },
+                "turn": 2
+              },
+              {
+                "enemies": [
+                  {
+                    "alive": true,
+                    "block": 0,
+                    "enemy_id": "Chomper",
+                    "hittable": true,
+                    "hp": "1/62",
+                    "i": 0,
+                    "instance_id": "visible-enemy-3",
+                    "intents": [
+                      {
+                        "damage": null,
+                        "hits": 1,
+                        "intent_type": "STATUS_CARD"
+                      }
+                    ],
+                    "power_details": [
+                      {
+                        "amount": 3,
+                        "display_amount": 3,
+                        "power_id": "WEAK_POWER"
+                      },
+                      {
+                        "amount": 3,
+                        "display_amount": 3,
+                        "power_id": "VULNERABLE_POWER"
+                      }
+                    ],
+                    "powers": [
+                      "WEAK_POWER 3",
+                      "VULNERABLE_POWER 3"
+                    ]
+                  }
+                ],
+                "player": {
+                  "block": 12,
+                  "energy": 1,
+                  "hp": "18/75",
+                  "orb_capacity": null,
+                  "orb_details": [],
+                  "power_details": [
+                    {
+                      "amount": 3,
+                      "display_amount": 3,
+                      "power_id": "THORNS_POWER"
+                    },
+                    {
+                      "amount": 1,
+                      "display_amount": 1,
+                      "power_id": "TYRANNY_POWER"
+                    }
+                  ],
+                  "powers": [
+                    "THORNS_POWER 3",
+                    "TYRANNY_POWER 1"
+                  ],
+                  "stars": 0
+                },
+                "turn": 3
+              }
+            ],
+            "history_complete": false,
+            "schema_version": 1,
+            "source": "observed_full_run_public_frames_and_completed_actions"
+          },
+          "run": {
+            "act_count": 3,
+            "act_floor": 14,
+            "act_id": "1",
+            "act_index": 2,
+            "ascension": 0,
+            "awaiting_second_boss": false,
+            "boss_id": "KAISER_CRAB_BOSS",
+            "character_id": "REGENT",
+            "deck": [
+              {
+                "card_count": 1,
+                "card_id": "STRIKE_REGENT",
+                "card_ids": [
+                  "STRIKE_REGENT"
+                ],
+                "line": "STRIKE_REGENT*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "STRIKE_REGENT",
+                "card_ids": [
+                  "STRIKE_REGENT"
+                ],
+                "line": "STRIKE_REGENT*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "line": "DEFEND_REGENT+*1",
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "line": "DEFEND_REGENT*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "line": "DEFEND_REGENT*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "DEFEND_REGENT",
+                "card_ids": [
+                  "DEFEND_REGENT"
+                ],
+                "line": "DEFEND_REGENT*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "FALLING_STAR",
+                "card_ids": [
+                  "FALLING_STAR"
+                ],
+                "line": "FALLING_STAR*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "VENERATE",
+                "card_ids": [
+                  "VENERATE"
+                ],
+                "line": "VENERATE*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "REFINE_BLADE",
+                "card_ids": [
+                  "REFINE_BLADE"
+                ],
+                "line": "REFINE_BLADE+*1",
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "PHOTON_CUT",
+                "card_ids": [
+                  "PHOTON_CUT"
+                ],
+                "enchantment": {
+                  "amount": 1,
+                  "enchantment_id": "PERFECT_FIT"
+                },
+                "line": "PHOTON_CUT+*1",
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "KNOW_THY_PLACE",
+                "card_ids": [
+                  "KNOW_THY_PLACE"
+                ],
+                "line": "KNOW_THY_PLACE*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GAMMA_BLAST",
+                "card_ids": [
+                  "GAMMA_BLAST"
+                ],
+                "line": "GAMMA_BLAST+*1",
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "TYRANNY_CARD",
+                "card_ids": [
+                  "TYRANNY_CARD"
+                ],
+                "line": "TYRANNY_CARD*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLITTERSTREAM",
+                "card_ids": [
+                  "GLITTERSTREAM"
+                ],
+                "line": "GLITTERSTREAM*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLOW",
+                "card_ids": [
+                  "GLOW"
+                ],
+                "line": "GLOW+*1",
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "KNOW_THY_PLACE",
+                "card_ids": [
+                  "KNOW_THY_PLACE"
+                ],
+                "line": "KNOW_THY_PLACE*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "BULWARK",
+                "card_ids": [
+                  "BULWARK"
+                ],
+                "line": "BULWARK+*1",
+                "upgraded": true
+              },
+              {
+                "card_count": 1,
+                "card_id": "MANIFEST_AUTHORITY",
+                "card_ids": [
+                  "MANIFEST_AUTHORITY"
+                ],
+                "line": "MANIFEST_AUTHORITY*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "GLITTERSTREAM",
+                "card_ids": [
+                  "GLITTERSTREAM"
+                ],
+                "line": "GLITTERSTREAM*1",
+                "upgraded": false
+              },
+              {
+                "card_count": 1,
+                "card_id": "REFLECT_CARD",
+                "card_ids": [
+                  "REFLECT_CARD"
+                ],
+                "line": "REFLECT_CARD*1",
+                "upgraded": false
+              }
+            ],
+            "deck_size": 20,
+            "floor": 31,
+            "gold": 178,
+            "hp": "18/75",
+            "is_last_act": false,
+            "map_coord": {
+              "col": 1,
+              "row": 13
+            },
+            "max_energy": 3,
+            "potions": [
+              {
+                "discard": false,
+                "i": 0,
+                "occupied": false,
+                "potion_id": null,
+                "usable": false
+              },
+              {
+                "discard": false,
+                "i": 1,
+                "occupied": false,
+                "potion_id": null,
+                "usable": false
+              },
+              {
+                "discard": false,
+                "i": 2,
+                "occupied": false,
+                "potion_id": null,
+                "usable": false
+              }
+            ],
+            "relic_ids": [
+              "DIVINE_RIGHT",
+              "WINGED_BOOTS",
+              "FENCING_MANUAL",
+              "BRONZE_SCALES",
+              "MOLTEN_EGG",
+              "PETRIFIED_TOAD",
+              "SEAL_OF_GOLD",
+              "HAPPY_FLOWER",
+              "VENERABLE_TEA_SET",
+              "ICE_CREAM"
+            ],
+            "relic_is_melted": [
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false
+            ],
+            "relic_stacks": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              1,
+              null,
+              null
+            ],
+            "relic_statuses": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "room_type": "Monster"
+          },
+          "screen": "COMBAT",
+          "supported": true,
+          "turn": 3
+        },
+        "schema_version": 1
+      },
+      "encounter_id": "offline-public-combat-15",
+      "enemy_turns": [
+        {
+          "enemies": [
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "Chomper",
+              "hittable": true,
+              "hp": "45/60",
+              "i": 0,
+              "instance_id": "visible-enemy-2",
+              "intents": [
+                {
+                  "damage": 8,
+                  "hits": 2,
+                  "intent_type": "MULTI_ATTACK"
+                }
+              ],
+              "power_details": [
+                {
+                  "amount": 2,
+                  "display_amount": 2,
+                  "power_id": "ARTIFACT_POWER"
+                }
+              ],
+              "powers": [
+                "ARTIFACT_POWER 2"
+              ]
+            },
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "Chomper",
+              "hittable": true,
+              "hp": "62/62",
+              "i": 1,
+              "instance_id": "visible-enemy-3",
+              "intents": [
+                {
+                  "damage": null,
+                  "hits": 1,
+                  "intent_type": "STATUS_CARD"
+                }
+              ],
+              "power_details": [
+                {
+                  "amount": 2,
+                  "display_amount": 2,
+                  "power_id": "ARTIFACT_POWER"
+                }
+              ],
+              "powers": [
+                "ARTIFACT_POWER 2"
+              ]
+            }
+          ],
+          "player": {
+            "block": 16,
+            "energy": 0,
+            "hp": "18/75",
+            "orb_capacity": null,
+            "orb_details": [],
+            "power_details": [
+              {
+                "amount": 3,
+                "display_amount": 3,
+                "power_id": "THORNS_POWER"
+              },
+              {
+                "amount": 1,
+                "display_amount": 1,
+                "power_id": "DRAW_CARDS_NEXT_TURN_POWER"
+              },
+              {
+                "amount": 5,
+                "display_amount": 5,
+                "power_id": "BLOCK_NEXT_TURN_POWER"
+              }
+            ],
+            "powers": [
+              "THORNS_POWER 3",
+              "DRAW_CARDS_NEXT_TURN_POWER 1",
+              "BLOCK_NEXT_TURN_POWER 5"
+            ],
+            "stars": 5
+          },
+          "turn": 1
+        },
+        {
+          "enemies": [
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "Chomper",
+              "hittable": true,
+              "hp": "62/62",
+              "i": 0,
+              "instance_id": "visible-enemy-3",
+              "intents": [
+                {
+                  "damage": 8,
+                  "hits": 2,
+                  "intent_type": "MULTI_ATTACK"
+                }
+              ],
+              "power_details": [],
+              "powers": []
+            }
+          ],
+          "player": {
+            "block": 16,
+            "energy": 0,
+            "hp": "18/75",
+            "orb_capacity": null,
+            "orb_details": [],
+            "power_details": [
+              {
+                "amount": 3,
+                "display_amount": 3,
+                "power_id": "THORNS_POWER"
+              },
+              {
+                "amount": 5,
+                "display_amount": 5,
+                "power_id": "BLOCK_NEXT_TURN_POWER"
+              },
+              {
+                "amount": 1,
+                "display_amount": 1,
+                "power_id": "ENERGY_NEXT_TURN_POWER"
+              }
+            ],
+            "powers": [
+              "THORNS_POWER 3",
+              "BLOCK_NEXT_TURN_POWER 5",
+              "ENERGY_NEXT_TURN_POWER 1"
+            ],
+            "stars": 3
+          },
+          "turn": 2
+        },
+        {
+          "enemies": [
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "Chomper",
+              "hittable": true,
+              "hp": "1/62",
+              "i": 0,
+              "instance_id": "visible-enemy-3",
+              "intents": [
+                {
+                  "damage": null,
+                  "hits": 1,
+                  "intent_type": "STATUS_CARD"
+                }
+              ],
+              "power_details": [
+                {
+                  "amount": 3,
+                  "display_amount": 3,
+                  "power_id": "WEAK_POWER"
+                },
+                {
+                  "amount": 3,
+                  "display_amount": 3,
+                  "power_id": "VULNERABLE_POWER"
+                }
+              ],
+              "powers": [
+                "WEAK_POWER 3",
+                "VULNERABLE_POWER 3"
+              ]
+            }
+          ],
+          "player": {
+            "block": 12,
+            "energy": 1,
+            "hp": "18/75",
+            "orb_capacity": null,
+            "orb_details": [],
+            "power_details": [
+              {
+                "amount": 3,
+                "display_amount": 3,
+                "power_id": "THORNS_POWER"
+              },
+              {
+                "amount": 1,
+                "display_amount": 1,
+                "power_id": "TYRANNY_POWER"
+              }
+            ],
+            "powers": [
+              "THORNS_POWER 3",
+              "TYRANNY_POWER 1"
+            ],
+            "stars": 0
+          },
+          "turn": 3
+        },
+        {
+          "enemies": [
+            {
+              "alive": true,
+              "block": 0,
+              "enemy_id": "Chomper",
+              "hittable": true,
+              "hp": "1/62",
+              "i": 0,
+              "instance_id": "visible-enemy-3",
+              "intents": [
+                {
+                  "damage": 6,
+                  "hits": 2,
+                  "intent_type": "MULTI_ATTACK"
+                }
+              ],
+              "power_details": [
+                {
+                  "amount": 2,
+                  "display_amount": 2,
+                  "power_id": "WEAK_POWER"
+                },
+                {
+                  "amount": 2,
+                  "display_amount": 2,
+                  "power_id": "VULNERABLE_POWER"
+                }
+              ],
+              "powers": [
+                "WEAK_POWER 2",
+                "VULNERABLE_POWER 2"
+              ]
+            }
+          ],
+          "player": {
+            "block": 0,
+            "energy": 4,
+            "hp": "18/75",
+            "orb_capacity": null,
+            "orb_details": [],
+            "power_details": [
+              {
+                "amount": 3,
+                "display_amount": 3,
+                "power_id": "THORNS_POWER"
+              },
+              {
+                "amount": 1,
+                "display_amount": 1,
+                "power_id": "TYRANNY_POWER"
+              }
+            ],
+            "powers": [
+              "THORNS_POWER 3",
+              "TYRANNY_POWER 1"
+            ],
+            "stars": 0
+          },
+          "turn": 4
+        }
+      ],
+      "history_complete": false,
+      "schema_version": 1,
+      "source": "observed_full_run_public_frames_and_completed_actions"
+    },
+    "run": {
+      "act_count": 3,
+      "act_floor": 14,
+      "act_id": "1",
+      "act_index": 2,
+      "ascension": 0,
+      "awaiting_second_boss": false,
+      "boss_id": "KAISER_CRAB_BOSS",
+      "character_id": "REGENT",
+      "deck": [
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_REGENT",
+          "card_ids": [
+            "STRIKE_REGENT"
+          ],
+          "line": "STRIKE_REGENT*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_REGENT",
+          "card_ids": [
+            "STRIKE_REGENT"
+          ],
+          "line": "STRIKE_REGENT*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "line": "DEFEND_REGENT+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "line": "DEFEND_REGENT*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "line": "DEFEND_REGENT*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "line": "DEFEND_REGENT*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "FALLING_STAR",
+          "card_ids": [
+            "FALLING_STAR"
+          ],
+          "line": "FALLING_STAR*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "VENERATE",
+          "card_ids": [
+            "VENERATE"
+          ],
+          "line": "VENERATE*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "REFINE_BLADE",
+          "card_ids": [
+            "REFINE_BLADE"
+          ],
+          "line": "REFINE_BLADE+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "PHOTON_CUT",
+          "card_ids": [
+            "PHOTON_CUT"
+          ],
+          "enchantment": {
+            "amount": 1,
+            "enchantment_id": "PERFECT_FIT"
+          },
+          "line": "PHOTON_CUT+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "KNOW_THY_PLACE",
+          "card_ids": [
+            "KNOW_THY_PLACE"
+          ],
+          "line": "KNOW_THY_PLACE*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GAMMA_BLAST",
+          "card_ids": [
+            "GAMMA_BLAST"
+          ],
+          "line": "GAMMA_BLAST+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "TYRANNY_CARD",
+          "card_ids": [
+            "TYRANNY_CARD"
+          ],
+          "line": "TYRANNY_CARD*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GLITTERSTREAM",
+          "card_ids": [
+            "GLITTERSTREAM"
+          ],
+          "line": "GLITTERSTREAM*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GLOW",
+          "card_ids": [
+            "GLOW"
+          ],
+          "line": "GLOW+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "KNOW_THY_PLACE",
+          "card_ids": [
+            "KNOW_THY_PLACE"
+          ],
+          "line": "KNOW_THY_PLACE*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "BULWARK",
+          "card_ids": [
+            "BULWARK"
+          ],
+          "line": "BULWARK+*1",
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "MANIFEST_AUTHORITY",
+          "card_ids": [
+            "MANIFEST_AUTHORITY"
+          ],
+          "line": "MANIFEST_AUTHORITY*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "GLITTERSTREAM",
+          "card_ids": [
+            "GLITTERSTREAM"
+          ],
+          "line": "GLITTERSTREAM*1",
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "REFLECT_CARD",
+          "card_ids": [
+            "REFLECT_CARD"
+          ],
+          "line": "REFLECT_CARD*1",
+          "upgraded": false
+        }
+      ],
+      "deck_size": 20,
+      "floor": 31,
+      "gold": 178,
+      "hp": "18/75",
+      "is_last_act": false,
+      "map_coord": {
+        "col": 1,
+        "row": 13
+      },
+      "max_energy": 3,
+      "potions": [
+        {
+          "discard": false,
+          "i": 0,
+          "occupied": false,
+          "potion_id": null,
+          "usable": false
+        },
+        {
+          "discard": false,
+          "i": 1,
+          "occupied": false,
+          "potion_id": null,
+          "usable": false
+        },
+        {
+          "discard": false,
+          "i": 2,
+          "occupied": false,
+          "potion_id": null,
+          "usable": false
+        }
+      ],
+      "relic_ids": [
+        "DIVINE_RIGHT",
+        "WINGED_BOOTS",
+        "FENCING_MANUAL",
+        "BRONZE_SCALES",
+        "MOLTEN_EGG",
+        "PETRIFIED_TOAD",
+        "SEAL_OF_GOLD",
+        "HAPPY_FLOWER",
+        "VENERABLE_TEA_SET",
+        "ICE_CREAM"
+      ],
+      "relic_is_melted": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "relic_stacks": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null
+      ],
+      "relic_statuses": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "room_type": "Monster"
+    },
+    "screen": "CARD_SELECTION",
+    "selection": {
+      "can_skip": false,
+      "cards": [
+        {
+          "card_count": 1,
+          "card_id": "DARK_SHACKLES",
+          "card_ids": [
+            "DARK_SHACKLES"
+          ],
+          "costs_x": false,
+          "dynamic_values": [],
+          "effective_keywords": [
+            "Exhaust"
+          ],
+          "energy_cost": 0,
+          "i": 0,
+          "instance_id": "visible-25",
+          "keyword_state_complete": true,
+          "line": "DARK_SHACKLES*1",
+          "mods": [],
+          "selectable": null,
+          "selected": false,
+          "source_index": 0,
+          "source_pile": "Hand",
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "BULWARK",
+          "card_ids": [
+            "BULWARK"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 15,
+              "current_value": 15,
+              "enchanted_value": 15,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 2,
+          "i": 1,
+          "instance_id": "visible-4",
+          "keyword_state_complete": true,
+          "line": "BULWARK+*1",
+          "mods": [],
+          "selectable": null,
+          "selected": false,
+          "source_index": 1,
+          "source_pile": "Hand",
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "PHOTON_CUT",
+          "card_ids": [
+            "PHOTON_CUT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 13,
+              "current_value": 13,
+              "enchanted_value": 13,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "enchantment": {
+            "amount": 1,
+            "enchantment_id": "PERFECT_FIT"
+          },
+          "energy_cost": 1,
+          "i": 2,
+          "instance_id": "visible-11",
+          "keyword_state_complete": true,
+          "line": "PHOTON_CUT+*1",
+          "mods": [],
+          "selectable": null,
+          "selected": false,
+          "source_index": 2,
+          "source_pile": "Hand",
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        },
+        {
+          "card_count": 1,
+          "card_id": "STRIKE_REGENT",
+          "card_ids": [
+            "STRIKE_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 6,
+              "current_value": 6,
+              "enchanted_value": 6,
+              "name": "Damage"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 3,
+          "instance_id": "visible-20",
+          "keyword_state_complete": true,
+          "line": "STRIKE_REGENT*1",
+          "mods": [],
+          "selectable": null,
+          "selected": false,
+          "source_index": 3,
+          "source_pile": "Hand",
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "MANIFEST_AUTHORITY",
+          "card_ids": [
+            "MANIFEST_AUTHORITY"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 7,
+              "current_value": 7,
+              "enchanted_value": 7,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 4,
+          "instance_id": "visible-3",
+          "keyword_state_complete": true,
+          "line": "MANIFEST_AUTHORITY*1",
+          "mods": [],
+          "selectable": null,
+          "selected": false,
+          "source_index": 4,
+          "source_pile": "Hand",
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": false
+        },
+        {
+          "card_count": 1,
+          "card_id": "DEFEND_REGENT",
+          "card_ids": [
+            "DEFEND_REGENT"
+          ],
+          "costs_x": false,
+          "dynamic_values": [
+            {
+              "base_value": 8,
+              "current_value": 8,
+              "enchanted_value": 8,
+              "name": "Block"
+            }
+          ],
+          "effective_keywords": [],
+          "energy_cost": 1,
+          "i": 5,
+          "instance_id": "visible-18",
+          "keyword_state_complete": true,
+          "line": "DEFEND_REGENT+*1",
+          "mods": [],
+          "selectable": null,
+          "selected": false,
+          "source_index": 5,
+          "source_pile": "Hand",
+          "star_cost": 0,
+          "star_costs_x": false,
+          "upgraded": true
+        }
+      ],
+      "confirm": false,
+      "kind": "combat_hand_select",
+      "max": 1,
+      "min": 1,
+      "requires_confirmation": false,
+      "selected": 0,
+      "underlying_screen": "COMBAT"
+    },
+    "supported": true,
+    "turn": 4
+  }
+}

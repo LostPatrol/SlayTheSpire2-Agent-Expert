@@ -1,0 +1,23 @@
+diff --git a/sts2-rs/crates/sts2-content/src/ascension_scaling.rs b/sts2-rs/crates/sts2-content/src/ascension_scaling.rs
+index 889869a..eb5f4e8 100644
+--- a/sts2-rs/crates/sts2-content/src/ascension_scaling.rs
++++ b/sts2-rs/crates/sts2-content/src/ascension_scaling.rs
+@@ -308,6 +308,8 @@ pub(crate) const ASCENSION_TOUGH_BLOCK_SCALING: &[(MonsterKind, &str, i32, i32)]
+     // (primary).
+     (MonsterKind::MagiKnight, "FIRST_POWER_SHIELD", 5, 9),
+     (MonsterKind::MagiKnight, "PREP", 5, 9),
++    // Nibbit.cs SliceBlock: the secondary icon must match the existing A8 effect.
++    (MonsterKind::Nibbit, "SLICE", 5, 6),
+     // C# `Seapunk.cs:38,86` `BubbleBlock => (.., 8, 7)`; secondary (the head
+     // intent is the Buff), granted by `seapunk_bubble_burp_effect`. The grant
+     // already read the A8 pair inline but the Defend telegraph kept 7 (GH #893).
+@@ -1688,7 +1690,7 @@ mod tests {
+             9,
+             &[Tough::Block("FIRST_POWER_SHIELD"), Tough::Block("PREP")],
+         ),
+-        ("Nibbit", "SliceBlock", 5, 6, &[Tough::Effect("SLICE")]),
++        ("Nibbit", "SliceBlock", 5, 6, &[Tough::Block("SLICE")]),
+         (
+             "PhantasmalGardener",
+             "SkittishAmount",
+

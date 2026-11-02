@@ -1,0 +1,159 @@
+diff --git a/sts2-rs/crates/sts2-core/src/hashing.rs b/sts2-rs/crates/sts2-core/src/hashing.rs
+--- a/sts2-rs/crates/sts2-core/src/hashing.rs
++++ b/sts2-rs/crates/sts2-core/src/hashing.rs
+@@ -205,16 +205,16 @@ pub fn chance_outcome_hash(state: &CombatState) -> u64 {
+     let mut h = new_hasher();
+     hash_scalars(state, &mut h);
+     0x03u8.hash(&mut h);
+-    hash_player_chance_dedup(&state.player, &mut h, state);
++    hash_player_chance_dedup::<TtV2Encoding, _>(&state.player, &mut h, state);
+     0x04u8.hash(&mut h);
+     (state.allies.len() as u64).hash(&mut h);
+     for ally in &state.allies {
+-        hash_player::<FastEncoding, _>(ally, &mut h, state);
++        hash_player::<TtV2Encoding, _>(ally, &mut h, state);
+     }
+     let (uid_bound, loose) = chance_dedup_arena_split(state);
+     0x0Au8.hash(&mut h);
+     hash_pile_observational(&loose, state, &mut h);
+-    hash_enemies_cards_items_pending_skipping::<FastEncoding, _>(state, &mut h, |c| {
++    hash_enemies_cards_items_pending_skipping::<TtV2Encoding, _>(state, &mut h, |c| {
+         uid_bound.binary_search(&c.uid.get()).is_err()
+     });
+     h.finish()
+@@ -681,25 +686,22 @@ trait HashEncoding {
+     fn relic_kind<H: Hasher>(kind: crate::relics::RelicKind, h: &mut H);
+     /// Visit every card in the arena in the strategy's canonical order.
+     fn for_each_card(state: &CombatState, f: impl FnMut(&crate::Card));
+-    /// Fold one creature's powers. Every hash but [`tt_hash_v2`] keys the
+-    /// rows on the power's arena uid ([`hash_powers`]).
++    /// Fold creature powers; V2 transpositions and chance outcomes use observable rows.
+     #[inline]
+     fn powers<H: Hasher>(power_uids: &[crate::PowerUid], state: &CombatState, h: &mut H) {
+         hash_powers(power_uids, state, h);
+     }
+-    /// Fold a player's powers. Every hash but [`tt_hash_v2`] reads only the
+-    /// legacy [`PlayerCombatState::powers`] list.
++    /// Fold player powers; V2 transpositions and chance outcomes also read the mirror creature.
+     #[inline]
+     fn player_powers<H: Hasher>(p: &PlayerCombatState, state: &CombatState, h: &mut H) {
+         Self::powers(&p.powers, state, h);
+     }
+-    /// Per-player fields only [`tt_hash_v2`] reads. Writes nothing for every
+-    /// other hash, so their byte streams are unchanged by this hook.
++    /// Actual player belt fields shared by V2 transpositions and chance outcomes.
+     #[inline]
+     fn player_extra<H: Hasher>(_p: &PlayerCombatState, _h: &mut H) {}
+ }
+ 
+-/// [`tt_hash_v2`]'s encodings: [`FastEncoding`]'s piles, relics and arena
++/// V2 transposition and chance-outcome encodings: fast piles, relics and arena
+ /// walk, plus the two fixes the v2 key exists for — powers folded without
+ /// their arena uid ([`hash_powers_observational`]) and the player's potion
+ /// belt ([`hash_potion_belt`]).
+@@ -992,7 +994,7 @@ fn hash_player_tail<E: HashEncoding, H: Hasher>(
+ /// ever merges outcomes whose face-up piles hold the same multiset of
+ /// observable cards; the pile tag is still hashed, so a card in Discard
+ /// vs the same card in Exhaust still differs.
+-fn hash_player_chance_dedup<H: Hasher>(p: &PlayerCombatState, h: &mut H, state: &CombatState) {
++fn hash_player_chance_dedup<E: HashEncoding,H: Hasher>(p: &PlayerCombatState, h: &mut H, state: &CombatState) {
+     for (kind, pile) in [
+         (PileKind::Hand, p.hand.as_slice()),
+         (PileKind::Discard, p.discard.as_slice()),
+@@ -1004,7 +1006,8 @@ fn hash_player_chance_dedup<H: Hasher>(p: &PlayerCombatState, h: &mut H, state:
+     }
+     PileKind::Draw.hash(h);
+     hash_draw_pile_chance_dedup(p, state, h);
+-    hash_player_tail::<FastEncoding, H>(p, h, state);
++    // Share the TT's actual power union and potion belt semantics while retaining pile dedup.
++    hash_player_tail::<E, H>(p, h, state);
+ }
+ 
+ /// The DRAW-pile encoding for [`chance_outcome_hash`]: pinned positions
+@@ -1405,6 +1408,32 @@ mod tests {
+     use crate::{CardUid, CombatState};
+     use smallvec::SmallVec;
+ 
++    /// Distinct random power or potion results must remain distinct chance outcomes.
++    #[test]
++    fn chance_hash_tracks_creature_backed_player_power_and_actual_belt() {
++        let mut base=CombatState::default();
++        base.init_player_creature();
++        let hash=chance_outcome_hash(&base);
++        let mut powered=base.clone();
++        let owner=powered.player.creature_uid.unwrap();
++        let uid=std::num::NonZeroU32::new(1).unwrap();
++        powered.powers.push(crate::Power::new(uid,crate::PowerKind::Strength,3));
++        powered.creatures.iter_mut().find(|creature|creature.id==owner.0)
++            .unwrap().powers.push(crate::PowerUid(uid));
++        assert!(powered.player.powers.is_empty(),"fixture must exercise the actual creature-backed list");
++        assert_ne!(hash,chance_outcome_hash(&powered));
++        assert_ne!(tt_hash_v2(&base),tt_hash_v2(&powered));
++        let mut holding=base.clone();
++        holding.player.potions.push(crate::PotionKind::StrengthPotion);
++        holding.player.potion_slot_indices.push(2);
++        holding.player.potion_slots=3;
++        assert_ne!(hash,chance_outcome_hash(&holding));
++        assert_ne!(tt_hash_v2(&base),tt_hash_v2(&holding));
++        let mut moved=holding.clone();
++        moved.player.potion_slot_indices[0]=1;
++        assert_ne!(chance_outcome_hash(&holding),chance_outcome_hash(&moved));
++    }
++
+     #[test]
+     fn deterministic_same_state() {
+         let a = CombatState::default();
+diff --git a/sts2-rs/crates/sts2-mcts/src/tree_reuse_tests.rs b/sts2-rs/crates/sts2-mcts/src/tree_reuse_tests.rs
+index 6a4a643..2fe815b 100644
+--- a/sts2-rs/crates/sts2-mcts/src/tree_reuse_tests.rs
++++ b/sts2-rs/crates/sts2-mcts/src/tree_reuse_tests.rs
+@@ -481,11 +481,11 @@ fn drink(s: &CombatState) -> Option<CombatState> {
+ 
+ /// The failing-first pin for v2's potion fix: drinking any of these
+ /// potions at the opening of a fight leaves the v1 key (`search_hash`) —
+-/// and the chance-outcome dedup key — unchanged, so the table merges "drank
++/// unchanged, so the table merges "drank
+ /// it" into "still holds it". Two blind spots line up: the belt (v1 hashes
+ /// the legacy potion arena) and the power the potion grants (it lands on
+ /// the player's mirror creature, which v1 does not visit). The v2 key sees
+-/// every drink.
++/// every drink; chance outcomes now share the corrected V2 player semantics.
+ #[test]
+ fn tt_hash_v1_misses_these_drinks_and_v2_sees_them() {
+     let s = first_combat(4);
+@@ -512,10 +512,10 @@ fn tt_hash_v1_misses_these_drinks_and_v2_sees_them() {
+             sts2_core::search_hash(&after),
+             "{kind:?}: v1 key moved"
+         );
+-        assert_eq!(
++        assert_ne!(
+             sts2_core::chance_outcome_hash(&before),
+             sts2_core::chance_outcome_hash(&after),
+-            "{kind:?}: observation hash moved"
++            "{kind:?}: chance outcome hash must distinguish drinking"
+         );
+         assert_ne!(
+             sts2_core::tt_hash_v2(&before),
+@@ -634,17 +634,12 @@ fn tt_hash_v1_cannot_see_the_players_powers_and_v2_can() {
+         1,
+         "the mirror creature has it"
+     );
+-    for h in [sts2_core::search_hash, sts2_core::chance_outcome_hash] {
+-        assert_eq!(
+-            h(&none),
+-            h(&two),
+-            "v1-family hash saw the player's Strength"
+-        );
+-        assert_eq!(h(&two), h(&three));
++    assert_eq!(sts2_core::search_hash(&none),sts2_core::search_hash(&two));
++    assert_eq!(sts2_core::search_hash(&two),sts2_core::search_hash(&three));
++    for hash in [sts2_core::tt_hash_v2,sts2_core::chance_outcome_hash] {
++        assert_ne!(hash(&none),hash(&two));
++        assert_ne!(hash(&two),hash(&three));
+     }
+-    let v2 = sts2_core::tt_hash_v2;
+-    assert_ne!(v2(&none), v2(&two));
+-    assert_ne!(v2(&two), v2(&three));
+ }
+ 
+ /// The knob reaches the table: on a belt the v1 key cannot see, the two

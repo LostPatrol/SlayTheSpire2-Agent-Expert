@@ -1,0 +1,39 @@
+diff --git a/sts2-rs/crates/sts2-runai/src/ppo/wire.rs b/sts2-rs/crates/sts2-runai/src/ppo/wire.rs
+index c600e79..cecaecf 100644
+--- a/sts2-rs/crates/sts2-runai/src/ppo/wire.rs
++++ b/sts2-rs/crates/sts2-runai/src/ppo/wire.rs
+@@ -817,7 +817,7 @@ fn build_shop(state: &Value) -> Option<WireDecision> {
+ /// knows relic IDENTITY on the trained `boss_relic` surface. Routed via the
+ /// event surface the pick is positional: delegating just this decision in the
+ /// engine-world ablation collapsed the native 10/20 baseline to 3/20.
+-const BOSS_RELIC_ANCIENTS: &[&str] = &["OROBAS", "PAEL", "TEZCATARA", "NONUPEIPE", "TANX", "VAKUU"];
++const BOSS_RELIC_ANCIENTS: &[&str] = &["DARV", "OROBAS", "PAEL", "TEZCATARA", "NONUPEIPE", "TANX", "VAKUU"];
+ 
+ /// Wire event keys whose first `text_key` segment is not the event's registry
+ /// name: DollRoom's C# loc entry is `MR_STRUGGLES`, and TheArchitect's
+@@ -946,7 +946,7 @@ fn build_event(state: &Value) -> Option<WireDecision> {
+ ///
+ /// Fires only on the live-bridge shape: at least two enabled options, every
+ /// one of them carrying a non-empty `relic_id` AND an `event_id` naming one of
+-/// the six act-start Ancients. The Ancient's other pages (dialogue, the
++/// the seven act-start Ancients. The Ancient's other pages (dialogue, the
+ /// post-pick "Proceed") have an empty `relic_id` and stay on the event
+ /// surface, as do all ordinary events.
+ ///
+@@ -1596,6 +1596,16 @@ mod tests {
+         assert!(d.obs.event_options.is_none());
+         assert_eq!(d.labels, ["Yummy Cookie", "Biiig Hug", "Seal of Gold"]);
+ 
++        // Darv's public relic options use the same trained head as the full-run Ancient picker.
++        let mut darv = s.clone();
++        for idx in 0..3 {
++            darv["options"][idx]["event_id"] = json!("DARV");
++        }
++        let darv_decision = build_decision(&darv, "event").expect("Darv decision");
++        assert_eq!(darv_decision.actions, d.actions);
++        assert_eq!(darv_decision.obs.boss_relic_options, d.obs.boss_relic_options);
++        assert!(darv_decision.obs.event_options.is_none());
++
+         // An ordinary event stays an event, however boss-relic-ish its
+         // options look — the gate is the EVENT id.
+         let mut plain = s.clone();

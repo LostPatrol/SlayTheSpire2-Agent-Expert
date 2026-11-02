@@ -1,0 +1,187 @@
+diff --git a/sts2-rs/crates/sts2-core/src/cards.rs b/sts2-rs/crates/sts2-core/src/cards.rs
+--- a/sts2-rs/crates/sts2-core/src/cards.rs
++++ b/sts2-rs/crates/sts2-core/src/cards.rs
+@@ -350,6 +350,12 @@
+     /// global `modify_card_cost` walk and cleared on play with the other
+     /// `WhenPlayed` riders. Never set at v0.107.1.
+     CostReductionUntilPlayed,
++    /// Current public total energy quote, encoded as cost + 1 (0 = absent).
++    /// Importers must clear it after the observed decision boundary advances.
++    ObservedEnergyCost,
++    /// Current public total star quote, encoded as cost + 1 (0 = absent).
++    /// This is an observation input, not a combat-lasting cost modifier.
++    ObservedStarCost,
+ }
+ 
+ /// [`VarKey::SneckoRollLive`]: the Snecko roll raised `CostAbsolutelySet`, so
+@@ -826,10 +832,8 @@
+     }
+ }
+ 
+-// The "may be nonzero" mask has 24 bits. VarKey has 26 variants, so the two
+-// last share a bit with the first two (WireCostStable with RampageDamage,
+-// Generic with ClawBuff): a superset filter, so that only costs a false
+-// "maybe". No key a sweep gates on aliases.
++// Keys beyond the 24-bit "may be nonzero" mask alias earlier bits.
++// This is a superset filter: aliases only cause a harmless false "maybe".
+ impl crate::inline_kv::InlineKvKey for VarKey {
+     const FILL: Self = VarKey::RampageDamage;
+     #[inline]
+@@ -847,23 +851,23 @@
+ }
+ 
+ /// `Card::combat_vars` storage: fixed-capacity `Copy` map (was
+-/// `SmallVec<[(VarKey, i32); 4]>` with rare heap spill). Capacity 16 covers
++/// `SmallVec<[(VarKey, i32); 4]>` with rare heap spill). Capacity 18 covers
+ /// the PROVABLE worst case, not just the typical one: slots are never
+ /// reclaimed (clearing a var writes 0 in place — the live prefix is
+ /// equality/hash-visible), so a card accumulates one slot per distinct key
+-/// it EVER touches in a combat. The maximum distinct-key set is 16: the 11
++/// it EVER touches in a combat. The maximum distinct-key set is 18: the 11
+ /// generic flags any card can carry (`FreeThisTurn`, `EtherealThisCombat`,
+ /// `StarCostFreeThisCombat`, `SneckoCostDeltaThisTurn`, `SneckoRollLive`,
+ /// `CostAbsolutelySet`, `IsDupe`, `GeneratedInCombat`,
+ /// `PendingBatchAutoPlay`, `DampenDowngradedMarker`, `Generic`) + the
+-/// wire-reconstruction cost trio + at most 2 card-specific keys on one
++/// wire-reconstruction cost trio + 2 observed cost quotes + at most 2 card-specific keys on one
+ /// card (Thrash's remainder pair; every other card-specific key excludes
+ /// the rest). The previous capacity 8 sized for "1–2 scaling keys + a few
+ /// flags" and panicked mid-run on a legitimate 9th distinct key (GH #474:
+ /// Ironclad A10 seed 41100016, `CostAbsolutelySet` via net_search forks).
+ /// Overflow still panics loudly (see [`crate::inline_kv`]); the guard test
+ /// is `combat_vars_capacity_holds_worst_case_distinct_key_set`.
+-pub type CombatVars = crate::inline_kv::InlineKv<VarKey, 16>;
++pub type CombatVars = crate::inline_kv::InlineKv<VarKey, 18>;
+ 
+ /// `Card::enchantments` storage: fixed-capacity `Copy` map (was
+ /// `SmallVec<[(EnchantmentId, i32); 2]>` with rare heap spill). Capacity 6:
+@@ -969,15 +973,16 @@
+ }
+ 
+ // Layout tripwire: the card arena (`CombatState.cards: Vec<Card>`) is
+-// memcpy-cloned 2–3× per MCTS simulation, so every byte here is hot. 224 =
+-// 40 (scalar fields) + 132 (CombatVars, cap 16) + 52 (CardEnchantments,
+-// cap 6). The 160→224 growth is the deliberate GH #474 capacity raise
++// memcpy-cloned 2–3× per MCTS simulation, so every byte here is hot. 240 =
++// 40 (scalar fields) + 148 (CombatVars, cap 18) + 52 (CardEnchantments,
++// cap 6). The 224→240 growth accommodates two current public cost quotes.
++// The 160→224 growth was the deliberate GH #474 capacity raise
+ // (clone bench 2026-08-18: combatstate_clone_grown_arena_48 3.03→3.05µs,
+ // +0.5%; the isolated card_arena_clone_48 memcpy 94→116ns).
+ // If this fires, you grew `Card` — decide deliberately (and re-run the
+ // grown-arena clone bench in sts2-bench) rather than letting it drift.
+ const _: () = assert!(
+-    core::mem::size_of::<Card>() == 224,
++    core::mem::size_of::<Card>() == 240,
+     "size_of::<Card>() changed — see the comment above this assert"
+ );
+ 
+@@ -3941,7 +3946,7 @@
+     /// seed 41100016, `CostAbsolutelySet` via net_search forks).
+     #[test]
+     fn combat_vars_capacity_holds_worst_case_distinct_key_set() {
+-        // 16 keys: 11 generic + 3 wire trio + Thrash's pair.
++        // 18 keys: 11 generic + 3 wire + 2 observed quotes + Thrash's pair.
+         let worst_case = [
+             VarKey::FreeThisTurn,
+             VarKey::EtherealThisCombat,
+@@ -3957,6 +3962,8 @@
+             VarKey::WireTransientCostThisTurn,
+             VarKey::WireCostExpiringOnPlay,
+             VarKey::WireCostStable,
++            VarKey::ObservedEnergyCost,
++            VarKey::ObservedStarCost,
+             VarKey::ThrashFoldRemNum,
+             VarKey::ThrashFoldRemDen,
+         ];
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -13204,6 +13204,11 @@
+     card_uid: CardUid,
+     mods_present: bool,
+ ) -> i32 {
++    // The observed total already includes local and global modifiers for this boundary.
++    let observed = card.combat_var(crate::cards::VarKey::ObservedEnergyCost);
++    if observed > 0 && card.cost >= 0 && !crate::card_effects::card_unplayable_inst(card) {
++        return observed - 1;
++    }
+     // Bead `sts2-rs-c68o`: per-card `FreeThisTurn` rider zeroes the cost
+     // BEFORE the modify_card_cost listener walk. Set by `InfernalBlade` on
+     // the random Attack it spawns into hand; cleared by end-of-turn cleanup
+@@ -19684,6 +19689,58 @@
+         assert_eq!(effective_card_cost(&state, uid), 2);
+     }
+ 
++    /// Public total quotes bypass duplicate modifiers and leave ordinary costs after clearing.
++    #[test]
++    fn observed_cost_quotes_are_total_and_explicitly_released() {
++        use crate::cards::{Card, CardId, VarKey};
++        let mut state = CombatState::default();
++        state.player.current_hp = 80;
++        state.player.max_hp = 80;
++        state.init_player_creature();
++        let player = state.player.creature_uid.expect("player creature");
++        crate::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Tangled, 2);
++        let mut card = Card::pod_defaults();
++        assert_eq!(effective_card_cost_inst(&state, &card, card.uid), 3);
++        card.set_combat_var(VarKey::ObservedEnergyCost, 1);
++        assert_eq!(effective_card_cost_inst(&state, &card, card.uid), 0);
++        card.set_combat_var(VarKey::ObservedEnergyCost, 3);
++        assert_eq!(effective_card_cost_inst(&state, &card, card.uid), 2);
++        card.set_combat_var(VarKey::ObservedEnergyCost, 0);
++        assert_eq!(effective_card_cost_inst(&state, &card, card.uid), 3);
++
++        card.card_id = CardId::FallingStar;
++        crate::card_effects::apply_power_to_creature(&mut state, player, PowerKind::VoidForm, 1);
++        assert_eq!(crate::effective_star_cost_in_combat(&state, &card), 0);
++        card.set_combat_var(VarKey::ObservedStarCost, 3);
++        assert_eq!(crate::effective_star_cost_in_combat(&state, &card), 2);
++        card.set_combat_var(VarKey::ObservedStarCost, 0);
++        assert_eq!(crate::effective_star_cost_in_combat(&state, &card), 0);
++    }
++
++    /// Observation quotes never change X-cost spending or make an unplayable card playable.
++    #[test]
++    fn observed_cost_quotes_do_not_replace_x_or_unplayable_costs() {
++        use crate::cards::{Card, CardId, KeywordOverride, VarKey};
++        let state = CombatState::default();
++        let mut card = Card::pod_defaults();
++        card.cost = -1;
++        let energy = effective_card_cost_inst(&state, &card, card.uid);
++        card.set_combat_var(VarKey::ObservedEnergyCost, 8);
++        assert_eq!(effective_card_cost_inst(&state, &card, card.uid), energy);
++
++        card.cost = 0;
++        card.card_id = CardId::Stardust;
++        let stars = crate::effective_star_cost_in_combat(&state, &card);
++        card.set_combat_var(VarKey::ObservedStarCost, 8);
++        assert_eq!(crate::effective_star_cost_in_combat(&state, &card), stars);
++
++        card.cost = 1;
++        card.card_id = CardId::StrikeIronclad;
++        card.keyword_override = Some(KeywordOverride::UNPLAYABLE);
++        assert_eq!(effective_card_cost_inst(&state, &card, card.uid), 1);
++        assert_eq!(crate::effective_star_cost_in_combat(&state, &card), 0);
++    }
++
+     /// Brilliant Scarf is one late override per turn, even with an early surcharge.
+     #[test]
+     fn brilliant_scarf_frees_only_the_fifth_manual_play() {
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -12961,6 +12961,13 @@
+ /// gate from disagreeing after an auto-play.
+ #[must_use]
+ pub fn effective_star_cost_in_combat(state: &CombatState, card: &crate::cards::Card) -> i32 {
++    // Stardust spends stars through its X-cost capture rather than this fixed-cost gate.
++    let observed = card.combat_var(crate::cards::VarKey::ObservedStarCost);
++    if observed > 0 && card.cost >= 0 && card.card_id != crate::cards::CardId::Stardust
++        && !crate::card_effects::card_unplayable_inst(card)
++    {
++        return observed - 1;
++    }
+     let base = effective_star_cost(card);
+     if base == 0 {
+         return 0;

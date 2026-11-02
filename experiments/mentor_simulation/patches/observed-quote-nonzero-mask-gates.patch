@@ -1,0 +1,41 @@
+diff --git a/sts2-rs/crates/sts2-core/src/cards.rs b/sts2-rs/crates/sts2-core/src/cards.rs
+index df78b8b..22e14ad 100644
+--- a/sts2-rs/crates/sts2-core/src/cards.rs
++++ b/sts2-rs/crates/sts2-core/src/cards.rs
+@@ -838,7 +838,12 @@ impl crate::inline_kv::InlineKvKey for VarKey {
+     const FILL: Self = VarKey::RampageDamage;
+     #[inline]
+     fn nz_index(self) -> usize {
+-        self as usize % crate::inline_kv::NZ_BITS
++        // Observation quotes share cold accumulator bits, never the hot cost gates.
++        match self {
++            Self::ObservedEnergyCost => Self::RampageDamage as usize,
++            Self::ObservedStarCost => Self::ClawBuff as usize,
++            _ => self as usize % crate::inline_kv::NZ_BITS,
++        }
+     }
+ }
+ 
+diff --git a/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs b/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs
+index fefc629..b69780f 100644
+--- a/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs
++++ b/sts2-rs/crates/sts2-core/tests/inline_kv_nz_proptest.rs
+@@ -27,7 +27,7 @@ use sts2_core::inline_kv::{InlineKv, InlineKvKey};
+ const COMBAT_VAR_SLOTS: usize = 18;
+ 
+ /// Exercise every key, including the added quote keys and deliberate mask aliases.
+-const VAR_KEYS: [VarKey; 28] = [
++const VAR_KEYS: [VarKey; 30] = [
+     VarKey::RampageDamage,
+     VarKey::ClawBuff,
+     VarKey::GeneticAlgorithmBlock,
+@@ -53,6 +53,8 @@ const VAR_KEYS: [VarKey; 28] = [
+     VarKey::WireTransientCostThisTurn,
+     VarKey::WireCostExpiringOnPlay,
+     VarKey::WireCostStable,
++    VarKey::SneckoRollLive,
++    VarKey::CostReductionUntilPlayed,
+     VarKey::ObservedEnergyCost,
+     VarKey::ObservedStarCost,
+     VarKey::Generic,
+

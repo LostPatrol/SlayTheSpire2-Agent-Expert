@@ -1,0 +1,28 @@
+# Package metadata and dependencies for the external STS2 controller.
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sts2-agent-expert"
+version = "0.1.0"
+description = "Public-observation NoSL controller for Slay the Spire 2"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.28,<1", "jsonschema>=4.23,<5", "fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+sts2-agent = "sts2_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Local dashboard assets are served from the installed package without a frontend build.
+[tool.setuptools.package-data]
+sts2_agent = ["web/*.html", "web/*.js", "web/*.css"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

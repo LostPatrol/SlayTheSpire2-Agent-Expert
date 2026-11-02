@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "snapshot_id": "spire-codex-v0.107.1-2af6543c-f627467fff",
+  "usage": "Reviewed static associations for reference retrieval. They do not assert ownership, selected outcomes, or exact simulator rules.",
+  "relations": [
+    {
+      "from": "cards.BYRDONIS_EGG",
+      "to": "rest_site_options.HATCH",
+      "relationship": "rest_site_interaction",
+      "evidence": {"repository": "ptrlrd/spire-codex", "revision": "2af6543ca7a6c76acfde6be582651c7c05e88e50", "path": "data/eng/messages.json", "key": "rest_site_ui.OPTION_HATCH", "text": "Hatch your [green]Byrdonis Egg[/green]."}
+    },
+    {
+      "from": "cards.BYRDONIS_EGG",
+      "to": "relics.BYRDPIP",
+      "relationship": "associated_transformation_reward",
+      "verification": "public_reference_association",
+      "evidence": {"repository": "https://github.com/tfriedel/spire-mentor", "revision": "28429066d91ed05c10b7b57597fc624196d197a4", "path": "sts2-wiki/data/v0.107.1/relics/Byrdpip.json", "text": "Upon pickup, all Byrdonus Egg cards in your deck and hand are transformed into Byrd Swoop cards. Summons a Byrdpip pet to accompany you in battle."}
+    },
+    {
+      "from": "relics.BYRDPIP",
+      "to": "cards.BYRD_SWOOP",
+      "relationship": "pickup_reward",
+      "evidence": {"repository": "ptrlrd/spire-codex", "revision": "2af6543ca7a6c76acfde6be582651c7c05e88e50", "path": "data/eng/relics.json", "key": "BYRDPIP.description", "text": "Upon pickup, gain the card [gold]Byrd Swoop[/gold]. A [gold]Byrdpip[/gold] will accompany you in battles."}
+    }
+  ]
+}

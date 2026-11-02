@@ -1,0 +1,162 @@
+<!doctype html>
+<!-- Local static knowledge reference; all untrusted source text is rendered with textContent. -->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STS2 · 离线知识库</title>
+  <meta name="color-scheme" content="light dark">
+  <script>
+    /** Apply the saved appearance before paint; keep storage failures non-fatal. */
+    (() => {
+      // Both local pages share this origin-scoped appearance preference.
+      const key = "sts2-agent-theme";
+      const modes = ["system", "light", "dark"];
+      const labels = {system: "跟随系统", light: "浅色模式", dark: "深色模式"};
+      const system = window.matchMedia("(prefers-color-scheme: dark)");
+      let mode = "system";
+      try { mode = localStorage.getItem(key) || mode; } catch (_) {}
+      if (!modes.includes(mode)) mode = "system";
+      /** Update colors and describe the next action for keyboard and screen-reader users. */
+      function render() {
+        document.documentElement.dataset.theme = mode === "system" ? (system.matches ? "dark" : "light") : mode;
+        const button = document.getElementById("theme-toggle");
+        if (!button) return;
+        const next = modes[(modes.indexOf(mode) + 1) % modes.length];
+        button.textContent = labels[mode];
+        button.title = `当前${labels[mode]}；点击切换到${labels[next]}`;
+        button.setAttribute("aria-label", button.title);
+      }
+      /** Persist a deliberate choice without requiring localStorage availability. */
+      function toggle() {
+        mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+        try { localStorage.setItem(key, mode); } catch (_) {}
+        render();
+      }
+      render();
+      system.addEventListener("change", render);
+      window.addEventListener("storage", event => {
+        if (event.key !== key && event.key !== null) return;
+        mode = modes.includes(event.newValue) ? event.newValue : "system";
+        render();
+      });
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("theme-toggle").addEventListener("click", toggle);
+        render();
+      });
+    })();
+  </script>
+  <style>
+    :root { color-scheme: dark; font: 15px/1.65 system-ui, sans-serif; background: #0c1118; color: #dce5ed; }
+    * { box-sizing: border-box; }
+    body { margin: 0 auto; max-width: 1360px; padding: 32px; }
+    a { color: #78dbc1; text-decoration: none; }
+    h1 { margin: 0; font-size: 30px; letter-spacing: -.8px; }
+    h2 { font-size: 20px; margin: 0 0 16px; }
+    p { margin: 8px 0 20px; color: #99abbd; }
+    .eyebrow { color: #78dbc1; font-size: 12px; letter-spacing: 2px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    #meta { white-space: pre-wrap; background: #121c26; border: 1px solid #283949; border-radius: 12px; padding: 16px 20px; margin: 24px 0; color: #b7c9d7; }
+    form { display: flex; gap: 12px; margin-bottom: 24px; }
+    input, select, button { font: inherit; color: inherit; border: 1px solid #33475a; background: #151f2b; border-radius: 9px; padding: 10px 14px; }
+    input { flex: 1; min-width: 80px; }
+    button { background: #245b50; border-color: #37806c; cursor: pointer; }
+    input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid #78dbc1; outline-offset: 3px; }
+    main { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.4fr); gap: 24px; }
+    #results { display: flex; flex-direction: column; gap: 10px; }
+    .entry { text-align: left; background: #141e29; border: 1px solid #293a4b; padding: 15px 18px; }
+    .entry:hover, .entry[aria-pressed=true] { border-color: #78dbc1; background: #192c32; }
+    .entry small { display: block; color: #8ea4b7; overflow-wrap: anywhere; }
+    article { min-height: 420px; border: 1px solid #293a4b; background: #111b25; border-radius: 12px; padding: 24px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.8 ui-monospace, monospace; color: #b8c9d6; }
+    #description { color: #e1e8ee; white-space: pre-wrap; font-size: 16px; }
+    #notice { color: #dfc18e; margin: 0 0 15px; }
+    /* Semantic colors preserve legibility on the optional light reference page. */
+    :root[data-theme="light"] { color-scheme: light; background:#f3f4ef; color:#24362f; }
+    :root[data-theme="light"] a, :root[data-theme="light"] .eyebrow { color:#216d57; }
+    :root[data-theme="light"] p, :root[data-theme="light"] .entry small { color:#566a62; }
+    :root[data-theme="light"] #meta, :root[data-theme="light"] article { background:#fff; border-color:#cbd5ce; color:#3d594d; }
+    :root[data-theme="light"] input, :root[data-theme="light"] select, :root[data-theme="light"] .entry { background:#f8faf6; border-color:#b2c3b7; color:#24362f; }
+    :root[data-theme="light"] button { background:#216d57; border-color:#216d57; color:#fff; }
+    :root[data-theme="light"] .entry:hover, :root[data-theme="light"] .entry[aria-pressed=true] { background:#e4f0e7; border-color:#216d57; }
+    :root[data-theme="light"] pre { color:#3d594d; }
+    :root[data-theme="light"] #description { color:#24362f; }
+    :root[data-theme="light"] #notice { color:#785819; }
+    :root[data-theme="light"] :focus-visible { outline-color:#216d57; }
+    .header-links { display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:flex-end; }
+    .theme-toggle { font-size:12px; padding:6px 10px; white-space:nowrap; }
+    @media (max-width: 760px) { body { padding: 20px; } main { grid-template-columns: 1fr; } form { flex-wrap: wrap; } header { align-items: flex-start; } h1 { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <header><div><div class="eyebrow">SPIRE CODEX / LOCAL SNAPSHOT</div><h1>离线知识库</h1></div><div class="header-links"><button type="button" class="theme-toggle" id="theme-toggle">跟随系统</button><a href="/">← Agent 仪表盘</a></div></header>
+  <p>本地固定版本的静态资料。模型每次仅收到与当前公开局面相关的有限条目。实时牌面与状态数值优先。</p>
+  <div id="meta" role="status">正在读取本地快照…</div>
+  <form id="search"><input id="query" aria-label="搜索名称、ID或机制" placeholder="搜索名称、ID或机制，例如 Sandpit / Burning Blood"><select id="kind" aria-label="条目分类"><option value="">所有分类</option></select><button>搜索</button></form>
+  <p id="notice" aria-live="polite"></p>
+  <main><section id="results" aria-label="搜索结果"></section><article><h2 id="title">选择一个条目</h2><p id="description">可按英文名称、实体 ID 或机制关键词搜索。</p><pre id="detail"></pre></article></main>
+  <script>
+    "use strict";
+    // A local search is bounded and never contacts an external wiki or the model provider.
+    let searchVersion = 0;
+    let detailVersion = 0;
+    /** Render a value as text while preserving unknown values. */
+    function show(id, value) { document.getElementById(id).textContent = value ?? ""; }
+    /** Request a local read-only resource and report a short user-facing error. */
+    async function read(path) {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(`本地知识库请求失败 (${response.status})`);
+      return response.json();
+    }
+    /** Load a full local entity without treating reference prose as executable rules. */
+    async function select(entry, button) {
+      const version = ++detailVersion;
+      try {
+        const detail = await read(`/api/knowledge/${encodeURIComponent(entry.kind)}/${encodeURIComponent(entry.entity_id)}`);
+        if (version !== detailVersion) return;
+        document.querySelectorAll(".entry").forEach(node => node.setAttribute("aria-pressed", String(node === button)));
+        show("title", detail.name || detail.entity_id);
+        show("description", detail.description || detail.text || "该条目没有独立的机制正文，请查看下方原始字段。");
+        show("detail", JSON.stringify(detail, null, 2));
+      } catch (error) { show("notice", error.message); }
+    }
+    /** Search local entities and keep stale network responses from replacing newer results. */
+    async function search(event) {
+      event?.preventDefault();
+      const version = ++searchVersion;
+      const params = new URLSearchParams({q: document.getElementById("query").value, kind: document.getElementById("kind").value, limit: "30"});
+      try {
+        const data = await read("/api/knowledge?" + params);
+        if (version !== searchVersion) return;
+        const metadata = data.metadata || {};
+        show("meta", JSON.stringify(metadata, null, 2));
+        const results = document.getElementById("results");
+        results.replaceChildren();
+        show("notice", data.results.length ? `显示 ${data.results.length} 条匹配资料 · 点击查看来源、版本及完整字段` : "没有匹配条目；请尝试英文名或实体 ID。");
+        for (const entry of data.results) {
+          const button = document.createElement("button");
+          button.className = "entry";
+          button.setAttribute("aria-pressed", "false");
+          const name = document.createElement("strong");
+          name.textContent = entry.name || entry.entity_id;
+          const caption = document.createElement("small");
+          caption.textContent = `${entry.kind} · ${entry.entity_id}`;
+          button.append(name, caption);
+          button.addEventListener("click", () => select(entry, button));
+          results.append(button);
+        }
+      } catch (error) { if (version === searchVersion) show("notice", error.message); }
+    }
+    // These categories mirror the imported public static entity types.
+    const kinds = ["cards", "powers", "monsters", "relics", "potions", "events", "encounters", "keywords", "characters", "orbs", "enchantments", "afflictions", "mechanics"];
+    for (const kind of kinds) {
+      const option = document.createElement("option");
+      option.value = kind;
+      option.textContent = kind;
+      document.getElementById("kind").append(option);
+    }
+    document.getElementById("search").addEventListener("submit", search);
+    search();
+  </script>
+</body>
+</html>

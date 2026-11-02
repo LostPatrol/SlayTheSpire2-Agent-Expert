@@ -1,0 +1,185 @@
+{
+  "run_id": "public-fixture",
+  "observation_id": "reward",
+  "decision_episode_id": "reward",
+  "state": {
+    "screen": "REWARD",
+    "turn": 2,
+    "available_actions": [
+      "claim_reward",
+      "proceed"
+    ],
+    "session": {
+      "mode": "singleplayer",
+      "phase": "run",
+      "control_scope": "local_player"
+    },
+    "combat": {
+      "action_readiness": {
+        "can_use_combat_actions": false,
+        "reason": "combat_screen_unavailable",
+        "actions_settled": true,
+        "modal_open": false,
+        "is_paused": false,
+        "local_turn_ready": true,
+        "snapshot_stable": false
+      },
+      "player": {
+        "hp": "74/80",
+        "block": 0,
+        "energy": 0,
+        "stars": 0,
+        "focus": 0,
+        "orbs": [],
+        "pets": [],
+        "pet_missing": false,
+        "cards_played_this_turn": 3,
+        "attacks_played_this_turn": 3,
+        "skills_played_this_turn": 0,
+        "powers": []
+      },
+      "players": [
+        {
+          "slot_index": 0,
+          "is_local": true,
+          "character_id": "IRONCLAD",
+          "character_name": "铁甲战士",
+          "current_hp": 74,
+          "max_hp": 80,
+          "block": 0,
+          "energy": 0,
+          "stars": 0,
+          "focus": 0,
+          "is_alive": true
+        }
+      ],
+      "hand": [],
+      "draw": [],
+      "discard": [],
+      "exhaust": [],
+      "enemies": []
+    },
+    "run": {
+      "character": "铁甲战士",
+      "ascension": 0,
+      "ascension_effects": [],
+      "floor": 1,
+      "act_id": "0",
+      "boss_id": "VANTOM_BOSS",
+      "hp": "74/80",
+      "gold": 99,
+      "max_energy": 3,
+      "base_orb_slots": 0,
+      "deck": [
+        {
+          "line": "打击*5 [1费]：造成6点伤害。",
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "keywords": [],
+          "mods": []
+        },
+        {
+          "line": "痛击 [2费]：造成8点伤害。 给予2层易伤。",
+          "card_ids": [
+            "BASH"
+          ],
+          "keywords": [
+            "易伤"
+          ],
+          "mods": []
+        },
+        {
+          "line": "防御*4 [1费]：获得5点格挡。",
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "keywords": [
+            "格挡"
+          ],
+          "mods": []
+        }
+      ],
+      "relics": [
+        "燃烧之血"
+      ],
+      "relic_ids": [
+        "BURNING_BLOOD"
+      ],
+      "relic_stacks": [
+        null
+      ],
+      "relic_descriptions": [
+        "在战斗结束时，回复[green]{Heal}[/green]点生命。"
+      ],
+      "potions": [
+        {
+          "i": 0,
+          "potion_id": null,
+          "line": "0: 空",
+          "description": null,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        },
+        {
+          "i": 1,
+          "potion_id": null,
+          "line": "1: 空",
+          "description": null,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        },
+        {
+          "i": 2,
+          "potion_id": null,
+          "line": "2: 空",
+          "description": null,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        }
+      ],
+      "piles": {
+        "draw": [],
+        "discard": [],
+        "exhaust": []
+      }
+    },
+    "reward": {
+      "pending_card_choice": false,
+      "can_proceed": true,
+      "rewards": [
+        {
+          "i": 0,
+          "line": "Gold: 17金币",
+          "claimable": true
+        },
+        {
+          "i": 1,
+          "line": "Card: 将一张牌添加到你的牌组。",
+          "claimable": true
+        }
+      ],
+      "cards": [],
+      "alternatives": []
+    },
+    "protocol_version": 1,
+    "action_revision": 15,
+    "supported": true
+  },
+  "available_actions": [
+    "claim_reward",
+    "proceed"
+  ],
+  "action_parameters": {
+    "claim_reward": {
+      "option_index": "reward.rewards[].i"
+    },
+    "proceed": {}
+  }
+}

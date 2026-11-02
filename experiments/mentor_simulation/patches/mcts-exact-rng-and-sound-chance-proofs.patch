@@ -1,0 +1,362 @@
+diff --git a/sts2-rs/crates/sts2-mcts/src/lib.rs b/sts2-rs/crates/sts2-mcts/src/lib.rs
+index e5a09a9..3eef663 100644
+--- a/sts2-rs/crates/sts2-mcts/src/lib.rs
++++ b/sts2-rs/crates/sts2-mcts/src/lib.rs
+@@ -320,12 +320,8 @@ pub struct MctsConfig {
+     pub endturn_widening_c: f32,
+     /// DPW exponent `alpha` for `EndTurn` chance nodes.
+     pub endturn_widening_alpha: f32,
+-    /// Allow the MCTS-solver to prove a **win** through a chance node once
+-    /// its outcome set is deemed closed (all sampled outcomes proven-win and
+-    /// the closure heuristic has fired). This is unsound under DPW unless the
+-    /// support is genuinely finite and enumerated, so it defaults to `false`
+-    /// (the loss-side — any outcome proven-loss ⇒ chance node proven-loss —
+-    /// is always sound and stays on).
++    /// Retained for config compatibility. Sampled DPW outcomes never prove wins or losses;
++    /// heuristic closure does not certify enumeration of total probability mass.
+     pub chance_prove_wins: bool,
+     /// Stop drawing fresh DPW outcomes at a chance node once
+     /// [`MctsNode::chance_closed`] has fired (16 consecutive duplicate
+@@ -2047,8 +2043,8 @@ pub struct MctsNode {
+     /// because the backprop's proven-parent early break made the
+     /// stamp permanent before any sibling was expanded. Both proven
+     /// sides are sound again by induction: terminal seeds are exact,
+-    /// chance nodes prove a loss on ANY realized losing outcome, and
+-    /// decision nodes only on a fully-expanded all-losing child set.
++    /// sampled chance nodes never prove either verdict, and decision nodes
++    /// only prove losses on a fully-expanded all-losing child set.
+     pub proven_loss: bool,
+     /// State summary for this node (outcome after its edge action). See
+     /// [`NodeSnapshot`].
+@@ -2322,6 +2318,12 @@ pub struct Mcts<P: Policy = UniformPolicy> {
+     pub policy: P,
+     pub rng: Xoshiro256PlusPlus,
+     sim_index: u32,
++    /// Preserve imported game RNG paths when every hidden stream is explicitly authorized.
++    exact_rng: bool,
++    /// Observation-only host quotes expire in core apply, outside the phase prefix shortcut.
++    endturn_prefix_cache: bool,
++    /// Require actual terminal rollouts for reported win/loss and final-HP observations.
++    terminal_rollouts: bool,
+     /// Aggregated `(action, visits, mean_value)` for [`root_visits`]. Lazily
+     /// recomputed on demand.
+     root_stats: Vec<(Action, u32, f32)>,
+@@ -2732,6 +2734,9 @@ impl<P: Policy> Mcts<P> {
+             policy,
+             rng,
+             sim_index: 0,
++            exact_rng: false,
++            endturn_prefix_cache: true,
++            terminal_rollouts: false,
+             root_stats: Vec::new(),
+             #[allow(clippy::disallowed_methods)]
+             transposition: Some(TranspositionTable::with_log2(
+@@ -2764,6 +2769,37 @@ impl<P: Policy> Mcts<P> {
+         }
+     }
+ 
++    /// Follow true imported RNG outcomes instead of resampling nature (fresh trees only).
++    #[must_use]
++    pub fn with_exact_rng(mut self, enabled: bool) -> Self {
++        assert_eq!(self.sim_index, 0, "exact RNG must be selected before searching");
++        if enabled {
++            assert_eq!(self.config.hidden_info, HiddenInfoMode::Clairvoyant,
++                "exact RNG requires an unscrambled, clairvoyant root");
++            // Search hashes omit RNG cursors, so their merges are invalid for exact paths.
++            self.config.use_transposition_table = false;
++            self.transposition = None;
++            // Additional leaf playouts reseed game RNG independently of action-policy sampling.
++            self.config.leaf_playouts = 1;
++        }
++        self.exact_rng = enabled;
++        self
++    }
++
++    /// Disable phase-prefix shortcuts when the host attaches observation-only action wrappers.
++    #[must_use]
++    pub fn with_endturn_prefix_cache(mut self, enabled: bool) -> Self {
++        self.endturn_prefix_cache = enabled;
++        self
++    }
++
++    /// Continue nonterminal solver-proven leaves so empirical statistics describe real endpoints.
++    #[must_use]
++    pub fn with_terminal_rollouts(mut self, enabled: bool) -> Self {
++        self.terminal_rollouts = enabled;
++        self
++    }
++
+     /// Cache the PUCT prior per node (the default) or recompute it on every
+     /// read ([`Self::prior_cache`]). The two searches are identical; the
+     /// switch exists to check that (GH #830) and to measure what the cache
+@@ -4876,7 +4912,7 @@ impl<P: Policy> Mcts<P> {
+                     let action_applied = action.clone();
+                     let probe = apply_and_probe(&mut work, action, self.config.hidden_info);
+                     let pre_action_draw_heterogeneous = probe.pre_action_draw_heterogeneous;
+-                    let stochastic = probe.stochastic;
++                    let stochastic = probe.stochastic && !self.exact_rng;
+                     if stochastic {
+                         let chance_id = self.alloc_chance_node(node_id, &edge, &work);
+                         // H3 retune (bead `sts2-rs-k1z14`, F1 G2/G3 pass):
+@@ -5058,7 +5094,8 @@ impl<P: Policy> Mcts<P> {
+         let leaf = self.tree.node(node_id);
+         let leaf_proven_win = leaf.proven_win;
+         let leaf_proven_loss = leaf.proven_loss;
+-        let leaf_decisive = leaf_proven_win || leaf_proven_loss || leaf.is_terminal;
++        let leaf_decisive = leaf.is_terminal
++            || (!self.terminal_rollouts && (leaf_proven_win || leaf_proven_loss));
+         // `playout0` is `Some` only at `leaf_playouts > 1`, where `value` is
+         // the k-playout mean and playout 0's own value is kept apart for the
+         // statistics that stay single-playout (bucket, best sequence).
+@@ -5554,7 +5591,7 @@ impl<P: Policy> Mcts<P> {
+             .realized
+             .as_deref()
+             .expect("chance parent has realized state");
+-        if sts2_core::combat_loop::side_channel_recorders_armed(pre) {
++        if !self.endturn_prefix_cache || sts2_core::combat_loop::side_channel_recorders_armed(pre) {
+             return None;
+         }
+         match &self.tree.node(chance_id).endturn_prefix {
+@@ -5973,10 +6010,8 @@ impl<P: Policy> Mcts<P> {
+     /// * Decision node: `proven_win` if ANY child proven_win; `proven_loss`
+     ///   if the node is fully expanded (every legal action has a child)
+     ///   AND all children are proven_loss.
+-    /// * Chance node: `proven_loss` if ANY outcome proven_loss (sound —
+-    ///   nature can realize it); `proven_win` only if ALL outcomes proven_win
+-    ///   AND the node is closed AND `chance_prove_wins` is set (unsound under
+-    ///   DPW otherwise).
++    /// * Chance node: sampled outcomes do not prove either verdict. DPW closure
++    ///   is a sampling heuristic, not an enumeration of total probability mass.
+     fn chance_backprop_proven(&mut self, path: &[NodeId]) {
+         for window in path.windows(2).rev() {
+             let parent_id = window[0];
+@@ -5986,26 +6021,8 @@ impl<P: Policy> Mcts<P> {
+             }
+             match self.tree.node(parent_id).kind {
+                 NodeKind::Chance => {
+-                    let outcomes: SmallVec<[NodeId; 8]> = self
+-                        .tree
+-                        .node(parent_id)
+-                        .chance_outcomes
+-                        .iter()
+-                        .map(|o| o.child)
+-                        .collect();
+-                    let any_loss = outcomes.iter().any(|&c| self.tree.node(c).proven_loss);
+-                    if any_loss {
+-                        self.tree.node_mut(parent_id).proven_loss = true;
+-                        continue;
+-                    }
+-                    if self.config.chance_prove_wins && self.tree.node(parent_id).chance_closed {
+-                        let all_win = !outcomes.is_empty()
+-                            && outcomes.iter().all(|&c| self.tree.node(c).proven_win);
+-                        if all_win {
+-                            self.tree.node_mut(parent_id).proven_win = true;
+-                            continue;
+-                        }
+-                    }
++                    // One losing sample only proves a possible loss; even unanimous samples
++                    // cannot exclude unseen outcomes. Keep their empirical backup instead.
+                     break;
+                 }
+                 NodeKind::Decision => {
+@@ -7810,6 +7827,8 @@ mod tests {
+                 skills_played_this_turn: 0,
+                 card_plays_started_this_turn: 0,
+                 cards_first_in_series_this_turn: 0,
++                manual_card_series_this_turn: 0,
++                non_auto_card_plays_finished_this_turn: 0,
+                 request_end_turn_after_play: false,
+                 retain_this_turn: smallvec::SmallVec::new(),
+                 sly_this_turn: smallvec::SmallVec::new(),
+@@ -8090,6 +8109,8 @@ mod tests {
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: SmallVec::new(),
+             sly_this_turn: SmallVec::new(),
+@@ -8446,6 +8467,8 @@ mod tests {
+                 skills_played_this_turn: 0,
+                 card_plays_started_this_turn: 0,
+                 cards_first_in_series_this_turn: 0,
++                manual_card_series_this_turn: 0,
++                non_auto_card_plays_finished_this_turn: 0,
+                 request_end_turn_after_play: false,
+                 retain_this_turn: SmallVec::new(),
+                 sly_this_turn: SmallVec::new(),
+@@ -8642,6 +8665,8 @@ mod tests {
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: smallvec::SmallVec::new(),
+             sly_this_turn: smallvec::SmallVec::new(),
+@@ -8816,6 +8841,8 @@ mod tests {
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: smallvec::SmallVec::new(),
+             sly_this_turn: smallvec::SmallVec::new(),
+@@ -12034,11 +12061,91 @@ mod tests {
+         let _ = m.search_n(50);
+     }
+ 
++    /// Authorized exact paths retain the same RNG continuation as an ordinary core transition.
+     #[test]
+-    fn chance_mode_loss_proves_through_chance() {
+-        // Loss-side proving is sound and always on: if any outcome of a
+-        // chance node is a proven loss, the chance node is a proven loss.
+-        // Build a chance node by hand with one proven-loss outcome.
++    fn exact_rng_retains_real_shuffle_outcomes_without_chance_or_tt() {
++        let mut state = make_smoke_state(4);
++        let hand: Vec<_> = state.player.hand.drain(..).collect();
++        let draw: Vec<_> = state.player.draw.drain(..).collect();
++        state.player.discard.extend(hand.into_iter().chain(draw));
++        let mut realized_hashes = Vec::new();
++        for cursor in [0, 3, 7] {
++            let mut world = state.clone();
++            for _ in 0..cursor { let _ = world.run_rng.shuffle.next_int(0, 100); }
++            let mut expected = world.clone();
++            let _ = core_apply(&mut expected, Action::EndTurn);
++            let mut search = Mcts::new(world, chance_cfg(13, 2)).with_exact_rng(true);
++            let _ = search.search();
++            assert!(!search.config.use_transposition_table);
++            assert_eq!(count_chance_nodes(&search), 0);
++            let root = search.tree.node(search.tree.root);
++            let (_, child) = root.children.iter().find(|(edge, _)|
++                *edge == EdgeAction::Other(Action::EndTurn)).expect("forced end turn expanded");
++            let actual = search.tree.node(*child).realized.as_deref().unwrap();
++            assert_eq!(actual.player.hand, expected.player.hand);
++            assert_eq!(actual.run_rng, expected.run_rng);
++            realized_hashes.push(sts2_core::state_hash(actual));
++        }
++        assert!(realized_hashes.windows(2).any(|pair| pair[0] != pair[1]),
++            "changing true RNG must change the realized continuation");
++    }
++
++    /// Nonterminal proofs cannot manufacture a resolved HP sample or win in terminal-rollout mode.
++    #[test]
++    fn terminal_rollouts_do_not_count_a_nonterminal_proof_as_a_win() {
++        let mut state=make_smoke_state(4);
++        state.player.hand.clear();
++        let cfg=MctsConfig {max_rollout_depth:0,..chance_cfg(13,1)};
++        let mut search=Mcts::new(state,cfg).with_exact_rng(true).with_terminal_rollouts(true);
++        let _=search.search();
++        let child=search.tree.node(search.tree.root).children[0].1;
++        let node=search.tree.node_mut(child);
++        node.proven_win=true;
++        node.is_terminal=false;
++        node.is_expanded=true;
++        node.untried_actions.clear();
++        node.children.clear();
++        let _=search.search_n(1);
++        let row=search.root_outcomes().into_iter().next().unwrap();
++        assert_eq!(row.wins,0);
++        assert_eq!(row.hp_n,0);
++        assert_eq!(row.ties,row.visits);
++    }
++
++    /// Host quotes use the plain action wrapper rather than skipping expiry through cached phases.
++    #[test]
++    fn quoted_root_can_disable_endturn_prefix_and_preserve_quote_expiry() {
++        let mut state = make_smoke_state(4);
++        sts2_content::cards::dispatch::ensure_installed();
++        sts2_content::relics::dispatch::ensure_installed();
++        // The smoke helper has symbolic pile UIDs; quote expiry needs real arena instances.
++        for raw in 1..=10 {
++            let mut card=sts2_core::build_card_for_version(sts2_core::cards::CardId::StrikeIronclad,
++                false,sts2_core::GameVersion::V0_107_1).unwrap();
++            card.uid=sts2_core::CardUid::new(raw).unwrap();
++            state.cards.push(card);
++        }
++        let hand: Vec<_> = state.player.hand.drain(..).collect();
++        let draw: Vec<_> = state.player.draw.drain(..).collect();
++        state.player.discard.extend(hand.into_iter().chain(draw));
++        state.cards[0].set_combat_var(sts2_core::cards::VarKey::ObservedEnergyCost, 2);
++        let mut search = Mcts::new(state, chance_cfg(13, 32)).with_endturn_prefix_cache(false);
++        let _ = search.search();
++        assert!(count_chance_nodes(&search) > 0);
++        for node in search.tree.arena.iter().filter(|node|node.kind==NodeKind::Chance) {
++            assert!(matches!(node.endturn_prefix,EndTurnPrefix::Unprobed));
++            for outcome in &node.chance_outcomes {
++                let realized=search.tree.node(outcome.child).realized.as_deref().unwrap();
++                assert!(realized.cards.iter().all(|card|
++                    card.combat_var(sts2_core::cards::VarKey::ObservedEnergyCost)==0));
++            }
++        }
++    }
++
++    /// An observed losing branch cannot collapse a mixed stochastic future into certain defeat.
++    #[test]
++    fn chance_mode_sampled_loss_does_not_prove_chance_loss() {
++        // A positive-probability losing outcome does not exclude a winning outcome.
+         let state = make_smoke_state(11);
+         let mut m = Mcts::new(state, chance_cfg(1, 0));
+         let root = m.tree.root;
+@@ -12060,9 +12167,19 @@ mod tests {
+         let path = [root, chance_id, outcome];
+         m.chance_backprop_proven(&path);
+         assert!(
+-            m.tree.node(chance_id).proven_loss,
+-            "any proven-loss outcome must prove the chance node a loss"
+-        );
++            !m.tree.node(chance_id).proven_loss,
++            "a sampled loss must never prove a stochastic action lost"
++        );
++        // Add a winning outcome: the chance action remains uncertain in both directions.
++        let winning_state = m.tree.root_state.clone();
++        let win = m.alloc_decision_inner(Some(chance_id), winning_state, 91);
++        m.tree.node_mut(win).proven_win = true;
++        m.tree.node_mut(chance_id).chance_outcomes.push(ChanceOutcome {
++            n: 1, child: win, dedup_hash: None,
++        });
++        m.chance_backprop_proven(&[root, chance_id, win]);
++        assert!(!m.tree.node(chance_id).proven_win);
++        assert!(!m.tree.node(chance_id).proven_loss);
+     }
+ 
+     /// A8 audit repair: the decision-node loss stamp must wait for FULL
+@@ -12121,9 +12238,8 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn chance_mode_win_not_proven_without_flag() {
+-        // Win-side proving through chance is gated: with chance_prove_wins
+-        // off (default), an all-wins chance node is NOT proven a win.
++    fn chance_mode_sampled_wins_never_prove_exhaustive_probability_mass() {
++        // DPW closure cannot certify that every positive-probability outcome was seen.
+         let state = make_smoke_state(12);
+         let mut m = Mcts::new(state, chance_cfg(1, 0));
+         assert!(!m.config.chance_prove_wins, "default is off");
+@@ -12150,12 +12266,12 @@ mod tests {
+             "win must not be proven through chance with chance_prove_wins off"
+         );
+ 
+-        // With the flag on AND closed AND all outcomes won, it proves.
++        // Even an explicitly requested heuristic closure must not become a proof.
+         m.config.chance_prove_wins = true;
+         m.chance_backprop_proven(&path);
+         assert!(
+-            m.tree.node(chance_id).proven_win,
+-            "closed all-win chance node proves a win when the flag is on"
++            !m.tree.node(chance_id).proven_win,
++            "closed unanimous samples do not prove a stochastic action won"
+         );
+     }
+ 
+@@ -12293,6 +12409,8 @@ mod tests {
+             skills_played_this_turn: 0,
+             card_plays_started_this_turn: 0,
+             cards_first_in_series_this_turn: 0,
++            manual_card_series_this_turn: 0,
++            non_auto_card_plays_finished_this_turn: 0,
+             request_end_turn_after_play: false,
+             retain_this_turn: SmallVec::new(),
+             sly_this_turn: SmallVec::new(),

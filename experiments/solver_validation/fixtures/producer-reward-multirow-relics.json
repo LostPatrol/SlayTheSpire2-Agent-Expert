@@ -1,0 +1,214 @@
+{
+  "metadata": {
+    "scope": "synthetic_typed_raw_dto_contract_not_native_capture",
+    "bridge_dll": "E:\\STS2-Agent-Expert\\vendor\\STS2-Agent\\STS2AIAgent\\bin\\Release\\net9.0\\STS2AIAgent.dll",
+    "bridge_dll_sha256": "C3C84917DD2C4EBDE5D968EA9181F6376F4804B4F1CF67BF05AA6B77969189ED",
+    "production_methods": [
+      "BuildAgentViewPayload",
+      "BuildAgentRewardPayload",
+      "BuildAgentRunPayload",
+      "BuildAgentCardStacks",
+      "BuildPublicStatePayload",
+      "FairDecisionProtocol.Token"
+    ],
+    "native_world": "absent; typed synthetic reward queue and UI controls",
+    "public_player_source": "E:\\STS2-Agent-Expert\\agent/codex/network-alignment-20261030/bridge/native-public-offers-probe.json",
+    "public_player_source_sha256": "AC977DEC26AF22C3EA08A066CC7B854765B2C77666D9699185C4E9834C01C523",
+    "case_scope": "synthetic_typed_multirow_reward_queue_on_native_public_player_context_not_native_UI_capture",
+    "ui_scope": "visible/claimable are controlled input variants; no actual reward button scene captured",
+    "controlled_potion_slot_count": 2,
+    "comparison_scope": "Core atomic potion swap may be compared only after both native-shaped steps; intermediate frame is virtual"
+  },
+  "public_state": {
+    "screen": "REWARD",
+    "turn": null,
+    "available_actions": [
+      "claim_reward",
+      "proceed"
+    ],
+    "session": {
+      "mode": "singleplayer",
+      "phase": "run",
+      "control_scope": "local_player"
+    },
+    "run": {
+      "character": "\u94C1\u7532\u6218\u58EB",
+      "character_id": "IRONCLAD",
+      "ascension": 0,
+      "ascension_effects": [],
+      "floor": 1,
+      "act_index": 1,
+      "act_count": 3,
+      "room_type": null,
+      "is_last_act": null,
+      "awaiting_second_boss": null,
+      "act_id": "0",
+      "boss_id": "THE_KIN_BOSS",
+      "hp": "80/80",
+      "gold": 99,
+      "max_energy": 3,
+      "base_orb_slots": 0,
+      "deck_size": 10,
+      "deck": [
+        {
+          "line": "Bash [2\u8D39]\uFF1ADeal {Damage:diff()} damage.\nApply {VulnerablePower:diff()} Vulnerable.",
+          "card_count": 1,
+          "card_ids": [
+            "BASH"
+          ],
+          "keywords": [
+            "\u6613\u4F24"
+          ],
+          "mods": [],
+          "effective_keywords": null,
+          "keyword_state_complete": false,
+          "upgraded": false,
+          "energy_cost": 2,
+          "star_cost": 0,
+          "costs_x": false,
+          "star_costs_x": false,
+          "card_type": "Attack",
+          "rarity": "",
+          "dynamic_values": []
+        },
+        {
+          "line": "Defend*4 [1\u8D39]\uFF1AGain {Block:diff()} Block.",
+          "card_count": 4,
+          "card_ids": [
+            "DEFEND_IRONCLAD"
+          ],
+          "keywords": [
+            "\u683C\u6321"
+          ],
+          "mods": [],
+          "effective_keywords": null,
+          "keyword_state_complete": false,
+          "upgraded": false,
+          "energy_cost": 1,
+          "star_cost": 0,
+          "costs_x": false,
+          "star_costs_x": false,
+          "card_type": "Skill",
+          "rarity": "",
+          "dynamic_values": []
+        },
+        {
+          "line": "Strike*5 [1\u8D39]\uFF1ADeal {Damage:diff()} damage.",
+          "card_count": 5,
+          "card_ids": [
+            "STRIKE_IRONCLAD"
+          ],
+          "keywords": [],
+          "mods": [],
+          "effective_keywords": null,
+          "keyword_state_complete": false,
+          "upgraded": false,
+          "energy_cost": 1,
+          "star_cost": 0,
+          "costs_x": false,
+          "star_costs_x": false,
+          "card_type": "Attack",
+          "rarity": "",
+          "dynamic_values": []
+        }
+      ],
+      "relics": [
+        "Burning Blood",
+        "Booming Conch"
+      ],
+      "relic_ids": [
+        "BURNING_BLOOD",
+        "BOOMING_CONCH"
+      ],
+      "relic_stacks": [
+        1,
+        1
+      ],
+      "relic_descriptions": [
+        "At the end of combat, heal {Heal} HP.",
+        "At the start of Elite combats, draw {Cards} additional {Cards:plural:card|cards} and gain {Energy:energyIcons()}."
+      ],
+      "potions": [
+        {
+          "i": 0,
+          "potion_id": "FIRE_POTION",
+          "line": "0: Fire Potion",
+          "description": null,
+          "rarity": null,
+          "occupied": true,
+          "is_queued": false,
+          "usable": false,
+          "discard": true,
+          "target": null,
+          "targets": []
+        },
+        {
+          "i": 1,
+          "potion_id": null,
+          "line": "1: \u7A7A",
+          "description": null,
+          "rarity": null,
+          "occupied": false,
+          "is_queued": false,
+          "usable": false,
+          "discard": false,
+          "target": null,
+          "targets": []
+        }
+      ],
+      "piles": {
+        "draw": [],
+        "discard": [],
+        "exhaust": []
+      },
+      "map_coord": {
+        "row": 0,
+        "col": 3
+      },
+      "act_floor": 1
+    },
+    "reward": {
+      "pending_card_choice": false,
+      "can_proceed": true,
+      "rewards": [
+        {
+          "i": 0,
+          "line": "Relic: ANCHOR",
+          "reward_type": "Relic",
+          "claimable": true,
+          "visible": true,
+          "successfully_selected": false,
+          "relic_id": "ANCHOR",
+          "potion_id": null,
+          "potion_slot_available": null,
+          "potion_procurement_allowed": null,
+          "potion_can_receive": null
+        },
+        {
+          "i": 1,
+          "line": "Relic: VAJRA",
+          "reward_type": "Relic",
+          "claimable": true,
+          "visible": true,
+          "successfully_selected": false,
+          "relic_id": "VAJRA",
+          "potion_id": null,
+          "potion_slot_available": null,
+          "potion_procurement_allowed": null,
+          "potion_can_receive": null
+        }
+      ],
+      "cards": [],
+      "alternatives": []
+    },
+    "glossary": {
+      "\u6613\u4F24": "\u6613\u4F24\u5355\u4F4D\u4F1A\u627F\u53D7\u66F4\u591A\u653B\u51FB\u4F24\u5BB3\u3002",
+      "\u683C\u6321": "\u683C\u6321\u4F1A\u4F18\u5148\u62B5\u6D88\u5373\u5C06\u53D7\u5230\u7684\u4F24\u5BB3\u3002"
+    },
+    "protocol_version": 1,
+    "observation_schema_version": 2,
+    "action_revision": 0,
+    "supported": true
+  },
+  "public_observation_token": "86aca2352ab7a82d14f48fd1a15cf5ade4d1ffab551ab3e883a5128296fc7fc6"
+}

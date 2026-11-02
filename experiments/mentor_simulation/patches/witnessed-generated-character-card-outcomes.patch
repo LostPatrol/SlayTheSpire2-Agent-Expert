@@ -1,0 +1,474 @@
+diff --git a/sts2-rs/crates/sts2-content/src/cards/colorless/helpers.rs b/sts2-rs/crates/sts2-content/src/cards/colorless/helpers.rs
+index 85dd5c0..a663576 100644
+--- a/sts2-rs/crates/sts2-content/src/cards/colorless/helpers.rs
++++ b/sts2-rs/crates/sts2-content/src/cards/colorless/helpers.rs
+@@ -1044,6 +1044,60 @@ pub(crate) fn create_character_cards_into_arena(
+     create_filtered_character_cards_into_arena(state, character, count, card_type, None, distinct)
+ }
+ 
++#[cfg(test)]
++mod observed_generation_tests {
++    use super::*;
++    use sts2_core::witnessed_outcomes::{with_observed_generated_cards, ObservedGeneratedCard};
++
++    /// Distinct batches cannot repeat a consumed identity; replacement batches keep that support.
++    #[test]
++    fn observed_generated_cards_preserve_original_distinct_batch_support() {
++        let mut before = CombatState::default();
++        let source = CardUid::new(1).unwrap();
++        let mut card = crate::cards::spec_index::card_pod_from_id(CardId::WhiteNoise, false).unwrap();
++        card.uid = source;
++        before.cards.push(card);
++        before.resolving_card = Some(source);
++        let outcome = ObservedGeneratedCard {
++            source,
++            character: sts2_core::CharacterId::Defect,
++            card_type: Some(sts2_core::cards::CardType::Power),
++            card_id: CardId::BufferCard,
++            upgraded: false,
++        };
++        for distinct in [true, false] {
++            let mut state = before.clone();
++            let result = with_observed_generated_cards(
++                &mut state,
++                &[outcome.clone(), outcome.clone()],
++                |s| {
++                    let uids = create_character_cards_into_arena(
++                        s,
++                        sts2_core::CharacterId::Defect,
++                        2,
++                        Some(sts2_core::cards::CardType::Power),
++                        distinct,
++                    );
++                    if !distinct {
++                        assert!(uids.iter().all(|uid| {
++                            sts2_core::card_by_uid(&s.cards, *uid).unwrap().card_id
++                                == CardId::BufferCard
++                        }));
++                    }
++                    Ok(sts2_core::StepResult::Advanced)
++                },
++            );
++            if distinct {
++                assert_eq!(result, Err("observed_generated_card_outside_positive_support"));
++                assert_eq!(state, before);
++            } else {
++                result.unwrap();
++                assert!(state.replay_observations.is_none());
++            }
++        }
++    }
++}
++
+ /// [`create_character_cards_into_arena`] with an additional **rarity** filter,
+ /// for the one C# generator that narrows the pool by rarity rather than by
+ /// card type: `HelloWorldPower.BeforeHandDraw` (`HelloWorldPower.cs:21-29`,
+@@ -1078,7 +1132,9 @@ pub(crate) fn create_filtered_character_cards_into_arena(
+     if pool.is_empty() {
+         return SmallVec::new();
+     }
+-    let chosen: SmallVec<[CardSpec; 4]> = if distinct {
++    // Preserve support only for an armed past-observation scope; ordinary sampling is unchanged.
++    let observed_support = state.replay_observations.as_ref().map(|_| pool.clone());
++    let mut chosen: SmallVec<[CardSpec; 4]> = if distinct {
+         let mut shuffled = pool;
+         state
+             .run_rng
+@@ -1095,6 +1151,27 @@ pub(crate) fn create_filtered_character_cards_into_arena(
+             })
+             .collect()
+     };
++    if let Some(support) = observed_support {
++        let source = sts2_core::card_effects::resolving_card_uid(state);
++        for index in 0..chosen.len() {
++            let sampled = (chosen[index].id, false);
++            let conditioned = sts2_core::witnessed_outcomes::condition_generated_character_card(
++                state,
++                source,
++                character,
++                card_type,
++                sampled,
++                |id, upgraded| {
++                    !upgraded
++                        && support.iter().any(|spec| spec.id == id)
++                        && (!distinct || !chosen[..index].iter().any(|spec| spec.id == id))
++                },
++            );
++            if let Some(spec) = support.iter().find(|spec| spec.id == conditioned.0) {
++                chosen[index] = *spec;
++            }
++        }
++    }
+     let mut uids: SmallVec<[CardUid; 4]> = SmallVec::with_capacity(chosen.len());
+     for spec in chosen {
+         let mut card = card_from_spec(&spec);
+diff --git a/sts2-rs/crates/sts2-content/tests/witnessed_generated_cards.rs b/sts2-rs/crates/sts2-content/tests/witnessed_generated_cards.rs
+new file mode 100644
+index 0000000..d0c4705
+--- /dev/null
++++ b/sts2-rs/crates/sts2-content/tests/witnessed_generated_cards.rs
+@@ -0,0 +1,215 @@
++//! Past generated-card observations use the original character sampler and generation effects.
++//! Factory evidence precedes listeners; raw future draws remain unconstrained.
++
++use sts2_content::{cards::dispatch, monster_dispatch::MonsterSpawnArgs};
++use sts2_core::cards::{CardId, CardType, VarKey};
++use sts2_core::runstate::{RoomType, RunState};
++use sts2_core::witnessed_outcomes::{with_observed_generated_cards, ObservedGeneratedCard};
++use sts2_core::{Action, CardUid, CharacterId, CombatState, MonsterKind, StepResult};
++
++/// Start a real Defect combat and give it one White Noise with no hidden intermediate plays.
++fn fixture() -> (CombatState, CardUid) {
++    dispatch::ensure_installed();
++    let mut run = RunState {
++        character_id: CharacterId::Defect,
++        current_hp: 80,
++        max_hp: 80,
++        ..RunState::default()
++    };
++    sts2_content::run_callbacks::populate_starter_deck(&mut run, CharacterId::Defect);
++    let mut state = sts2_content::run_bridge::enter_combat_from_roster(
++        &run,
++        &[(MonsterKind::Nibbit, MonsterSpawnArgs::None, 100)],
++        RoomType::Monster,
++    );
++    state.player.hand.clear();
++    state.player.draw.clear();
++    state.player.discard.clear();
++    state.player.energy = 9;
++    let source = add_white_noise(&mut state);
++    (state, source)
++}
++
++/// Add the registered source without changing its effect, cost or original dispatch path.
++fn add_white_noise(state: &mut CombatState) -> CardUid {
++    let mut card =
++        sts2_content::cards::spec_index::card_pod_from_id(CardId::WhiteNoise, false).unwrap();
++    card.uid = CardUid::new(state.cards.len() as u32 + 1).unwrap();
++    let uid = card.uid;
++    state.cards.push(card);
++    state.player.hand.push(uid);
++    uid
++}
++
++/// Observe the unmodified factory role; White Noise supplies temporary free cost afterward.
++fn evidence(source: CardUid, card_id: CardId) -> ObservedGeneratedCard {
++    ObservedGeneratedCard {
++        source,
++        character: CharacterId::Defect,
++        card_type: Some(CardType::Power),
++        card_id,
++        upgraded: false,
++    }
++}
++
++/// Play the actual source as a normal manual card.
++fn play(state: &mut CombatState) -> StepResult {
++    sts2_core::apply(
++        state,
++        Action::PlayCard {
++            hand_index: 0,
++            target: None,
++        },
++    )
++}
++
++/// Buffer is in the original Power pool; the original shuffle, free flag and listeners still run.
++#[test]
++fn observed_generated_cards_replay_white_noise_buffer_with_original_rng_and_effects() {
++    let (before, source) = fixture();
++    let mut raw = before.clone();
++    assert_ne!(play(&mut raw), StepResult::InvalidTarget);
++    let mut observed = before.clone();
++    with_observed_generated_cards(
++        &mut observed,
++        &[evidence(source, CardId::BufferCard)],
++        |s| Ok(play(s)),
++    )
++    .unwrap();
++    assert_eq!(observed.run_rng, raw.run_rng);
++    assert!(
++        observed.run_rng.combat_card_generation.counter()
++            > before.run_rng.combat_card_generation.counter()
++    );
++    assert_eq!(observed.player.hand.len(), 1);
++    let card = sts2_core::card_by_uid(&observed.cards, observed.player.hand[0]).unwrap();
++    assert_eq!((card.card_id, card.upgraded), (CardId::BufferCard, false));
++    assert_eq!(card.combat_var(VarKey::FreeThisTurn), 1);
++    assert_eq!(card.combat_var(VarKey::GeneratedInCombat), 1);
++    assert_eq!(
++        sts2_core::hooks::effective_card_cost(&observed, card.uid),
++        0
++    );
++    assert!(observed.player.exhaust.contains(&source));
++    assert_eq!(
++        observed.player.generated_cards_this_combat,
++        before.player.generated_cards_this_combat + 1
++    );
++    assert!(observed.replay_observations.is_none());
++}
++
++/// Bad pool, role, source, upgrade, extra or missing evidence restores the complete before-state.
++#[test]
++fn observed_generated_cards_reject_bad_or_incomplete_evidence_atomically() {
++    let (before, source) = fixture();
++    let valid = evidence(source, CardId::BufferCard);
++    let mut bad_source = valid.clone();
++    bad_source.source = CardUid::new(source.get() + 1).unwrap();
++    let mut bad_character = valid.clone();
++    bad_character.character = CharacterId::Ironclad;
++    let mut bad_type = valid.clone();
++    bad_type.card_type = Some(CardType::Skill);
++    let mut bad_upgrade = valid.clone();
++    bad_upgrade.upgraded = true;
++    for (expected, reason) in [
++        (vec![], "observed_generated_card_unwitnessed_extra_event"),
++        (
++            vec![valid.clone(), valid.clone()],
++            "observed_generated_card_queue_not_consumed",
++        ),
++        (vec![bad_source], "observed_generated_card_source_mismatch"),
++        (vec![bad_character], "observed_generated_card_role_mismatch"),
++        (vec![bad_type], "observed_generated_card_role_mismatch"),
++        (
++            vec![bad_upgrade],
++            "observed_generated_card_outside_positive_support",
++        ),
++        (
++            vec![evidence(source, CardId::BarricadeCard)],
++            "observed_generated_card_outside_positive_support",
++        ),
++        (
++            vec![evidence(source, CardId::Zap)],
++            "observed_generated_card_outside_positive_support",
++        ),
++    ] {
++        let mut state = before.clone();
++        assert_eq!(
++            with_observed_generated_cards(&mut state, &expected, |s| Ok(play(s))),
++            Err(reason)
++        );
++        assert_eq!(state, before);
++    }
++    let mut state = before.clone();
++    assert_eq!(
++        with_observed_generated_cards(&mut state, &[valid], |s| {
++            let _ = play(s);
++            Err("after_state_mismatch")
++        }),
++        Err("after_state_mismatch")
++    );
++    assert_eq!(state, before);
++}
++
++/// Natural evidence is exactly the raw world, and a later source has no past constraint left.
++#[test]
++fn observed_generated_cards_preserve_default_sampling_and_future_generation() {
++    let (before, source) = fixture();
++    let mut raw = before.clone();
++    let _ = play(&mut raw);
++    let natural = sts2_core::card_by_uid(&raw.cards, raw.player.hand[0])
++        .unwrap()
++        .card_id;
++    let mut observed = before;
++    with_observed_generated_cards(&mut observed, &[evidence(source, natural)], |s| Ok(play(s)))
++        .unwrap();
++    assert_eq!(observed, raw);
++    for state in [&mut observed, &mut raw] {
++        state.player.hand.clear();
++        add_white_noise(state);
++        let _ = play(state);
++        assert!(state.replay_observations.is_none());
++    }
++    assert_eq!(observed, raw);
++}
++
++/// Past card evidence composes with the existing complete-draw wrapper without changing its scope.
++#[test]
++fn observed_generated_cards_compose_with_draws_and_are_disarmed_by_search() {
++    let (mut state, source) = fixture();
++    with_observed_generated_cards(&mut state, &[evidence(source, CardId::BufferCard)], |s| {
++        let before_hash = sts2_core::chance_outcome_hash(s);
++        let mut search = sts2_mcts::Mcts::new(
++            s.clone(),
++            sts2_mcts::MctsConfig {
++                hidden_info: sts2_mcts::HiddenInfoMode::Clairvoyant,
++                max_simulations: 8,
++                ..sts2_mcts::MctsConfig::default()
++            },
++        );
++        assert!(search.tree.root_state.replay_observations.is_none());
++        assert_eq!(before_hash, sts2_core::chance_outcome_hash(s));
++        search.try_search_n(8).unwrap();
++        let mut committed = s.clone();
++        let _ = play(&mut committed);
++        assert!(committed.replay_observations.is_some());
++        assert!(search.reroot(
++            &Action::PlayCard {
++                hand_index: 0,
++                target: None
++            },
++            committed
++        ));
++        assert!(search.tree.root_state.replay_observations.is_none());
++        sts2_core::draw_knowledge::apply_observed_draws(
++            s,
++            Action::PlayCard {
++                hand_index: 0,
++                target: None,
++            },
++            &[],
++        )
++    })
++    .unwrap();
++    assert!(state.replay_observations.is_none());
++}
+diff --git a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+index 6dab1a7..805f030 100644
+--- a/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
++++ b/sts2-rs/crates/sts2-core/src/witnessed_outcomes.rs
+@@ -1,8 +1,19 @@
+ //! Ephemeral public observations of already executed chance effects.
+ //! Rule handlers still sample their original RNG before conditioning that result.
+ 
++use crate::cards::{CardId, CardType};
+ use crate::orbs::OrbKind;
+-use crate::{CombatState, CreatureUid, StepResult};
++use crate::{CardUid, CharacterId, CombatState, CreatureUid, StepResult};
++
++/// A witnessed factory result, before later generation listeners modify the card.
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub struct ObservedGeneratedCard {
++    pub source: CardUid,
++    pub character: CharacterId,
++    pub card_type: Option<CardType>,
++    pub card_id: CardId,
++    pub upgraded: bool,
++}
+ 
+ /// Typed outcomes keep unrelated random effects from consuming each other's evidence.
+ #[derive(Clone, Debug, PartialEq, Eq)]
+@@ -17,6 +28,8 @@ pub struct ReplayObservations {
+     consumed: usize,
+     random_orbs: Vec<OrbKind>,
+     orbs_consumed: usize,
++    generated_cards: Vec<ObservedGeneratedCard>,
++    generated_consumed: usize,
+     error: Option<&'static str>,
+ }
+ 
+@@ -44,6 +57,26 @@ pub fn with_observed_outcomes(
+     hatch_hp: &[(CreatureUid, i32)],
+     random_orbs: &[OrbKind],
+     apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> Result<StepResult, &'static str> {
++    with_observed_outcomes_and_generated_cards(state, hatch_hp, random_orbs, &[], apply)
++}
++
++/// Condition a fully observed character-card generation prefix through its original sampler.
++pub fn with_observed_generated_cards(
++    state: &mut CombatState,
++    expected: &[ObservedGeneratedCard],
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
++) -> Result<StepResult, &'static str> {
++    with_observed_outcomes_and_generated_cards(state, &[], &[], expected, apply)
++}
++
++/// Compose independently typed past outcomes, rolling back the whole prefix on invalid evidence.
++pub fn with_observed_outcomes_and_generated_cards(
++    state: &mut CombatState,
++    hatch_hp: &[(CreatureUid, i32)],
++    random_orbs: &[OrbKind],
++    generated_cards: &[ObservedGeneratedCard],
++    apply: impl FnOnce(&mut CombatState) -> Result<StepResult, &'static str>,
+ ) -> Result<StepResult, &'static str> {
+     if state.replay_observations.is_some() {
+         return Err("observed_hatch_hp_nested_scope");
+@@ -64,6 +97,8 @@ pub fn with_observed_outcomes(
+         consumed: 0,
+         random_orbs: random_orbs.to_vec(),
+         orbs_consumed: 0,
++        generated_cards: generated_cards.to_vec(),
++        generated_consumed: 0,
+         error: None,
+     }));
+     let result = apply(state);
+@@ -77,6 +112,10 @@ pub fn with_observed_outcomes(
+                     (observations.orbs_consumed != observations.random_orbs.len())
+                         .then_some("observed_random_orb_queue_not_consumed")
+                 })
++                .or_else(|| {
++                    (observations.generated_consumed != observations.generated_cards.len())
++                        .then_some("observed_generated_card_queue_not_consumed")
++                })
+         }),
+     };
+     let result = result.and_then(|step| {
+@@ -152,6 +191,44 @@ pub fn condition_random_orb_kind(
+     kind
+ }
+ 
++/// Check the actual filtered factory support after its original RNG read; never allocate a card here.
++pub fn condition_generated_character_card(
++    state: &mut CombatState,
++    source: Option<CardUid>,
++    character: CharacterId,
++    card_type: Option<CardType>,
++    sampled: (CardId, bool),
++    supported: impl FnOnce(CardId, bool) -> bool,
++) -> (CardId, bool) {
++    let Some(observations) = state.replay_observations.as_mut() else {
++        return sampled;
++    };
++    if observations.error.is_some() {
++        return sampled;
++    }
++    let Some(expected) = observations
++        .generated_cards
++        .get(observations.generated_consumed)
++    else {
++        observations.error = Some("observed_generated_card_unwitnessed_extra_event");
++        return sampled;
++    };
++    if source != Some(expected.source) {
++        observations.error = Some("observed_generated_card_source_mismatch");
++        return sampled;
++    }
++    if character != expected.character || card_type != expected.card_type {
++        observations.error = Some("observed_generated_card_role_mismatch");
++        return sampled;
++    }
++    if !supported(expected.card_id, expected.upgraded) {
++        observations.error = Some("observed_generated_card_outside_positive_support");
++        return sampled;
++    }
++    observations.generated_consumed += 1;
++    (expected.card_id, expected.upgraded)
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+diff --git a/sts2-rs/crates/sts2-mcts/src/lib.rs b/sts2-rs/crates/sts2-mcts/src/lib.rs
+index 2ac84ca..6b16cc2 100644
+--- a/sts2-rs/crates/sts2-mcts/src/lib.rs
++++ b/sts2-rs/crates/sts2-mcts/src/lib.rs
+@@ -3924,7 +3924,7 @@ impl<P: Policy> Mcts<P> {
+     /// We accept this — it's the same trade-off other PIMC search
+     /// engines (e.g. Hearthstone-AI, Spire-AI) make to recover the
+     /// compute cost of re-search from scratch each turn.
+-    pub fn reroot(&mut self, action: &Action, new_root_state: CombatState) -> bool {
++    pub fn reroot(&mut self, action: &Action, mut new_root_state: CombatState) -> bool {
+         // Bead `sts2-rs-vqckz` (F0): `reroot` installs `new_root_state`
+         // VERBATIM — it never blindfolds. Under an honest mode the caller's
+         // state carries the true hidden pile order / RNG cursors, so tree
+@@ -3999,6 +3999,8 @@ impl<P: Policy> Mcts<P> {
+ 
+         self.tree.arena = new_arena;
+         self.tree.root = NodeId(0);
++        // A past-replay queue must never constrain continuations from an installed search root.
++        new_root_state.replay_observations = None;
+         self.tree.root_state = new_root_state;
+         {
+             // The tree stores realized state per node and may have re-rooted
+

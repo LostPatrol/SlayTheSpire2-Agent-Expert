@@ -1,0 +1,16 @@
+diff --git a/sts2-rs/crates/sts2-core/src/hashing.rs b/sts2-rs/crates/sts2-core/src/hashing.rs
+index 59a9432..f0af799 100644
+--- a/sts2-rs/crates/sts2-core/src/hashing.rs
++++ b/sts2-rs/crates/sts2-core/src/hashing.rs
+@@ -458,6 +458,11 @@ fn hash_enemies_cards_items_pending_skipping<E: HashEncoding, H: Hasher>(
+             c.species.hash(h);
+             c.monster_id.0.hash(h);
+             c.intent.hash(h);
++            // Moves with identical telegraphs can have different histories, weights or follow-ups.
++            if let Some(ai)=&c.ai {
++                0xA1u8.hash(h);
++                ai.hash_runtime_state(h);
++            }
+             E::powers(&c.powers, state, h);
+         } else {
+             0xDEADu16.hash(h);

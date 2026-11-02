@@ -1,0 +1,24 @@
+diff --git a/sts2-rs/crates/sts2-runai/src/ppo/policy.rs b/sts2-rs/crates/sts2-runai/src/ppo/policy.rs
+index 5bf93c1..05fd952 100644
+--- a/sts2-rs/crates/sts2-runai/src/ppo/policy.rs
++++ b/sts2-rs/crates/sts2-runai/src/ppo/policy.rs
+@@ -957,6 +957,19 @@ impl PpoPolicy {
+         Some((probs, value, argmax))
+     }
+ 
++    /// Decode an externally aggregated distribution with this policy's original group/tie rules.
++    #[must_use]
++    pub fn decode_probabilities(&self, actions: &[ActionDesc], probs: &[f32]) -> Option<usize> {
++        if actions.len() != probs.len() || probs.iter().any(|p| !p.is_finite()) {
++            return None;
++        }
++        if self.group_decode {
++            grouped_argmax(actions, probs)
++        } else {
++            argmax_first(probs)
++        }
++    }
++
+     /// Side-effect-free decision pipeline: see [`Self::evaluate_with_actions`].
+     /// Delegates to it and drops the masked list — the shape
+     /// [`Self::choose`] and the Task 9 parity binding already consume.

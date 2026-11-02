@@ -1,0 +1,67 @@
+diff --git a/sts2-rs/crates/sts2-content/src/monsters/act1_overgrowth.rs b/sts2-rs/crates/sts2-content/src/monsters/act1_overgrowth.rs
+index fb27664..5e81a24 100644
+--- a/sts2-rs/crates/sts2-content/src/monsters/act1_overgrowth.rs
++++ b/sts2-rs/crates/sts2-content/src/monsters/act1_overgrowth.rs
+@@ -1498,6 +1498,13 @@ fn install_plow_handlers() {
+     );
+ }
+ 
++/// Install Plow reactions for imported public positions that do not construct AI.
++pub fn ensure_power_handlers_installed() {
++    use std::sync::OnceLock;
++    static INSTALL_PLOW: OnceLock<()> = OnceLock::new();
++    INSTALL_PLOW.get_or_init(install_plow_handlers);
++}
++
+ fn ceremonial_beast_stun_effect(state: &mut CombatState, owner: CreatureUid) {
+     // C# `StunnedMove` (CeremonialBeast.cs:191-196) only clears the
+     // `IsStunnedByPlowRemoval` flag + plays the Unstun anim — it does **not**
+@@ -1570,9 +1577,7 @@ fn ceremonial_beast_stun_effect(state: &mut CombatState, owner: CreatureUid) {
+ /// C#'s immediate `CreatureCmd.Stun` interrupt.
+ pub fn create_ceremonial_beast_ai() -> MonsterAi {
+     // Install the plow_after_damage handler once.
+-    use std::sync::OnceLock;
+-    static INSTALL_PLOW: OnceLock<()> = OnceLock::new();
+-    INSTALL_PLOW.get_or_init(install_plow_handlers);
++    ensure_power_handlers_installed();
+ 
+     let mut s = BTreeMap::new();
+     s.insert(
+diff --git a/sts2-rs/crates/sts2-content/src/monsters/act1_underdocks.rs b/sts2-rs/crates/sts2-content/src/monsters/act1_underdocks.rs
+index 5917efd..b8aeeaa 100644
+--- a/sts2-rs/crates/sts2-content/src/monsters/act1_underdocks.rs
++++ b/sts2-rs/crates/sts2-content/src/monsters/act1_underdocks.rs
+@@ -2245,7 +2245,7 @@ fn remove_all_powers_after_steam_eruption_death(
+ /// a `OnceLock` from [`create_waterfall_giant_ai`] (every WaterfallGiant
+ /// spawn flows through it, so the handler is registered before any combat
+ /// damage event). Safe to call from multiple boot paths.
+-fn install_steam_eruption_handlers() {
++pub(crate) fn install_steam_eruption_handlers() {
+     sts2_core::enemy_death_effects::register(
+         PowerKind::SteamEruption,
+         steam_eruption_death_interrupt,
+diff --git a/sts2-rs/crates/sts2-content/src/monsters/mod.rs b/sts2-rs/crates/sts2-content/src/monsters/mod.rs
+index fa0fd38..bc5161d 100644
+--- a/sts2-rs/crates/sts2-content/src/monsters/mod.rs
++++ b/sts2-rs/crates/sts2-content/src/monsters/mod.rs
+@@ -18,6 +18,20 @@ pub(crate) use legacy_power_surface::{
+     apply_power_to_player_via_legacy_surface, apply_signed_power_to_player,
+ };
+ 
++/// Install monster power reactions needed without an enemy AI or turn transition.
++pub fn ensure_power_handlers_installed() {
++    use std::sync::Once;
++    // Importing a public position deliberately does not construct monster AI.
++    static INSTALL_POWER_HANDLERS: Once = Once::new();
++    INSTALL_POWER_HANDLERS.call_once(|| {
++        act1_overgrowth::ensure_power_handlers_installed();
++        act1_underdocks::install_skittish_handlers();
++        act1_underdocks::install_steam_eruption_handlers();
++        act2_hive::install_personal_hive_handlers();
++        act2_hive::install_curl_up_handlers();
++    });
++}
++
+ /// Helpers shared by the per-act monster test modules.
+ #[cfg(test)]
+ pub(crate) mod test_util {

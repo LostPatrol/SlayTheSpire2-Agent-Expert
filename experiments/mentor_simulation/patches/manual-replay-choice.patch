@@ -1,0 +1,31 @@
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+index aeaf7f0..c9f88cd 100644
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -8028,7 +8028,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+     //
+     // Combat-end short-circuit: if a replay killed the last enemy,
+     // stop replaying to avoid `apply_damage` on an empty board.
+-    for _ in 0..extra_plays.max(0) {
++    for replay in 0..extra_plays.max(0) {
+         // v0.111.0: the play loop breaks at the top of an iteration once combat
+         // is over or ending (decomp CardModel.cs:1898). No-op before v0.111.0.
+         if multi_play_stops_v0111(state) {
+@@ -8062,6 +8062,17 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+             state.discount_stomp_on_attack_played();
+         }
+         let _ = crate::card_effects::dispatch_for_card(state, card_uid, card.card_id, target_uid);
++        // A manual replay still awaits its own choice. Reuse the existing play
++        // tail with only the unstarted replays left; do not pick for the player.
++        if state.pending_choice.is_some() && !state.autoplay_inline_resolve && !state.is_over {
++            state.pending_play = Some(crate::PendingPlay {
++                finish: CardPlayFinish {
++                    extra_plays: extra_plays.max(0) - replay - 1,
++                    ..fin
++                },
++            });
++            return StepResult::PendingChoice;
++        }
+         // C# `CardModel.OnPlayWrapper` runs the affliction `OnPlay` INSIDE the
+         // per-iteration `for i < playCount2` loop (CardModel.cs:1513-1522), so a
+         // Weighted card's `LoseEnergy` drain (Afflictions/Weighted.cs:8-11) fires

@@ -1,0 +1,54 @@
+# Local instructions, credentials, environments, and generated evidence stay private.
+AGENTS.md
+AGNETS.md
+MEMORY.md
+agent/
+secrets/
+.env
+.env.*
+!.env.example
+.venv/
+.tools/
+local/
+runs/
+vendor/
+.tmp/
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+bin/
+obj/
+target/
+node_modules/
+*.log
+*.tmp
+*.bak
+*.dll
+*.exe
+*.pyd
+*.pdb
+*.save
+*.save.*
+# Machine-specific settings are created from published examples.
+/configs/machine.json
+/configs/bridge.settings.json
+/configs/environment.lock.json
+# The upstream bridge persists private runtime sessions next to its settings.
+configs/sessions/
+configs/decisions.jsonl
+# Design drafts, task briefs, and historical evaluation records are local references.
+/design/
+/STS2_*_Guide.md
+/STS2_*_Brief.md
+/docs/environment-report.md
+/docs/progress.md
+/docs/cache-analysis.md
+/docs/simulation-backend-selection.md
+experiments/**/results/
+/experiments/combat_simulation/RESULTS.md
+/experiments/combat_simulation/COMBATSOLVER-ASSESSMENT.md

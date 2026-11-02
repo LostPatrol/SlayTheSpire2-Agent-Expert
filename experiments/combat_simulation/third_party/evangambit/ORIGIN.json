@@ -1,0 +1,34 @@
+{
+  "repository": "https://github.com/evangambit/sts2",
+  "commit": "37e4264115546b6ac640d54aab3d7e2ac6983d2d",
+  "game_version": "v0.107.1",
+  "license": "MIT",
+  "copied_paths": ["src/Sts2Emulator/Core", "src/Sts2Emulator/Generated", "LICENSE"],
+  "source_modifications": [
+    {
+      "path": "Core/Effects/CardEffects.cs",
+      "change": "Uppercut keeps its original target; Exterminate uses four all-enemy hits; card self-HP-loss applies the existing Intangible cap.",
+      "reason": "Recorded public successors and isolated behavior checks confirm target identity, Exterminate area damage, and HP-loss protection semantics.",
+      "date": "2026-10-27"
+    },
+    {
+      "path": "Core/CombatEngine.cs",
+      "change": "Per-play Strangle and Oblivion snapshots bind enemy objects rather than mutable list indices. Rage uses unpowered block across manual and automatic play paths, including the previously missing auto-play trigger. Expose HandleEnemyDeaths internally for the host's reviewed potion path.",
+      "reason": "Creature-removal probes and recorded Rage plus Frail transitions expose index transfer and card-block modifier errors; potion resolution must reuse the existing kill hooks rather than duplicate or omit them.",
+      "date": "2026-10-28"
+    },
+    {
+      "path": "Core/CombatState.cs",
+      "change": "Remove obsolete StrangleBeforePlay state after replacing it with a per-play object snapshot.",
+      "reason": "The snapshot must not outlive one play or survive by index across enemy roster changes.",
+      "date": "2026-10-27"
+    },
+    {
+      "path": "Core/StateCloning.cs",
+      "change": "Remove cloning of the obsolete StrangleBeforePlay list; preserve Skippable, GeneratedUpgraded and GeneratedRetained when cloning pending selections.",
+      "reason": "Keep clone state consistent with the corrected combat lifecycle and prevent branch copies from changing legal choices or generated-card properties.",
+      "date": "2026-10-28"
+    }
+  ],
+  "integration": "Managed net9 host compiles Core with the documented local corrections and unchanged Generated source, without NativeAOT, game DLLs, native exports, Python bindings, or RL packages."
+}

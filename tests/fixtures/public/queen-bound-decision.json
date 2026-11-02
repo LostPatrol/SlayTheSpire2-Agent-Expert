@@ -1,0 +1,3816 @@
+{
+  "source": {
+    "run_id": "d2b348c3-e645-44fc-873f-a61a8a1ab678",
+    "decision_id": "0dd1d883-cee4-452d-bb62-2eff86c1fcdf",
+    "line": 8265,
+    "line_sha256": "9c64bd608c37c9d16002d82b6f7ebc53de24dcce8fb44148e5a84a01e5f93907"
+  },
+  "original_knowledge": {
+    "fact_ids": [
+      "powers.CHAINS_OF_BINDING",
+      "powers.CRIMSON_MANTLE",
+      "powers.FRAIL",
+      "powers.RUPTURE",
+      "powers.STRENGTH",
+      "powers.VULNERABLE",
+      "powers.WEAK",
+      "monsters.QUEEN",
+      "relics.BELLOWS",
+      "relics.BRILLIANT_SCARF",
+      "relics.BURNING_BLOOD",
+      "relics.GORGET",
+      "relics.JUZU_BRACELET",
+      "relics.LASTING_CANDY",
+      "relics.MANGO",
+      "relics.MEAT_ON_THE_BONE",
+      "relics.MERCURY_HOURGLASS",
+      "relics.PERMAFROST",
+      "relics.PUMPKIN_CANDLE"
+    ],
+    "omitted_related_entries": 34
+  },
+  "observation": {
+    "action_parameters": {
+      "end_turn": {},
+      "play_card": {
+        "card_index": "combat.hand[].i",
+        "target_index": "selected card.targets[] when nonempty"
+      }
+    },
+    "available_actions": [
+      "end_turn",
+      "play_card"
+    ],
+    "simulation_advice": {
+      "limits": {
+        "beam_width": 64,
+        "exhaustive_limit": 20000,
+        "max_depth": 6
+      },
+      "public_state_hash": "6f8faf2cc09225be11209d2d226f0c23e2f638d5339e9a066e08cc7fe0fd184d",
+      "status": "partial",
+      "strategies": {
+        "beam": {
+          "first_action": {
+            "type": "end_turn"
+          },
+          "full_legal_coverage": false,
+          "optimal_within_supported_horizon": false,
+          "score": -10011.65,
+          "score_breakdown": {
+            "combat_won": false,
+            "enemy_hp_reduction": 0,
+            "enemy_kills": 0,
+            "excess_block": 0,
+            "player_hp_change": 0,
+            "projected_hp_loss": 3,
+            "projected_incoming_damage": 50,
+            "projected_lethal": true,
+            "remaining_energy": 7
+          },
+          "score_support": {
+            "included": "public_current_declared_attacks_minus_current_block_with_visible_modifiers_and_confirmed_stuns",
+            "level": "partial",
+            "meaning": "transparent_tactical_heuristic_not_end_turn_hp_prediction_or_win_probability",
+            "reasons": [
+              "sum_of_current_declared_attacks_only_not_an_executed_enemy_turn",
+              "end_turn_card_power_relic_hooks_and_enemy_secondary_effects_not_resolved"
+            ]
+          },
+          "search_support_reasons": [
+            "h0:DEFEND_IRONCLAD:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h1:BURNING_PACT:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h2:FIGHT_ME:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h3:TWIN_STRIKE:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER",
+            "player:power_rule_not_reviewed:RUPTURE_POWER",
+            "player:unknown_power:CRIMSON_MANTLE_POWER",
+            "relic_rule_not_reviewed:BELLOWS",
+            "relic_rule_not_reviewed:BRILLIANT_SCARF",
+            "relic_rule_not_reviewed:JUZU_BRACELET",
+            "relic_rule_not_reviewed:LASTING_CANDY",
+            "relic_rule_not_reviewed:MANGO",
+            "relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "relic_rule_not_reviewed:MERCURY_HOURGLASS",
+            "relic_rule_not_reviewed:PERMAFROST",
+            "relic_rule_not_reviewed:PUMPKIN_CANDLE",
+            "relic_rule_not_reviewed:RED_MASK",
+            "relic_rule_not_reviewed:VENERABLE_TEA_SET"
+          ],
+          "sequence": [
+            {
+              "type": "stop_projection"
+            }
+          ],
+          "status": "advisory",
+          "support": {
+            "level": "partial",
+            "reasons": [
+              "player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER",
+              "player:unknown_power:CRIMSON_MANTLE_POWER",
+              "player:power_rule_not_reviewed:RUPTURE_POWER",
+              "relic_rule_not_reviewed:VENERABLE_TEA_SET",
+              "relic_rule_not_reviewed:RED_MASK",
+              "relic_rule_not_reviewed:PUMPKIN_CANDLE",
+              "relic_rule_not_reviewed:MERCURY_HOURGLASS",
+              "relic_rule_not_reviewed:PERMAFROST",
+              "relic_rule_not_reviewed:JUZU_BRACELET",
+              "relic_rule_not_reviewed:LASTING_CANDY",
+              "relic_rule_not_reviewed:BRILLIANT_SCARF",
+              "relic_rule_not_reviewed:MANGO",
+              "relic_rule_not_reviewed:BELLOWS",
+              "relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h0:DEFEND_IRONCLAD:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h1:BURNING_PACT:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h2:FIGHT_ME:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h3:TWIN_STRIKE:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE"
+            ],
+            "unknown_ids": [
+              "CRIMSON_MANTLE_POWER"
+            ]
+          },
+          "termination": "stop"
+        },
+        "exhaustive": {
+          "first_action": {
+            "type": "end_turn"
+          },
+          "full_legal_coverage": false,
+          "optimal_within_supported_horizon": true,
+          "score": -10011.65,
+          "score_breakdown": {
+            "combat_won": false,
+            "enemy_hp_reduction": 0,
+            "enemy_kills": 0,
+            "excess_block": 0,
+            "player_hp_change": 0,
+            "projected_hp_loss": 3,
+            "projected_incoming_damage": 50,
+            "projected_lethal": true,
+            "remaining_energy": 7
+          },
+          "score_support": {
+            "included": "public_current_declared_attacks_minus_current_block_with_visible_modifiers_and_confirmed_stuns",
+            "level": "partial",
+            "meaning": "transparent_tactical_heuristic_not_end_turn_hp_prediction_or_win_probability",
+            "reasons": [
+              "sum_of_current_declared_attacks_only_not_an_executed_enemy_turn",
+              "end_turn_card_power_relic_hooks_and_enemy_secondary_effects_not_resolved"
+            ]
+          },
+          "search_support_reasons": [
+            "h0:DEFEND_IRONCLAD:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h1:BURNING_PACT:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h2:FIGHT_ME:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h3:TWIN_STRIKE:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER",
+            "player:power_rule_not_reviewed:RUPTURE_POWER",
+            "player:unknown_power:CRIMSON_MANTLE_POWER",
+            "relic_rule_not_reviewed:BELLOWS",
+            "relic_rule_not_reviewed:BRILLIANT_SCARF",
+            "relic_rule_not_reviewed:JUZU_BRACELET",
+            "relic_rule_not_reviewed:LASTING_CANDY",
+            "relic_rule_not_reviewed:MANGO",
+            "relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "relic_rule_not_reviewed:MERCURY_HOURGLASS",
+            "relic_rule_not_reviewed:PERMAFROST",
+            "relic_rule_not_reviewed:PUMPKIN_CANDLE",
+            "relic_rule_not_reviewed:RED_MASK",
+            "relic_rule_not_reviewed:VENERABLE_TEA_SET"
+          ],
+          "sequence": [
+            {
+              "type": "stop_projection"
+            }
+          ],
+          "status": "advisory",
+          "support": {
+            "level": "partial",
+            "reasons": [
+              "player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER",
+              "player:unknown_power:CRIMSON_MANTLE_POWER",
+              "player:power_rule_not_reviewed:RUPTURE_POWER",
+              "relic_rule_not_reviewed:VENERABLE_TEA_SET",
+              "relic_rule_not_reviewed:RED_MASK",
+              "relic_rule_not_reviewed:PUMPKIN_CANDLE",
+              "relic_rule_not_reviewed:MERCURY_HOURGLASS",
+              "relic_rule_not_reviewed:PERMAFROST",
+              "relic_rule_not_reviewed:JUZU_BRACELET",
+              "relic_rule_not_reviewed:LASTING_CANDY",
+              "relic_rule_not_reviewed:BRILLIANT_SCARF",
+              "relic_rule_not_reviewed:MANGO",
+              "relic_rule_not_reviewed:BELLOWS",
+              "relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h0:DEFEND_IRONCLAD:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h1:BURNING_PACT:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h2:FIGHT_ME:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h3:TWIN_STRIKE:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE"
+            ],
+            "unknown_ids": [
+              "CRIMSON_MANTLE_POWER"
+            ]
+          },
+          "termination": "stop"
+        },
+        "greedy": {
+          "first_action": {
+            "type": "end_turn"
+          },
+          "full_legal_coverage": false,
+          "optimal_within_supported_horizon": false,
+          "score": -10011.65,
+          "score_breakdown": {
+            "combat_won": false,
+            "enemy_hp_reduction": 0,
+            "enemy_kills": 0,
+            "excess_block": 0,
+            "player_hp_change": 0,
+            "projected_hp_loss": 3,
+            "projected_incoming_damage": 50,
+            "projected_lethal": true,
+            "remaining_energy": 7
+          },
+          "score_support": {
+            "included": "public_current_declared_attacks_minus_current_block_with_visible_modifiers_and_confirmed_stuns",
+            "level": "partial",
+            "meaning": "transparent_tactical_heuristic_not_end_turn_hp_prediction_or_win_probability",
+            "reasons": [
+              "sum_of_current_declared_attacks_only_not_an_executed_enemy_turn",
+              "end_turn_card_power_relic_hooks_and_enemy_secondary_effects_not_resolved"
+            ]
+          },
+          "search_support_reasons": [
+            "h0:DEFEND_IRONCLAD:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h1:BURNING_PACT:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h2:FIGHT_ME:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "h3:TWIN_STRIKE:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER",
+            "player:power_rule_not_reviewed:RUPTURE_POWER",
+            "player:unknown_power:CRIMSON_MANTLE_POWER",
+            "relic_rule_not_reviewed:BELLOWS",
+            "relic_rule_not_reviewed:BRILLIANT_SCARF",
+            "relic_rule_not_reviewed:JUZU_BRACELET",
+            "relic_rule_not_reviewed:LASTING_CANDY",
+            "relic_rule_not_reviewed:MANGO",
+            "relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+            "relic_rule_not_reviewed:MERCURY_HOURGLASS",
+            "relic_rule_not_reviewed:PERMAFROST",
+            "relic_rule_not_reviewed:PUMPKIN_CANDLE",
+            "relic_rule_not_reviewed:RED_MASK",
+            "relic_rule_not_reviewed:VENERABLE_TEA_SET"
+          ],
+          "sequence": [
+            {
+              "type": "stop_projection"
+            }
+          ],
+          "status": "advisory",
+          "support": {
+            "level": "partial",
+            "reasons": [
+              "player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER",
+              "player:unknown_power:CRIMSON_MANTLE_POWER",
+              "player:power_rule_not_reviewed:RUPTURE_POWER",
+              "relic_rule_not_reviewed:VENERABLE_TEA_SET",
+              "relic_rule_not_reviewed:RED_MASK",
+              "relic_rule_not_reviewed:PUMPKIN_CANDLE",
+              "relic_rule_not_reviewed:MERCURY_HOURGLASS",
+              "relic_rule_not_reviewed:PERMAFROST",
+              "relic_rule_not_reviewed:JUZU_BRACELET",
+              "relic_rule_not_reviewed:LASTING_CANDY",
+              "relic_rule_not_reviewed:BRILLIANT_SCARF",
+              "relic_rule_not_reviewed:MANGO",
+              "relic_rule_not_reviewed:BELLOWS",
+              "relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h0:DEFEND_IRONCLAD:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h1:BURNING_PACT:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h2:FIGHT_ME:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE",
+              "h3:TWIN_STRIKE:player:power_rule_not_reviewed:CHAINS_OF_BINDING_POWER;player:unknown_power:CRIMSON_MANTLE_POWER;player:power_rule_not_reviewed:RUPTURE_POWER;relic_rule_not_reviewed:VENERABLE_TEA_SET;relic_rule_not_reviewed:RED_MASK;relic_rule_not_reviewed:PUMPKIN_CANDLE;relic_rule_not_reviewed:MERCURY_HOURGLASS;relic_rule_not_reviewed:PERMAFROST;relic_rule_not_reviewed:JUZU_BRACELET;relic_rule_not_reviewed:LASTING_CANDY;relic_rule_not_reviewed:BRILLIANT_SCARF;relic_rule_not_reviewed:MANGO;relic_rule_not_reviewed:BELLOWS;relic_rule_not_reviewed:MEAT_ON_THE_BONE"
+            ],
+            "unknown_ids": [
+              "CRIMSON_MANTLE_POWER"
+            ]
+          },
+          "termination": "stop"
+        }
+      },
+      "usage": "Advisory only; the model remains the final chooser and may choose another legal action. Only first_action is executable against this observation. Take at most one action, then re-observe and recompute; never copy later sequence steps into real actions. sequence uses initial-hand row handles, not current hand indices. end_turn/stop_projection only stops the simulation: enemy actions, draws and turn-end hooks are not executed. Search includes supported deterministic card plays and stop, excluding potions and other combat actions. Scores use an attack-based tactical heuristic, not end-turn HP, survival guarantees or win probability; assess the listed unscored hazards from the public observation."
+    },
+    "state": {
+      "available_actions": [
+        "end_turn",
+        "play_card"
+      ],
+      "combat": {
+        "action_readiness": {
+          "actions_settled": true,
+          "can_use_combat_actions": true,
+          "is_paused": false,
+          "local_turn_ready": true,
+          "modal_open": false,
+          "reason": "ready",
+          "snapshot_stable": true
+        },
+        "derived_combat_risks": {
+          "limitations": "Partial approximate warnings, not a combat simulation. No warning does not mean safe. Only current visible intents, block, HP, Sandpit, Doom, Constrict and Magic Bomb counters are checked. Future triggers, modifiers, and poison damage calculation are not covered.",
+          "source": "public_intents_hp_block_and_power_counters",
+          "warnings": [
+            {
+              "damage_after_block": 42,
+              "incoming_damage": 50,
+              "player_block": 8,
+              "player_hp": 3,
+              "power_amount": null,
+              "power_id": null,
+              "reason": "Enemy intent damage after current block is at least current HP.",
+              "risk_id": "incoming_damage",
+              "source": "enemy_intents"
+            }
+          ]
+        },
+        "discard": [
+          {
+            "card_ids": [
+              "UPPERCUT"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 13,
+                "current_value": 13,
+                "enchanted_value": 13,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Power",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "易伤",
+              "虚弱"
+            ],
+            "line": "上勾拳 [2费]：造成13点伤害。 给予1层虚弱。 给予1层易伤。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "UPPERCUT"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 13,
+                "current_value": 13,
+                "enchanted_value": 13,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Power",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "易伤",
+              "虚弱"
+            ],
+            "line": "上勾拳+ [2费]：造成13点伤害。 给予2层虚弱。 给予2层易伤。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "BODY_SLAM"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 0,
+                "current_value": 8,
+                "enchanted_value": 0,
+                "is_modified": true,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 0,
+                "current_value": 0,
+                "enchanted_value": 0,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "全身撞击+ [0费]：造成你当前格挡值的伤害。 （造成8点伤害）",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "POMMEL_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 9,
+                "current_value": 9,
+                "enchanted_value": 9,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "剑柄打击 [1费]：造成9点伤害。 抽1张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "POMMEL_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 10,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "剑柄打击+ [1费]：造成10点伤害。 抽2张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "PERFECTED_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 28,
+                "enchanted_value": 6,
+                "is_modified": true,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [],
+            "line": "完美打击 [2费]：造成28点伤害。 你每有一张名字中含有“打击”的牌，伤害+2。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "PERFECTED_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 39,
+                "enchanted_value": 6,
+                "is_modified": true,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [],
+            "line": "完美打击+ [2费]：造成39点伤害。 你每有一张名字中含有“打击”的牌，伤害+3。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "HEMOKINESIS"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 20,
+                "current_value": 20,
+                "enchanted_value": 20,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "御血术+ [1费]：失去2点生命。 造成20点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "STRIKE_IRONCLAD"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "打击*3 [1费]：造成6点伤害。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "TAUNT"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 7,
+                "current_value": 7,
+                "enchanted_value": 7,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "VulnerablePower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "易伤",
+              "格挡"
+            ],
+            "line": "挑衅 [1费]：获得7点格挡。 给予1层易伤。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BLOODLETTING"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Energy",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [],
+            "line": "放血 [0费]：失去3点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BLOODLETTING"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "Energy",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [],
+            "line": "放血+ [0费]：失去3点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "EXTERMINATE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 4,
+                "current_value": 4,
+                "enchanted_value": 4,
+                "is_modified": false,
+                "name": "Repeat",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "杀灭 [1费]：对所有敌人造成3点伤害4次。",
+            "mods": [],
+            "rarity": "Event",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "FLAME_BARRIER"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 12,
+                "current_value": 12,
+                "enchanted_value": 12,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 4,
+                "current_value": 4,
+                "enchanted_value": 4,
+                "is_modified": false,
+                "name": "DamageBack",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "火焰屏障 [2费]：获得12点格挡。 你在这个回合每受到一次攻击，都会对攻击者造成4点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "INFLAME"
+            ],
+            "card_type": "Power",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "StrengthPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "力量"
+            ],
+            "line": "燃烧+ [1费]：获得3点力量。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "BASH"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 10,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "VulnerablePower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "易伤"
+            ],
+            "line": "痛击+ [2费]：造成10点伤害。 给予3层易伤。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "SHRUG_IT_OFF"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "耸肩无视*2 [1费]：获得8点格挡。 抽1张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BLUDGEON"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 32,
+                "current_value": 32,
+                "enchanted_value": 32,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 3,
+            "keywords": [],
+            "line": "重锤 [3费]：造成32点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          }
+        ],
+        "draw": [
+          {
+            "card_ids": [
+              "POMMEL_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 10,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "剑柄打击+ [1费]：造成10点伤害。 抽2张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "TRUE_GRIT"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 9,
+                "current_value": 9,
+                "enchanted_value": 9,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡",
+              "消耗"
+            ],
+            "line": "坚毅+ [1费]：获得9点格挡。 消耗1张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "PERFECTED_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 39,
+                "enchanted_value": 6,
+                "is_modified": true,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [],
+            "line": "完美打击+ [2费]：造成39点伤害。 你每有一张名字中含有“打击”的牌，伤害+3。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "COLOSSUS"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Colossus",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "易伤",
+              "格挡"
+            ],
+            "line": "巨像+ [1费]：获得8点格挡。 在本回合中，有易伤状态的敌人对你造成的伤害降低50%。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "HEMOKINESIS"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 20,
+                "current_value": 20,
+                "enchanted_value": 20,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "御血术+ [1费]：失去2点生命。 造成20点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "WHIRLWIND"
+            ],
+            "card_type": "Attack",
+            "costs_x": true,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": true,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [
+              "附魔"
+            ],
+            "line": "旋风斩+ [X费]：对所有敌人造成10点伤害X次。",
+            "mods": [
+              "Enchantment",
+              "锋利"
+            ],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          }
+        ],
+        "enemies": [
+          {
+            "alive": true,
+            "block": 0,
+            "enemy_id": "QUEEN",
+            "hittable": true,
+            "hp": "87/400",
+            "i": 0,
+            "intents": [
+              {
+                "damage": 10,
+                "hits": 5,
+                "i": 0,
+                "intent_type": "Attack",
+                "label": "10[font_size=18]×5[/font_size]",
+                "status_card_count": null,
+                "total_damage": 50
+              }
+            ],
+            "name": "女王",
+            "power_details": [
+              {
+                "amount": 4,
+                "description": "力量会增加攻击牌造成的伤害。",
+                "display_amount": 4,
+                "index": 0,
+                "is_debuff": false,
+                "name": "力量",
+                "power_id": "STRENGTH_POWER"
+              }
+            ],
+            "powers": [
+              "STRENGTH_POWER 4"
+            ]
+          }
+        ],
+        "exhaust": [
+          {
+            "card_ids": [
+              "FIEND_FIRE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 7,
+                "current_value": 7,
+                "enchanted_value": 7,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "消耗"
+            ],
+            "line": "恶魔之焰 [2费]：消耗所有手牌。 每张被消耗的牌造成7点伤害。 消耗。",
+            "mods": [
+              "Exhaust"
+            ],
+            "rarity": "Rare",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "STRIKE_IRONCLAD"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "打击 [1费]：造成6点伤害。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "DISMANTLE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "易伤"
+            ],
+            "line": "拆卸 [1费]：造成8点伤害。 如果该敌人有易伤状态，则攻击两次。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "DOUBT"
+            ],
+            "card_type": "Curse",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "WeakPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": -1,
+            "keywords": [
+              "虚弱"
+            ],
+            "line": "疑虑 [0费]：不能被打出。 在你的回合结束时，如果这张牌在你的手牌中，获得1层虚弱。",
+            "mods": [
+              "Unplayable"
+            ],
+            "rarity": "Curse",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "OFFERING"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 5,
+                "enchanted_value": 5,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Energy",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [
+              "消耗"
+            ],
+            "line": "祭品+ [0费]：失去6点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。 抽5张牌。 消耗。",
+            "mods": [
+              "Exhaust"
+            ],
+            "rarity": "Rare",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "DEFEND_IRONCLAD"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 5,
+                "enchanted_value": 5,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "防御 [1费]：获得5点格挡。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          }
+        ],
+        "hand": [
+          {
+            "card_id": "DEFEND_IRONCLAD",
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 3,
+                "enchanted_value": 5,
+                "is_modified": true,
+                "name": "Block",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "i": 0,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "防御 [1费]：获得3点格挡。 魂缚",
+            "mods": [],
+            "playable": true,
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "target": null,
+            "targets": [],
+            "unplayable_reason": null,
+            "upgraded": false,
+            "why": null
+          },
+          {
+            "card_id": "BURNING_PACT",
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "i": 1,
+            "keywords": [
+              "消耗"
+            ],
+            "line": "燃烧契约+ [1费]：消耗1张牌。 抽3张牌。 魂缚",
+            "mods": [],
+            "playable": true,
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "target": null,
+            "targets": [],
+            "unplayable_reason": null,
+            "upgraded": true,
+            "why": null
+          },
+          {
+            "card_id": "FIGHT_ME",
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 17,
+                "enchanted_value": 5,
+                "is_modified": true,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "EnemyStrength",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Repeat",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "StrengthPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "i": 2,
+            "keywords": [
+              "力量"
+            ],
+            "line": "与我一战！ [2费]：造成17点伤害两次。 获得3点力量。 该敌人获得1点力量。 魂缚",
+            "mods": [],
+            "playable": true,
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "target": "enemies",
+            "targets": [
+              0
+            ],
+            "unplayable_reason": null,
+            "upgraded": false,
+            "why": null
+          },
+          {
+            "card_id": "TWIN_STRIKE",
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 17,
+                "enchanted_value": 5,
+                "is_modified": true,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "i": 3,
+            "keywords": [],
+            "line": "双重打击 [1费]：造成17点伤害两次。",
+            "mods": [],
+            "playable": true,
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "target": "enemies",
+            "targets": [
+              0
+            ],
+            "unplayable_reason": null,
+            "upgraded": false,
+            "why": null
+          }
+        ],
+        "player": {
+          "attacks_played_this_turn": 0,
+          "base_orb_slots": 0,
+          "block": 8,
+          "cards_played_this_turn": 1,
+          "empty_orb_slots": 0,
+          "energy": 7,
+          "focus": 0,
+          "hp": "3/94",
+          "orb_capacity": 0,
+          "orb_details": [],
+          "orbs": [],
+          "pet_details": [],
+          "pet_missing": false,
+          "pets": [],
+          "power_details": [
+            {
+              "amount": 3,
+              "description": "每回合抽到的前[blue]3[/blue]张牌将会被侵蚀为[gold]魂缚[/gold]。",
+              "display_amount": 3,
+              "index": 0,
+              "is_debuff": true,
+              "name": "魂缚锁链",
+              "power_id": "CHAINS_OF_BINDING_POWER"
+            },
+            {
+              "amount": 18,
+              "description": "力量会增加攻击牌造成的伤害。",
+              "display_amount": 18,
+              "index": 1,
+              "is_debuff": false,
+              "name": "力量",
+              "power_id": "STRENGTH_POWER"
+            },
+            {
+              "amount": 93,
+              "description": "脆弱时，从卡牌中获得的[gold]格挡[/gold]值减少[blue]25%[/blue]。",
+              "display_amount": 93,
+              "index": 2,
+              "is_debuff": true,
+              "name": "脆弱",
+              "power_id": "FRAIL_POWER"
+            },
+            {
+              "amount": 93,
+              "description": "虚弱的生物造成的攻击伤害减少[blue]25%[/blue]。",
+              "display_amount": 93,
+              "index": 3,
+              "is_debuff": true,
+              "name": "虚弱",
+              "power_id": "WEAK_POWER"
+            },
+            {
+              "amount": 93,
+              "description": "易伤的生物从攻击中受到的伤害增加[blue]50%[/blue]。",
+              "display_amount": 93,
+              "index": 4,
+              "is_debuff": true,
+              "name": "易伤",
+              "power_id": "VULNERABLE_POWER"
+            },
+            {
+              "amount": 8,
+              "description": "在你的回合开始时，失去生命并获得[gold]格挡[/gold]。",
+              "display_amount": 8,
+              "index": 5,
+              "is_debuff": false,
+              "name": "绯红披风",
+              "power_id": "CRIMSON_MANTLE_POWER"
+            },
+            {
+              "amount": 2,
+              "description": "每当你在自身回合失去生命时，获得[blue]1[/blue]点[gold]力量[/gold]。",
+              "display_amount": 2,
+              "index": 6,
+              "is_debuff": false,
+              "name": "撕裂",
+              "power_id": "RUPTURE_POWER"
+            }
+          ],
+          "powers": [
+            "CHAINS_OF_BINDING_POWER 3 [debuff]",
+            "STRENGTH_POWER 18",
+            "FRAIL_POWER 93 [debuff]",
+            "WEAK_POWER 93 [debuff]",
+            "VULNERABLE_POWER 93 [debuff]",
+            "CRIMSON_MANTLE_POWER 8",
+            "RUPTURE_POWER 2"
+          ],
+          "skills_played_this_turn": 1,
+          "stars": 0
+        },
+        "players": [
+          {
+            "block": 8,
+            "character_id": "IRONCLAD",
+            "character_name": "铁甲战士",
+            "current_hp": 3,
+            "energy": 7,
+            "focus": 0,
+            "is_alive": true,
+            "is_local": true,
+            "max_hp": 94,
+            "slot_index": 0,
+            "stars": 0
+          }
+        ]
+      },
+      "glossary": {
+        "力量": "每层力量通常使攻击额外造成 1 点伤害。",
+        "易伤": "易伤单位会承受更多攻击伤害。",
+        "格挡": "格挡会优先抵消即将受到的伤害。",
+        "消耗": "消耗牌打出后会移出本场战斗。",
+        "脆弱": "脆弱单位获得的格挡会减少。",
+        "虚弱": "虚弱单位造成的攻击伤害会降低。",
+        "附魔": "附魔是卡牌附着的额外词条或效果层。"
+      },
+      "protocol_version": 1,
+      "run": {
+        "act_id": "2",
+        "ascension": 0,
+        "ascension_effects": [],
+        "base_orb_slots": 0,
+        "boss_id": "QUEEN_BOSS",
+        "character": "铁甲战士",
+        "deck": [
+          {
+            "card_ids": [
+              "UPPERCUT"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 13,
+                "current_value": 13,
+                "enchanted_value": 13,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Power",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "易伤",
+              "虚弱"
+            ],
+            "line": "上勾拳 [2费]：造成13点伤害。 给予1层虚弱。 给予1层易伤。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "UPPERCUT"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 13,
+                "current_value": 13,
+                "enchanted_value": 13,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Power",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "易伤",
+              "虚弱"
+            ],
+            "line": "上勾拳+ [2费]：造成13点伤害。 给予2层虚弱。 给予2层易伤。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "FIGHT_ME"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 5,
+                "enchanted_value": 5,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "EnemyStrength",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Repeat",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "StrengthPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "力量"
+            ],
+            "line": "与我一战！ [2费]：造成5点伤害两次。 获得3点力量。 该敌人获得1点力量。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BODY_SLAM"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 0,
+                "current_value": 0,
+                "enchanted_value": 0,
+                "is_modified": false,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 0,
+                "current_value": 0,
+                "enchanted_value": 0,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "全身撞击+ [0费]：造成你当前格挡值的伤害。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "POMMEL_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 9,
+                "current_value": 9,
+                "enchanted_value": 9,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "剑柄打击*2 [1费]：造成9点伤害。 抽1张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "POMMEL_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 10,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "剑柄打击+ [1费]：造成10点伤害。 抽2张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "TWIN_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 5,
+                "enchanted_value": 5,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "双重打击 [1费]：造成5点伤害两次。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "TRUE_GRIT"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 9,
+                "current_value": 9,
+                "enchanted_value": 9,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡",
+              "消耗"
+            ],
+            "line": "坚毅+ [1费]：获得9点格挡。 消耗1张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "PERFECTED_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [],
+            "line": "完美打击 [2费]：造成6点伤害。 你每有一张名字中含有“打击”的牌，伤害+2。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "PERFECTED_STRIKE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculatedDamage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "CalculationBase",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "ExtraDamage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [],
+            "line": "完美打击+*2 [2费]：造成6点伤害。 你每有一张名字中含有“打击”的牌，伤害+3。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "COLOSSUS"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Colossus",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "易伤",
+              "格挡"
+            ],
+            "line": "巨像+ [1费]：获得8点格挡。 在本回合中，有易伤状态的敌人对你造成的伤害降低50%。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "HEMOKINESIS"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 20,
+                "current_value": 20,
+                "enchanted_value": 20,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "御血术+*2 [1费]：失去2点生命。 造成20点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "FIEND_FIRE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 7,
+                "current_value": 7,
+                "enchanted_value": 7,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "消耗"
+            ],
+            "line": "恶魔之焰 [2费]：消耗所有手牌。 每张被消耗的牌造成7点伤害。 消耗。",
+            "mods": [
+              "Exhaust"
+            ],
+            "rarity": "Rare",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "STRIKE_IRONCLAD"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "打击*4 [1费]：造成6点伤害。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "DISMANTLE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "易伤"
+            ],
+            "line": "拆卸 [1费]：造成8点伤害。 如果该敌人有易伤状态，则攻击两次。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "TAUNT"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 7,
+                "current_value": 7,
+                "enchanted_value": 7,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "VulnerablePower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "易伤",
+              "格挡"
+            ],
+            "line": "挑衅 [1费]：获得7点格挡。 给予1层易伤。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "RUPTURE"
+            ],
+            "card_type": "Power",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "StrengthPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "力量"
+            ],
+            "line": "撕裂+ [1费]：每当你在你的回合失去生命值时, 获得2点力量。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "BLOODLETTING"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Energy",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [],
+            "line": "放血 [0费]：失去3点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BLOODLETTING"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "Energy",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [],
+            "line": "放血+ [0费]：失去3点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "WHIRLWIND"
+            ],
+            "card_type": "Attack",
+            "costs_x": true,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": true,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [
+              "附魔"
+            ],
+            "line": "旋风斩+ [X费]：对所有敌人造成10点伤害X次。",
+            "mods": [
+              "Enchantment",
+              "锋利"
+            ],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "EXTERMINATE"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 4,
+                "current_value": 4,
+                "enchanted_value": 4,
+                "is_modified": false,
+                "name": "Repeat",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [],
+            "line": "杀灭 [1费]：对所有敌人造成3点伤害4次。",
+            "mods": [],
+            "rarity": "Event",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "FLAME_BARRIER"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 12,
+                "current_value": 12,
+                "enchanted_value": 12,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 4,
+                "current_value": 4,
+                "enchanted_value": 4,
+                "is_modified": false,
+                "name": "DamageBack",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "火焰屏障 [2费]：获得12点格挡。 你在这个回合每受到一次攻击，都会对攻击者造成4点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "INFLAME"
+            ],
+            "card_type": "Power",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "StrengthPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "力量"
+            ],
+            "line": "燃烧*2 [1费]：获得2点力量。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "INFLAME"
+            ],
+            "card_type": "Power",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "StrengthPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "力量"
+            ],
+            "line": "燃烧+ [1费]：获得3点力量。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "BURNING_PACT"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "消耗"
+            ],
+            "line": "燃烧契约+ [1费]：消耗1张牌。 抽3张牌。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "DOUBT"
+            ],
+            "card_type": "Curse",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "WeakPower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": -1,
+            "keywords": [
+              "虚弱"
+            ],
+            "line": "疑虑 [0费]：不能被打出。 在你的回合结束时，如果这张牌在你的手牌中，获得1层虚弱。",
+            "mods": [
+              "Unplayable"
+            ],
+            "rarity": "Curse",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BASH"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 10,
+                "current_value": 10,
+                "enchanted_value": 10,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 3,
+                "current_value": 3,
+                "enchanted_value": 3,
+                "is_modified": false,
+                "name": "VulnerablePower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 2,
+            "keywords": [
+              "易伤"
+            ],
+            "line": "痛击+ [2费]：造成10点伤害。 给予3层易伤。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "OFFERING"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 5,
+                "enchanted_value": 5,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 2,
+                "current_value": 2,
+                "enchanted_value": 2,
+                "is_modified": false,
+                "name": "Energy",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 6,
+                "current_value": 6,
+                "enchanted_value": 6,
+                "is_modified": false,
+                "name": "HpLoss",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 0,
+            "keywords": [
+              "消耗"
+            ],
+            "line": "祭品+ [0费]：失去6点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。 抽5张牌。 消耗。",
+            "mods": [
+              "Exhaust"
+            ],
+            "rarity": "Rare",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": true
+          },
+          {
+            "card_ids": [
+              "CRIMSON_MANTLE"
+            ],
+            "card_type": "Power",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "CrimsonMantlePower",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "绯红披风 [1费]：在你的回合开始时，失去1点生命并获得8点格挡。",
+            "mods": [],
+            "rarity": "Rare",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "SHRUG_IT_OFF"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 8,
+                "current_value": 8,
+                "enchanted_value": 8,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              },
+              {
+                "base_value": 1,
+                "current_value": 1,
+                "enchanted_value": 1,
+                "is_modified": false,
+                "name": "Cards",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "耸肩无视*2 [1费]：获得8点格挡。 抽1张牌。",
+            "mods": [],
+            "rarity": "Common",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "BLUDGEON"
+            ],
+            "card_type": "Attack",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 32,
+                "current_value": 32,
+                "enchanted_value": 32,
+                "is_modified": false,
+                "name": "Damage",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 3,
+            "keywords": [],
+            "line": "重锤 [3费]：造成32点伤害。",
+            "mods": [],
+            "rarity": "Uncommon",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          },
+          {
+            "card_ids": [
+              "DEFEND_IRONCLAD"
+            ],
+            "card_type": "Skill",
+            "costs_x": false,
+            "dynamic_values": [
+              {
+                "base_value": 5,
+                "current_value": 5,
+                "enchanted_value": 5,
+                "is_modified": false,
+                "name": "Block",
+                "was_just_upgraded": false
+              }
+            ],
+            "energy_cost": 1,
+            "keywords": [
+              "格挡"
+            ],
+            "line": "防御*2 [1费]：获得5点格挡。",
+            "mods": [],
+            "rarity": "Basic",
+            "star_cost": 0,
+            "star_costs_x": false,
+            "upgraded": false
+          }
+        ],
+        "floor": 48,
+        "gold": 501,
+        "hp": "3/94",
+        "max_energy": 3,
+        "piles": {
+          "discard": [
+            {
+              "card_ids": [
+                "UPPERCUT"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 13,
+                  "current_value": 13,
+                  "enchanted_value": 13,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "Power",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [
+                "易伤",
+                "虚弱"
+              ],
+              "line": "上勾拳 [2费]：造成13点伤害。 给予1层虚弱。 给予1层易伤。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "UPPERCUT"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 13,
+                  "current_value": 13,
+                  "enchanted_value": 13,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "Power",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [
+                "易伤",
+                "虚弱"
+              ],
+              "line": "上勾拳+ [2费]：造成13点伤害。 给予2层虚弱。 给予2层易伤。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "BODY_SLAM"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 0,
+                  "current_value": 8,
+                  "enchanted_value": 0,
+                  "is_modified": true,
+                  "name": "CalculatedDamage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 0,
+                  "current_value": 0,
+                  "enchanted_value": 0,
+                  "is_modified": false,
+                  "name": "CalculationBase",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "ExtraDamage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 0,
+              "keywords": [
+                "格挡"
+              ],
+              "line": "全身撞击+ [0费]：造成你当前格挡值的伤害。 （造成8点伤害）",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "POMMEL_STRIKE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "Cards",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 9,
+                  "current_value": 9,
+                  "enchanted_value": 9,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "剑柄打击 [1费]：造成9点伤害。 抽1张牌。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "POMMEL_STRIKE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "Cards",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 10,
+                  "current_value": 10,
+                  "enchanted_value": 10,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "剑柄打击+ [1费]：造成10点伤害。 抽2张牌。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "PERFECTED_STRIKE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 28,
+                  "enchanted_value": 6,
+                  "is_modified": true,
+                  "name": "CalculatedDamage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "is_modified": false,
+                  "name": "CalculationBase",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "ExtraDamage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [],
+              "line": "完美打击 [2费]：造成28点伤害。 你每有一张名字中含有“打击”的牌，伤害+2。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "PERFECTED_STRIKE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 39,
+                  "enchanted_value": 6,
+                  "is_modified": true,
+                  "name": "CalculatedDamage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "is_modified": false,
+                  "name": "CalculationBase",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "ExtraDamage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [],
+              "line": "完美打击+ [2费]：造成39点伤害。 你每有一张名字中含有“打击”的牌，伤害+3。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "HEMOKINESIS"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 20,
+                  "current_value": 20,
+                  "enchanted_value": 20,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "HpLoss",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "御血术+ [1费]：失去2点生命。 造成20点伤害。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "STRIKE_IRONCLAD"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "打击*3 [1费]：造成6点伤害。",
+              "mods": [],
+              "rarity": "Basic",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "TAUNT"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 7,
+                  "current_value": 7,
+                  "enchanted_value": 7,
+                  "is_modified": false,
+                  "name": "Block",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "VulnerablePower",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "易伤",
+                "格挡"
+              ],
+              "line": "挑衅 [1费]：获得7点格挡。 给予1层易伤。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "BLOODLETTING"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "Energy",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "HpLoss",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 0,
+              "keywords": [],
+              "line": "放血 [0费]：失去3点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "BLOODLETTING"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "Energy",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "HpLoss",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 0,
+              "keywords": [],
+              "line": "放血+ [0费]：失去3点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "EXTERMINATE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 4,
+                  "current_value": 4,
+                  "enchanted_value": 4,
+                  "is_modified": false,
+                  "name": "Repeat",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "杀灭 [1费]：对所有敌人造成3点伤害4次。",
+              "mods": [],
+              "rarity": "Event",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "FLAME_BARRIER"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 12,
+                  "current_value": 12,
+                  "enchanted_value": 12,
+                  "is_modified": false,
+                  "name": "Block",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 4,
+                  "current_value": 4,
+                  "enchanted_value": 4,
+                  "is_modified": false,
+                  "name": "DamageBack",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [
+                "格挡"
+              ],
+              "line": "火焰屏障 [2费]：获得12点格挡。 你在这个回合每受到一次攻击，都会对攻击者造成4点伤害。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "INFLAME"
+              ],
+              "card_type": "Power",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "StrengthPower",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "力量"
+              ],
+              "line": "燃烧+ [1费]：获得3点力量。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "BASH"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 10,
+                  "current_value": 10,
+                  "enchanted_value": 10,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "VulnerablePower",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [
+                "易伤"
+              ],
+              "line": "痛击+ [2费]：造成10点伤害。 给予3层易伤。",
+              "mods": [],
+              "rarity": "Basic",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "SHRUG_IT_OFF"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 8,
+                  "current_value": 8,
+                  "enchanted_value": 8,
+                  "is_modified": false,
+                  "name": "Block",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "Cards",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "格挡"
+              ],
+              "line": "耸肩无视*2 [1费]：获得8点格挡。 抽1张牌。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "BLUDGEON"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 32,
+                  "current_value": 32,
+                  "enchanted_value": 32,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 3,
+              "keywords": [],
+              "line": "重锤 [3费]：造成32点伤害。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            }
+          ],
+          "draw": [
+            {
+              "card_ids": [
+                "POMMEL_STRIKE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "Cards",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 10,
+                  "current_value": 10,
+                  "enchanted_value": 10,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "剑柄打击+ [1费]：造成10点伤害。 抽2张牌。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "TRUE_GRIT"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 9,
+                  "current_value": 9,
+                  "enchanted_value": 9,
+                  "is_modified": false,
+                  "name": "Block",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "格挡",
+                "消耗"
+              ],
+              "line": "坚毅+ [1费]：获得9点格挡。 消耗1张牌。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "PERFECTED_STRIKE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 39,
+                  "enchanted_value": 6,
+                  "is_modified": true,
+                  "name": "CalculatedDamage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "is_modified": false,
+                  "name": "CalculationBase",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 3,
+                  "current_value": 3,
+                  "enchanted_value": 3,
+                  "is_modified": false,
+                  "name": "ExtraDamage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [],
+              "line": "完美打击+ [2费]：造成39点伤害。 你每有一张名字中含有“打击”的牌，伤害+3。",
+              "mods": [],
+              "rarity": "Common",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "COLOSSUS"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 8,
+                  "current_value": 8,
+                  "enchanted_value": 8,
+                  "is_modified": false,
+                  "name": "Block",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "Colossus",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "易伤",
+                "格挡"
+              ],
+              "line": "巨像+ [1费]：获得8点格挡。 在本回合中，有易伤状态的敌人对你造成的伤害降低50%。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "HEMOKINESIS"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 20,
+                  "current_value": 20,
+                  "enchanted_value": 20,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "HpLoss",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "御血术+ [1费]：失去2点生命。 造成20点伤害。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "WHIRLWIND"
+              ],
+              "card_type": "Attack",
+              "costs_x": true,
+              "dynamic_values": [
+                {
+                  "base_value": 8,
+                  "current_value": 10,
+                  "enchanted_value": 10,
+                  "is_modified": true,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 0,
+              "keywords": [
+                "附魔"
+              ],
+              "line": "旋风斩+ [X费]：对所有敌人造成10点伤害X次。",
+              "mods": [
+                "Enchantment",
+                "锋利"
+              ],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            }
+          ],
+          "exhaust": [
+            {
+              "card_ids": [
+                "FIEND_FIRE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 7,
+                  "current_value": 7,
+                  "enchanted_value": 7,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 2,
+              "keywords": [
+                "消耗"
+              ],
+              "line": "恶魔之焰 [2费]：消耗所有手牌。 每张被消耗的牌造成7点伤害。 消耗。",
+              "mods": [
+                "Exhaust"
+              ],
+              "rarity": "Rare",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "STRIKE_IRONCLAD"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [],
+              "line": "打击 [1费]：造成6点伤害。",
+              "mods": [],
+              "rarity": "Basic",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "DISMANTLE"
+              ],
+              "card_type": "Attack",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 8,
+                  "current_value": 8,
+                  "enchanted_value": 8,
+                  "is_modified": false,
+                  "name": "Damage",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "易伤"
+              ],
+              "line": "拆卸 [1费]：造成8点伤害。 如果该敌人有易伤状态，则攻击两次。",
+              "mods": [],
+              "rarity": "Uncommon",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "DOUBT"
+              ],
+              "card_type": "Curse",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 1,
+                  "current_value": 1,
+                  "enchanted_value": 1,
+                  "is_modified": false,
+                  "name": "WeakPower",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": -1,
+              "keywords": [
+                "虚弱"
+              ],
+              "line": "疑虑 [0费]：不能被打出。 在你的回合结束时，如果这张牌在你的手牌中，获得1层虚弱。",
+              "mods": [
+                "Unplayable"
+              ],
+              "rarity": "Curse",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            },
+            {
+              "card_ids": [
+                "OFFERING"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "is_modified": false,
+                  "name": "Cards",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 2,
+                  "current_value": 2,
+                  "enchanted_value": 2,
+                  "is_modified": false,
+                  "name": "Energy",
+                  "was_just_upgraded": false
+                },
+                {
+                  "base_value": 6,
+                  "current_value": 6,
+                  "enchanted_value": 6,
+                  "is_modified": false,
+                  "name": "HpLoss",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 0,
+              "keywords": [
+                "消耗"
+              ],
+              "line": "祭品+ [0费]：失去6点生命。 获得res://images/packed/sprite_fonts/ironclad_energy_icon.pngres://images/packed/sprite_fonts/ironclad_energy_icon.png。 抽5张牌。 消耗。",
+              "mods": [
+                "Exhaust"
+              ],
+              "rarity": "Rare",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": true
+            },
+            {
+              "card_ids": [
+                "DEFEND_IRONCLAD"
+              ],
+              "card_type": "Skill",
+              "costs_x": false,
+              "dynamic_values": [
+                {
+                  "base_value": 5,
+                  "current_value": 5,
+                  "enchanted_value": 5,
+                  "is_modified": false,
+                  "name": "Block",
+                  "was_just_upgraded": false
+                }
+              ],
+              "energy_cost": 1,
+              "keywords": [
+                "格挡"
+              ],
+              "line": "防御 [1费]：获得5点格挡。",
+              "mods": [],
+              "rarity": "Basic",
+              "star_cost": 0,
+              "star_costs_x": false,
+              "upgraded": false
+            }
+          ]
+        },
+        "potions": [
+          {
+            "description": null,
+            "discard": false,
+            "i": 0,
+            "is_queued": false,
+            "line": "0: 空",
+            "occupied": false,
+            "potion_id": null,
+            "rarity": null,
+            "target": null,
+            "targets": [],
+            "usable": false
+          },
+          {
+            "description": null,
+            "discard": false,
+            "i": 1,
+            "is_queued": false,
+            "line": "1: 空",
+            "occupied": false,
+            "potion_id": null,
+            "rarity": null,
+            "target": null,
+            "targets": [],
+            "usable": false
+          },
+          {
+            "description": null,
+            "discard": false,
+            "i": 2,
+            "is_queued": false,
+            "line": "2: 空",
+            "occupied": false,
+            "potion_id": null,
+            "rarity": null,
+            "target": null,
+            "targets": [],
+            "usable": false
+          }
+        ],
+        "relic_descriptions": [
+          "在战斗结束时，回复[green]6[/green]点生命。",
+          "到达[gold]休息处[/gold]后的下一场战斗开始时额外获得[img]res://images/packed/sprite_fonts/ironclad_energy_icon.png[/img][img]res://images/packed/sprite_fonts/ironclad_energy_icon.png[/img]。",
+          "在每场战斗开始时，给于所有敌人[blue]1[/blue]层[gold]虚弱[/gold]。",
+          "在每个回合开始时获得[img]res://images/packed/sprite_fonts/ironclad_energy_icon.png[/img]。这件遗物会在[blue]5[/blue]场战斗后熄灭。可以在[gold]休息处[/gold]为其[gold]添火[/gold]。",
+          "在你的回合开始时，对所有敌人造成[blue]3[/blue]点伤害。",
+          "当你在战斗中第一次打出能力牌时，获得[blue]7[/blue]点[gold]格挡[/gold]。",
+          "你在[gold]?[/gold]房间中不会再遭遇常规战斗。",
+          "每两场战斗，你的卡牌奖励就会额外包含一张能力牌。",
+          "在每场战斗开始时，获得[blue]4[/blue]层[gold]覆甲[/gold]。",
+          "你每回合从你的手牌打出的第[blue]5[/blue]张牌可以被免费打出。",
+          "拾起时，将你的最大生命值提升[blue]14[/blue]。",
+          "你在每场战斗开始时的[gold]手牌[/gold]，将被[gold]升级[/gold]。",
+          "如果你在战斗结束时生命值等于或低于[blue]50%[/blue]，回复[green]12[/green]点生命。"
+        ],
+        "relic_ids": [
+          "BURNING_BLOOD",
+          "VENERABLE_TEA_SET",
+          "RED_MASK",
+          "PUMPKIN_CANDLE",
+          "MERCURY_HOURGLASS",
+          "PERMAFROST",
+          "JUZU_BRACELET",
+          "LASTING_CANDY",
+          "GORGET",
+          "BRILLIANT_SCARF",
+          "MANGO",
+          "BELLOWS",
+          "MEAT_ON_THE_BONE"
+        ],
+        "relic_stacks": [
+          null,
+          null,
+          null,
+          6,
+          null,
+          null,
+          null,
+          0,
+          null,
+          1,
+          null,
+          null,
+          null
+        ],
+        "relics": [
+          "燃烧之血",
+          "古茶具套装",
+          "红面具",
+          "南瓜蜡烛",
+          "水银沙漏",
+          "永冻冰晶",
+          "佛珠手链",
+          "吃不完的糖",
+          "护喉甲",
+          "艳丽围巾",
+          "芒果",
+          "风箱",
+          "带骨肉"
+        ]
+      },
+      "screen": "COMBAT",
+      "session": {
+        "control_scope": "local_player",
+        "mode": "singleplayer",
+        "phase": "run"
+      },
+      "supported": true,
+      "turn": 9
+    }
+  }
+}

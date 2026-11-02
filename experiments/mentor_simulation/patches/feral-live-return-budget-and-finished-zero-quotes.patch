@@ -1,0 +1,629 @@
+diff --git a/sts2-rs/crates/sts2-content/src/cards/defect/helpers.rs b/sts2-rs/crates/sts2-content/src/cards/defect/helpers.rs
+index 5a949fc..1f30030 100644
+--- a/sts2-rs/crates/sts2-content/src/cards/defect/helpers.rs
++++ b/sts2-rs/crates/sts2-content/src/cards/defect/helpers.rs
+@@ -39,7 +39,10 @@ pub(crate) fn apply_power_to_player(state: &mut CombatState, kind: PowerKind, am
+         id: new_id,
+         kind,
+         amount,
+-        counter: 0,
++        // Legacy roots without a creature mirror still use native fresh-Feral history initialization.
++        counter: if kind == PowerKind::Feral {
++            state.combat_log.zero_cost_attacks_played_this_turn.min(i32::MAX as u32) as i32
++        } else { 0 },
+         applier: None,
+         skip_next_tick: false,
+     });
+diff --git a/sts2-rs/crates/sts2-content/src/cards/defect/tests.rs b/sts2-rs/crates/sts2-content/src/cards/defect/tests.rs
+index 010d784..0597a7c 100644
+--- a/sts2-rs/crates/sts2-content/src/cards/defect/tests.rs
++++ b/sts2-rs/crates/sts2-content/src/cards/defect/tests.rs
+@@ -1304,6 +1304,152 @@ fn l0be_feral_grants_one_feral() {
+     assert_player_power(&state, PowerKind::Feral, 1);
+ }
+ 
++/// Keep real card dispatch active with a durable opponent and controlled hand/draw piles.
++fn feral_budget_fixture(mirror: bool) -> CombatState {
++    crate::cards::dispatch::ensure_installed();
++    let (mut state, _) = fresh_state(CardId::GoForTheEyes, 3, 0);
++    state.cards.clear();
++    state.player.play.clear();
++    state.player.hand.clear();
++    state.player.draw.clear();
++    state.player.energy = 20;
++    state.player.max_energy = 20;
++    state.phase = sts2_core::CombatPhase::PlayerPlayPhase;
++    state.creatures[0].current_hp = 1000;
++    state.creatures[0].max_hp = 1000;
++    if mirror {
++        state.init_player_creature();
++    }
++    state
++}
++
++/// Insert an actual registered card; extra iterations use the existing replay-count machinery.
++fn feral_budget_card(state: &mut CombatState, id: CardId, replay: i32, draw: bool) -> sts2_core::CardUid {
++    let mut card = crate::cards::spec_index::card_pod_from_id(id, false).expect("registered card");
++    card.uid = sts2_core::CardUid::new(state.cards.len() as u32 + 1).expect("non-zero card uid");
++    card.base_replay_count = replay;
++    let uid = card.uid;
++    state.cards.push(card);
++    if draw {
++        state.player.draw.push(uid);
++    } else {
++        state.player.hand.push(uid);
++    }
++    uid
++}
++
++/// Observe the owned instance rather than assuming its mirror/legacy storage location.
++fn feral_budget_counter(state: &CombatState) -> i32 {
++    state.player_power_uids().iter().filter_map(|uid| state.powers.get_by_id(uid.0))
++        .find(|power| power.kind == PowerKind::Feral).expect("Feral installed").counter
++}
++
++/// Base and Echo iterations count separately; active Feral consumes only actual series returns.
++#[test]
++fn repair51_feral_active_replays_separate_finished_history_from_return_budget() {
++    for (base_replay, echo, expected_finished) in [(1, false, 2), (0, true, 2), (1, true, 3)] {
++        for recording in [false, true] {
++            let mut state = feral_budget_fixture(true);
++            if recording {
++                // Late opt-in records rows without claiming this constructed root covers combat birth.
++                state.combat_log.event_log.set_public_history_recording(true);
++            }
++            let player = state.player.creature_uid.expect("player mirror");
++            sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Feral, 2);
++            if echo {
++                sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::EchoForm, 1);
++            }
++            let eyes = feral_budget_card(&mut state, CardId::GoForTheEyes, base_replay, false);
++            let claw = feral_budget_card(&mut state, CardId::Claw, 0, false);
++            let _ = sts2_core::combat_loop::play_card(&mut state, 0, Some(0));
++            assert!(state.player.hand.contains(&eyes));
++            assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, expected_finished);
++            assert_eq!(feral_budget_counter(&state), 1);
++            if recording {
++                assert_eq!(state.combat_log.event_log.public_history().unwrap().plays.len(), expected_finished as usize);
++            }
++            let index = state.player.hand.iter().position(|uid| *uid == claw).unwrap();
++            let _ = sts2_core::combat_loop::play_card(&mut state, index as u8, Some(0));
++            assert!(state.player.hand.contains(&claw));
++            assert_eq!(feral_budget_counter(&state), 2);
++            let index = state.player.hand.iter().position(|uid| *uid == claw).unwrap();
++            let _ = sts2_core::combat_loop::play_card(&mut state, index as u8, Some(0));
++            assert!(state.player.discard.contains(&claw));
++            assert_eq!(feral_budget_counter(&state), 2, "a discarded attack consumes no return");
++            assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, expected_finished + 2);
++        }
++    }
++}
++
++/// Fresh Feral seeds all prior finished zero quotes; restacking preserves its existing budget.
++#[test]
++fn repair51_feral_fresh_seed_and_restack_preserve_distinct_native_counts() {
++    for mirror in [false, true] {
++        let mut state = feral_budget_fixture(mirror);
++        feral_budget_card(&mut state, CardId::GoForTheEyes, 1, false);
++        let _ = sts2_core::combat_loop::play_card(&mut state, 0, Some(0));
++        assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 2);
++        feral_budget_card(&mut state, CardId::Feral, 0, mirror);
++        if mirror {
++            // Native auto-acquired Feral initializes from the same completed history as a hand play.
++            assert!(sts2_core::combat_loop::auto_play_card_from_draw_top(&mut state, false));
++        } else {
++            let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
++        }
++        assert_eq!(feral_budget_counter(&state), 2);
++        feral_budget_card(&mut state, CardId::Feral, 0, false);
++        let _ = sts2_core::combat_loop::play_card(&mut state, 0, None);
++        assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 2);
++        assert_eq!(feral_budget_counter(&state), 2);
++        let claw = feral_budget_card(&mut state, CardId::Claw, 0, false);
++        let _ = sts2_core::combat_loop::play_card(&mut state, 0, Some(0));
++        assert!(state.player.discard.contains(&claw));
++        assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 3);
++        assert_eq!(feral_budget_counter(&state), 2);
++        assert_eq!(play_feral(&mut state, None), EffectResult::Resolved);
++        assert_eq!(feral_budget_counter(&state), 2, "restack does not reseed from newer history");
++        let claw = feral_budget_card(&mut state, CardId::Claw, 0, false);
++        let _ = sts2_core::combat_loop::play_card(&mut state, 0, Some(0));
++        assert!(state.player.hand.contains(&claw));
++        assert_eq!(feral_budget_counter(&state), 3);
++    }
++}
++
++/// A real player turn resets the completed history and Feral's owned-side return counter.
++#[test]
++fn repair51_feral_turn_start_resets_history_and_active_budget() {
++    let mut state = feral_budget_fixture(true);
++    let player = state.player.creature_uid.expect("player mirror");
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Feral, 1);
++    feral_budget_card(&mut state, CardId::Claw, 0, false);
++    let _ = sts2_core::combat_loop::play_card(&mut state, 0, Some(0));
++    assert_eq!(feral_budget_counter(&state), 1);
++    assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 1);
++    let _ = sts2_core::combat_loop::start_player_turn(&mut state);
++    assert_eq!(feral_budget_counter(&state), 0);
++    assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 0);
++}
++
++/// Auto-play is free to execute, but only its immutable zero quote counts or returns through Feral.
++#[test]
++fn repair51_feral_auto_replays_preserve_quote_before_self_cost_mutation() {
++    let mut state = feral_budget_fixture(true);
++    let player = state.player.creature_uid.expect("player mirror");
++    sts2_core::card_effects::apply_power_to_creature(&mut state, player, PowerKind::Feral, 2);
++    let momentum = feral_budget_card(&mut state, CardId::MomentumStrike, 1, true);
++    assert!(sts2_core::combat_loop::auto_play_card_from_draw_top(&mut state, false));
++    assert_eq!(state.cards[momentum.get() as usize - 1].cost, 0);
++    assert!(state.player.discard.contains(&momentum));
++    assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 0, "all replays retain the original one-energy quote");
++    assert_eq!(feral_budget_counter(&state), 0);
++    let eyes = feral_budget_card(&mut state, CardId::GoForTheEyes, 1, true);
++    assert!(sts2_core::combat_loop::auto_play_card_from_draw_top(&mut state, false));
++    assert!(state.player.hand.contains(&eyes));
++    assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 2);
++    assert_eq!(feral_budget_counter(&state), 1);
++    assert_eq!(state.player.energy, 20);
++}
++
+ /// Bead `sts2-rs-ko4nm`: HotfixPower : TemporaryFocusPower folds
+ /// +2 Focus into the player on apply (reverted at owner's turn
+ /// end by `hooks::after_turn_end`). Playing Hotfix must leave
+diff --git a/sts2-rs/crates/sts2-core/src/card_effects.rs b/sts2-rs/crates/sts2-core/src/card_effects.rs
+index 0d2eac2..bd876ef 100644
+--- a/sts2-rs/crates/sts2-core/src/card_effects.rs
++++ b/sts2-rs/crates/sts2-core/src/card_effects.rs
+@@ -1167,7 +1167,10 @@ fn apply_power_to_creature_inner(
+         id: new_id,
+         kind,
+         amount,
+-        counter: 0,
++        // Fresh Feral seeds all finished zero-cost attacks; existing instances keep their live budget.
++        counter: if kind == PowerKind::Feral && state.player.creature_uid == Some(target_uid) {
++            state.combat_log.zero_cost_attacks_played_this_turn.min(i32::MAX as u32) as i32
++        } else { 0 },
+         applier: None,
+         // Bead `sts2-rs-st9tl`: defer the first decrement tick for
+         // Vulnerable / Weak / Frail, but ONLY when the target is the
+@@ -1645,7 +1648,10 @@ pub fn apply_power_to_creature_with_applier(
+         id: new_id,
+         kind,
+         amount,
+-        counter: 0,
++        // The applier-aware fresh path has the same AfterApplied history initialization.
++        counter: if kind == PowerKind::Feral && state.player.creature_uid == Some(target_uid) {
++            state.combat_log.zero_cost_attacks_played_this_turn.min(i32::MAX as u32) as i32
++        } else { 0 },
+         applier,
+         // Beads `sts2-rs-st9tl` (player V/W/F) + `sts2-rs-ybtmu` (enemy
+         // Ritual): same skip-first-tick semantics as
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+index d0b5d6b..3958077 100644
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -7893,6 +7893,31 @@ pub(crate) fn check_for_empty_hand(state: &mut CombatState) {
+     }
+ }
+ 
++/// Count each finished iteration from its immutable ResourceInfo quote, even when tracing is disabled.
++fn record_zero_cost_attack_finished(state: &mut CombatState, kind: cards::CardType, energy_value: i32) {
++    if kind == cards::CardType::Attack && energy_value == 0 {
++        state.combat_log.zero_cost_attacks_played_this_turn = state.combat_log
++            .zero_cost_attacks_played_this_turn.saturating_add(1);
++    }
++}
++
++/// Read the live Feral instance; its return budget is distinct from completed attack history.
++fn feral_returns_left(state: &CombatState) -> i32 {
++    state.player_power_uids().iter().filter_map(|uid|state.powers.get_by_id(uid.0))
++        .find(|power|power.kind == crate::PowerKind::Feral)
++        .map_or(0,|power|power.amount.saturating_sub(power.counter).max(0))
++}
++
++/// Only a real Feral result-pile override consumes its live budget; restacking preserves this counter.
++fn consume_feral_return(state: &mut CombatState) {
++    for uid in state.player_power_uids() {
++        if let Some(power) = state.powers.get_mut_by_id(uid.0).filter(|power|power.kind == crate::PowerKind::Feral) {
++            power.counter = power.counter.saturating_add(1);
++        }
++    }
++}
++
++/// Settle a hand-played card and each original replay after its choices have resolved.
+ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) -> StepResult {
+     let CardPlayFinish {
+         card,
+@@ -7966,6 +7991,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+     // loop below bumps once more per replay (each replay is its own C#
+     // `CardPlayFinished`). GoldAxe is the sole reader of this counter.
+     crate::event_log::finish_public_play(state, card_uid, false);
++    record_zero_cost_attack_finished(state, card.card_type, paid_energy);
+     state.combat_log.player_card_plays_this_combat = state
+         .combat_log
+         .player_card_plays_this_combat
+@@ -8178,6 +8204,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         // `History.CardPlaysFinished.Count` (the initial play was bumped once
+         // above before the effect dispatch).
+         crate::event_log::finish_public_play(state, card_uid, true);
++        record_zero_cost_attack_finished(state, card.card_type, paid_energy);
+         state.combat_log.player_card_plays_this_combat = state
+             .combat_log
+             .player_card_plays_this_combat
+@@ -8337,6 +8364,7 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+             // combat-wide counter feeding GoldAxe's `CalculatedDamageVar`
+             // equal to `History.CardPlaysFinished.Count`.
+             crate::event_log::finish_public_play(state, card_uid, true);
++            record_zero_cost_attack_finished(state, card.card_type, paid_energy);
+             state.combat_log.player_card_plays_this_combat = state
+                 .combat_log
+                 .player_card_plays_this_combat
+@@ -8429,20 +8457,17 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+     // FeralPower (C# `FeralPower.ModifyCardPlayResultPileTypeAndPosition`): the
+     // first `Amount` 0-energy owner Attacks each turn return to Hand/Top instead
+     // of their normal result pile (exhaust for DramaticEntrance, discard for a
+-    // plain 0-cost Attack). `resolved_cost` is the energy actually spent
+-    // (`ResourceInfo.EnergyValue`), not the printed cost. The per-turn tally
+-    // `zero_cost_attacks_played_this_turn` is C#'s `zeroCostAttacksPlayed`
+-    // (seeded on AfterApplied from this turn's history, reset AfterSideTurnStart):
+-    // it is incremented for EVERY 0-cost owner Attack below so a pre-Feral attack
+-    // still counts against the budget. Corruption's Skill→Exhaust override is
+-    // disjoint (Skills vs Attacks), so no precedence conflict.
+-    let is_zero_cost_attack = card.card_type == cards::CardType::Attack && resolved_cost == 0;
++    // plain 0-cost Attack). ResourceInfo keeps the original energy quote.
++    // Feral seeds its counter from completed history on fresh application, then
++    // increments only for actual returns, once per result-pile override.
++    let is_zero_cost_attack = card.card_type == cards::CardType::Attack && paid_energy == 0;
+     let feral_returns_to_hand = is_zero_cost_attack
+         && !played_card_is_dupe
+         && state.pending_choice.is_none()
+-        && (state.combat_log.zero_cost_attacks_played_this_turn as i32)
+-            < state.player_power_amount(crate::PowerKind::Feral);
++        && state.player.play.contains(&card_uid)
++        && feral_returns_left(state) > 0;
+     if feral_returns_to_hand {
++        consume_feral_return(state);
+         // C# `FeralPower.cs:60` calls `Flash()` in
+         // `AfterModifyingCardPlayResultPileOrPosition`, which `Hook` fires only
+         // on the models that actually changed the result pile — i.e. exactly
+@@ -8655,17 +8680,6 @@ pub(crate) fn finish_card_play(state: &mut CombatState, fin: CardPlayFinish) ->
+         state.player.skills_played_this_turn =
+             state.player.skills_played_this_turn.saturating_add(1);
+     }
+-    // FeralPower budget tally (C# `zeroCostAttacksPlayed`): increment for EVERY
+-    // 0-energy owner Attack played this turn, whether or not Feral redirected it
+-    // above — a 0-cost attack played before Feral was applied still consumes the
+-    // budget. Read BEFORE this bump by the `feral_returns_to_hand` gate.
+-    if is_zero_cost_attack {
+-        state.combat_log.zero_cost_attacks_played_this_turn = state
+-            .combat_log
+-            .zero_cost_attacks_played_this_turn
+-            .saturating_add(1);
+-    }
+-
+     // Bead `sts2-rs-3k85q`: removed a duplicate `move_card(Play→Discard)`
+     // that lived here as a stale fallback from the pre-exhaust-registry
+     // refactor — the if/else above already routes the played card to its
+@@ -10392,6 +10406,7 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+     // curses/status returned early above (C# `MoveToResultPileWithoutPlaying`
+     // records no `CardPlayFinished`), so they stay excluded.
+     crate::event_log::finish_public_play(state, top_uid, false);
++    record_zero_cost_attack_finished(state, top_card_type, auto_energy_value);
+     state.combat_log.player_card_plays_this_combat = state
+         .combat_log
+         .player_card_plays_this_combat
+@@ -10565,6 +10580,7 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+             );
+             resolve_inline_auto_play_choices(state);
+             crate::event_log::finish_public_play(state, top_uid, true);
++            record_zero_cost_attack_finished(state, top_card_type, auto_energy_value);
+             state.combat_log.player_card_plays_this_combat = state
+                 .combat_log
+                 .player_card_plays_this_combat
+@@ -10611,11 +10627,10 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+     // FeralPower redirect for an auto-played 0-energy owner Attack (Mayhem /
+     // Cascade / Catastrophe), mirroring the hand-play path in `finish_card_play`:
+     // the first `Amount` 0-cost owner Attacks each turn return to Hand/Top
+-    // instead of exhaust/discard. `auto_resolved_cost` is C#
+-    // `EnergyCost.GetResolved()` (== ResourceInfo.EnergyValue). The tally is
+-    // bumped once below for every 0-cost auto-played Attack.
++    // instead of exhaust/discard. The captured ResourceInfo.EnergyValue is
++    // independent of zero energy payment and any later cost mutation.
+     let auto_is_zero_cost_attack =
+-        top_card_type == cards::CardType::Attack && auto_resolved_cost == 0;
++        top_card_type == cards::CardType::Attack && auto_energy_value == 0;
+     if state.player.play.contains(&top_uid) {
+         let self_exhausts = crate::card_effects::card_exhausts_inst(&state.cards[top_idx]);
+         // CorruptionPower routes the owner's played Skills to Exhaust — the
+@@ -10630,9 +10645,9 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+             && state.cards[top_idx].combat_var(VarKey::IsDupe) != 0;
+         let feral_returns_to_hand = auto_is_zero_cost_attack
+             && !feral_skips_dupe
+-            && (state.combat_log.zero_cost_attacks_played_this_turn as i32)
+-                < state.player_power_amount(crate::PowerKind::Feral);
++            && feral_returns_left(state) > 0;
+         if feral_returns_to_hand {
++            consume_feral_return(state);
+             // C# `FeralPower.cs:60` — the auto-play mirror of the
+             // `finish_card_play` emission (Havoc / Mayhem / Cascade); see the
+             // comment there for the hook and the ordering deviation.
+@@ -10797,16 +10812,6 @@ pub(crate) fn finish_auto_played_card(state: &mut CombatState, fin: AutoPlayFini
+         }
+     }
+ 
+-    // FeralPower budget tally: an auto-played 0-cost owner Attack consumes the
+-    // budget too (C# records a `CardPlayStartedEntry` for auto-plays). Bumped
+-    // after the routing read above, matching the hand-play path.
+-    if auto_is_zero_cost_attack {
+-        state.combat_log.zero_cost_attacks_played_this_turn = state
+-            .combat_log
+-            .zero_cost_attacks_played_this_turn
+-            .saturating_add(1);
+-    }
+-
+     // Bead `sts2-rs-afterimage-nested`: restore the caller's before-play
+     // snapshot transients that this nested play armed/consumed. See the
+     // `saved_play_snapshots` capture above. Mirrors C#'s per-card
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+index 1158910..86960c6 100644
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -8709,12 +8709,13 @@ pub fn after_side_turn_start(
+             effects.push(Effect::RemovePower { listener });
+             Some(effects)
+         }
+-        PowerKind::Slow => {
++        PowerKind::Slow | PowerKind::Feral => {
+             // C# `SlowPower.AfterSideTurnStart`
+             // (decompiled MegaCrit.Sts2.Core.Models.Powers/SlowPower.cs:51-60):
+             // `if side == Owner.Side: SlowAmount = 0`. Reset the per-instance
+             // counter (SlowAmount) at the owner's turn start so the per-turn
+             // damage ramp restarts. `amount` (the stack) is untouched.
++            // Feral resets its independently consumed return budget at the same owner-side boundary.
+             let owner = owner_of_listener(state, listener)?;
+             if creature_ref_side(owner) != ctx.side {
+                 return None;
+@@ -17235,6 +17236,7 @@ const AFTER_SIDE_TURN_START_KINDS: crate::PowerKindSet = crate::PowerKindSet::fr
+     PowerKind::Doom,
+     PowerKind::DoubleDamage,
+     PowerKind::DrawCardsNextTurn,
++    PowerKind::Feral,
+     PowerKind::Focus,
+     PowerKind::Furnace,
+     PowerKind::Inferno,
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+index fc32bdd..dded7fa 100644
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -3202,17 +3202,9 @@ pub struct TurnEvents {
+     /// Read by `HelixDrill`'s `CalculatedHits` (hits = energy spent this
+     /// turn − the card's own effective cost). HelixDrill.cs:30-43.
+     pub energy_spent_this_turn: i32,
+-    /// Count of 0-energy **Attack** cards the player has played this turn
+-    /// (incl. auto-plays), reset at the player's side-turn start via
+-    /// [`Self::reset_per_turn`]. Drives
+-    /// `FeralPower.ModifyCardPlayResultPileTypeAndPosition` (C# `FeralPower.cs`):
+-    /// the first `Amount` such attacks return to Hand/Top instead of
+-    /// exhaust/discard. C# tracks this via a per-power `zeroCostAttacksPlayed`
+-    /// seeded (AfterApplied) from the turn's history and reset
+-    /// (AfterSideTurnStart); a plain per-turn tally is the equivalent — a
+-    /// pre-Feral 0-cost attack still counts against the budget (it incremented
+-    /// the tally) even though it wasn't redirected. Reads the energy ACTUALLY
+-    /// spent (`resolved_cost`/`ResourceInfo.EnergyValue`), not printed cost.
++    /// Completed 0-EnergyValue Attack iterations this turn, including auto-plays and repeats.
++    /// Seeds a fresh Feral instance; its live return budget remains in Power.counter.
++    /// EnergyValue is the captured quote, independent of energy payment; reset each player turn.
+     pub zero_cost_attacks_played_this_turn: u32,
+     /// Count of player card plays FINISHED this player-turn (incl. auto-plays),
+     /// bumped at the same sites as [`Self::player_card_plays_this_combat`].
+diff --git a/sts2-rs/crates/sts2-wire/src/emit/combat.rs b/sts2-rs/crates/sts2-wire/src/emit/combat.rs
+index e1914e1..246729d 100644
+--- a/sts2-rs/crates/sts2-wire/src/emit/combat.rs
++++ b/sts2-rs/crates/sts2-wire/src/emit/combat.rs
+@@ -11,8 +11,8 @@
+ //!
+ //!   * `rng` (`Xoshiro256PlusPlus`) — only the wire-schema-recorded
+ //!     `rng.seed` survives; the in-process cursor is opaque.
+-//!   * `combat_log` (`TurnEvents`) — append-only buffer, not in the
+-//!     wire format.
++//!   * `combat_log` (`TurnEvents`) — append-only buffer, apart from
++//!     explicitly carried scalar history such as the zero-cost Attack count.
+ //!   * Hook listeners — closure state on the relic / power buses,
+ //!     reconstructed lazily from the relic/power kinds on the next
+ //!     `apply()`.
+@@ -502,6 +502,8 @@ pub fn powers_to_value(uids: &[PowerUid], arena: &[Power], path: &str) -> Result
+         // `SlowAmount * 10` (the per-instance `counter`, bumped per card
+         // played and reset at the owner's turn start).
+         let display_amount = match pow.kind {
++            // Native Feral displays remaining returns, independently of completed zero-cost history.
++            PowerKind::Feral => pow.amount.saturating_sub(pow.counter).max(0),
+             PowerKind::Slow => pow.counter.saturating_mul(10),
+             // Panache's counter is CardsLeft; -1 is its pre-source-play initialization marker.
+             PowerKind::Panache => if pow.counter == -1 { 5 } else { pow.counter },
+@@ -714,6 +716,11 @@ pub fn combat_state_to_value(state: &CombatState) -> Result<Value, EmitError> {
+             state.player.cards_played_this_turn.to_vec(),
+         );
+     }
++    // Fresh Feral uses all completed iterations, even when an active instance consumed fewer returns.
++    if state.combat_log.zero_cost_attacks_played_this_turn != 0 {
++        set(&mut player, "zero_cost_attacks_played_this_turn",
++            state.combat_log.zero_cost_attacks_played_this_turn);
++    }
+     // ChainsOfBinding's once-per-turn Bound gate — same rationale as the
+     // buckets above: dropping it re-opens vetoed plays on round-trip.
+     if state.combat_log.chains_bound_card_played_this_turn {
+@@ -1570,6 +1577,66 @@ mod tests {
+         assert_eq!(parsed.wire_version, WIRE_VERSION);
+     }
+ 
++    /// Completed history and a saturated Feral budget remain independent through repeated wire rebuilds.
++    #[test]
++    fn repair51_feral_wire_preserves_counter_and_completed_zero_cost_history() {
++        let mut state = CombatState::default();
++        let id = NonZeroU32::new(1).expect("non-zero power id");
++        state.powers.push(Power {
++            id,
++            kind: PowerKind::Feral,
++            amount: 2,
++            counter: 3,
++            applier: None,
++            skip_next_tick: false,
++        });
++        state.player.powers.push(PowerUid(id));
++        state.combat_log.zero_cost_attacks_played_this_turn = 5;
++        for _ in 0..2 {
++            let value = combat_state_to_value(&state).expect("serializes");
++            assert_eq!(value["player"]["zero_cost_attacks_played_this_turn"], 5);
++            assert_eq!(value["player"]["powers"][0]["display_amount"], 0);
++            assert_eq!(value["player"]["powers"][0]["counter"], 3);
++            state = crate::state_from_json(&value).expect("rebuilds");
++            assert_eq!(state.combat_log.zero_cost_attacks_played_this_turn, 5);
++            assert_eq!(state.powers[0].counter, 3);
++        }
++    }
++
++    /// Feral needs an exact display/history inference or an explicit counter, including saturated budgets.
++    #[test]
++    fn repair51_feral_wire_display_fallback_and_optional_history_validation() {
++        let mut value = combat_state_to_value(&CombatState::default()).expect("serializes");
++        // Rust output round-trips its explicit counter; this input uses the legacy display key.
++        value["player"]["powers"] = serde_json::json!([
++            {"name": PowerKind::Feral.python_name(), "amount": 3, "display": 2}
++        ]);
++        let restored = crate::state_from_json(&value).expect("positive display rebuilds");
++        assert_eq!(restored.powers[0].counter, 1);
++        assert_eq!(restored.combat_log.zero_cost_attacks_played_this_turn, 0);
++        value["player"]["powers"][0]["display"] = serde_json::json!(4);
++        assert!(crate::state_from_json(&value).is_err(), "display cannot exceed the stack");
++        value["player"]["powers"][0]["display"] = serde_json::json!(0);
++        let error = crate::state_from_json(&value).expect_err("unknown saturated budget must fail");
++        assert!(error.to_string().contains("explicit counter"));
++        value["player"]["powers"][0]["counter"] = serde_json::json!(3);
++        let restored = crate::state_from_json(&value).expect("explicit counter overrides ambiguous display");
++        assert_eq!(restored.powers[0].counter, 3);
++        value["player"]["powers"][0].as_object_mut().unwrap().remove("counter");
++        value["player"]["zero_cost_attacks_played_this_turn"] = serde_json::json!(3);
++        let restored = crate::state_from_json(&value).expect("history bounds saturated counter exactly");
++        assert_eq!(restored.powers[0].counter, 3);
++        value["player"]["zero_cost_attacks_played_this_turn"] = serde_json::json!(0);
++        assert!(crate::state_from_json(&value).is_err(), "zero display contradicts a zero history count");
++        value["player"]["powers"][0].as_object_mut().unwrap().remove("display");
++        let restored = crate::state_from_json(&value).expect("known empty history needs no display");
++        assert_eq!(restored.powers[0].counter, 0);
++        value["player"].as_object_mut().unwrap().remove("zero_cost_attacks_played_this_turn");
++        assert!(crate::state_from_json(&value).is_err(), "missing display and history cannot identify a counter");
++        value["player"]["zero_cost_attacks_played_this_turn"] = serde_json::json!(-1);
++        assert!(crate::parse_json(&value).is_err());
++    }
++
+     #[test]
+     fn default_state_has_no_legal_actions_or_choice_and_empty_previews() {
+         let state = CombatState::default();
+diff --git a/sts2-rs/crates/sts2-wire/src/state_dict.rs b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+index 38875dd..8cda951 100644
+--- a/sts2-rs/crates/sts2-wire/src/state_dict.rs
++++ b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+@@ -344,6 +344,8 @@ pub struct ParsedPlayer {
+     pub stars: Option<i32>,
+     pub osty: Option<ParsedOsty>,
+     pub cards_played_this_turn: Option<[u32; 5]>,
++    /// Finished zero-energy Attack iterations; seeds Feral independently of its live return budget.
++    pub zero_cost_attacks_played_this_turn: Option<u32>,
+     /// Run gold. Optional — older producers omit it. Gates in-combat relic
+     /// hooks (SealOfGold spends 5 gold for +1 energy at every player turn
+     /// start); rebuilt without it the hook could never fire — 90 of the 178
+@@ -1159,6 +1161,13 @@ fn parse_player<V: WireValue>(d: &V) -> WireResult<ParsedPlayer> {
+         None => None,
+     };
+ 
++    let zero_cost_attacks_played_this_turn = match extract_optional(d, "zero_cost_attacks_played_this_turn") {
++        Some(v) => Some(v.as_i64().and_then(|n| u32::try_from(n).ok()).ok_or_else(|| {
++            schema_err("$.player.zero_cost_attacks_played_this_turn", "must be a u32 or null")
++        })?),
++        None => None,
++    };
++
+     let bound_card_played_this_turn = match extract_optional(d, "bound_card_played_this_turn") {
+         Some(v) => v.as_bool().ok_or_else(|| {
+             schema_err(
+@@ -1198,6 +1207,7 @@ fn parse_player<V: WireValue>(d: &V) -> WireResult<ParsedPlayer> {
+         stars,
+         osty,
+         cards_played_this_turn,
++        zero_cost_attacks_played_this_turn,
+         gold,
+         bound_card_played_this_turn,
+     })
+@@ -3254,10 +3264,20 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+         let id = NonZeroU32::new(raw).expect("non-zero power id");
+         // A producer that carries the raw per-instance counter wins outright;
+         // the inferences below exist only for the dialects that don't.
+-        let counter = pp.counter.unwrap_or(match pp.kind {
++        let counter = match (pp.counter, pp.kind) {
++            (Some(counter), _) => counter,
++            // Saturated Feral display is exact only when completed history bounds it to the stack.
++            (None, PowerKind::Feral) => match pp.display {
++                Some(display) if display > 0 && display <= pp.amount => pp.amount - display,
++                Some(0) if parsed.player.zero_cost_attacks_played_this_turn
++                    .is_some_and(|count| i64::from(count) == i64::from(pp.amount)) => pp.amount,
++                None if parsed.player.zero_cost_attacks_played_this_turn == Some(0) => 0,
++                _ => return Err(schema_err("$.player.powers",
++                    "Feral requires an explicit counter when display and completed zero-cost history do not identify its return budget")),
++            },
+             // C# `SurroundedPower._facing` is hidden state; the engine
+             // stores it on `counter` (0=Right, 1=Left).
+-            PowerKind::Surrounded => surrounded_facing.unwrap_or(0),
++            (None, PowerKind::Surrounded) => surrounded_facing.unwrap_or(0),
+             // C# `TenderPower.DisplayAmount => CardsPlayedThisTurn`
+             // (`TenderPower.cs:22`). Tender drains 1 Strength AND 1 Dexterity
+             // per card played and gives all of it back at the owning side's
+@@ -3271,7 +3291,7 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+             // Strength and Dexterity that the world had given back and pruned
+             // (13 of the 43 single-field `$.player.powers` records in v17,
+             // shaped `mirror STRENGTH -3 / DEXTERITY -3` vs `world` nothing).
+-            PowerKind::Tender => pp.display.unwrap_or(0),
++            (None, PowerKind::Tender) => pp.display.unwrap_or(0),
+             // Same family, same carrier. C# `PanachePower.DisplayAmount =>
+             // DynamicVars["CardsLeft"]` (`PanachePower.cs:33`) and the engine's
+             // `counter` IS CardsLeft (5 at max, decrement per card, fire and
+@@ -3290,7 +3310,7 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+             // the old 0, and as far as the wire can be pushed without a new
+             // field — the two states are genuinely identical in every value C#
+             // exposes.
+-            PowerKind::Panache => pp.display.unwrap_or(-1),
++            (None, PowerKind::Panache) => pp.display.unwrap_or(-1),
+             // C# `AutomationPower.DisplayAmount => cardsLeft`, counting DOWN
+             // from 10 (`AutomationPower.cs:14,25,41-48`); the engine counts the
+             // same cards UP from 0 to 10, so the two are complements rather
+@@ -3299,7 +3319,7 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+             // `amount` here is the energy the power grants, NOT the cycle
+             // length, so the constant is 10 and not `pp.amount` (the difference
+             // from the WitheringPresence arm above).
+-            PowerKind::Automation => (10 - pp.display.unwrap_or(10)).clamp(0, 10),
++            (None, PowerKind::Automation) => (10 - pp.display.unwrap_or(10)).clamp(0, 10),
+             // GH #363 A1. C# `OrbitPower` keeps `energySpent` (cumulative) and
+             // `triggerCount` privately and publishes only
+             // `DisplayAmount => 4 - energySpent % 4` (`OrbitPower.cs:25`) —
+@@ -3324,9 +3344,9 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+             // allow-list: without it `transplant_hidden` carries the mirror's
+             // own drifting counter straight back over this derivation and the
+             // arm is dead code.
+-            PowerKind::Orbit => (4 - pp.display.unwrap_or(4)).rem_euclid(4),
++            (None, PowerKind::Orbit) => (4 - pp.display.unwrap_or(4)).rem_euclid(4),
+             _ => 0,
+-        });
++        };
+         state.powers.push(Power {
+             id,
+             kind: pp.kind,
+@@ -3350,6 +3370,9 @@ pub fn state_from_dict_impl(parsed: &ParsedState) -> WireResult<CoreCombatState>
+     if let Some(buckets) = parsed.player.cards_played_this_turn {
+         state.player.cards_played_this_turn = buckets;
+     }
++    if let Some(count) = parsed.player.zero_cost_attacks_played_this_turn {
++        state.combat_log.zero_cost_attacks_played_this_turn = count;
++    }
+     // GH #370. `card_plays_started_this_turn` gates card LEGALITY, not damage:
+     // `SlothPower.ShouldPlay` returns `_cardsPlayedThisTurn < Amount` and
+     // `RingingPower.ShouldPlay` refuses an afflicted card once any play has

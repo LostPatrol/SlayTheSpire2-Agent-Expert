@@ -1,0 +1,24 @@
+diff --git a/sts2-rs/crates/sts2-mcts/tests/common/mod.rs b/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
+index fb73d9e..a8e66b4 100644
+--- a/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
++++ b/sts2-rs/crates/sts2-mcts/tests/common/mod.rs
+@@ -118,6 +118,9 @@ pub fn build_handful(
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
++        // Fresh synthetic roots have no completed manual or non-auto plays.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+         sly_this_turn: smallvec::SmallVec::new(),
+@@ -270,6 +273,9 @@ pub fn build_vertical_slice_hp(seed: u64, player_hp: i32, cultist_hp: i32) -> Co
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
++        // Fresh synthetic roots have no completed manual or non-auto plays.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+         sly_this_turn: smallvec::SmallVec::new(),

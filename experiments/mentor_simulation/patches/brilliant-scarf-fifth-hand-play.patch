@@ -1,0 +1,156 @@
+diff --git a/sts2-rs/crates/sts2-content/src/relics/shop_event.rs b/sts2-rs/crates/sts2-content/src/relics/shop_event.rs
+index ea3bb65..c88a001 100644
+--- a/sts2-rs/crates/sts2-content/src/relics/shop_event.rs
++++ b/sts2-rs/crates/sts2-content/src/relics/shop_event.rs
+@@ -2145,11 +2145,8 @@ fn listener_chemical_x_modify_x_value(state: &CombatState, current_x: i32) -> i3
+ 
+ /// `BrilliantScarf::after_card_played` — `self._cards_this_turn += 1`
+ /// (Python `sts2-rl-agent@01c094d:sts2_env/relics/shop_event.py::
+-/// BrilliantScarf`). Tracker-only mirror — Python's documented "5th
+-/// card costs 0" effect is not implemented at this pin (see
+-/// `feedback_plan_doc_lag_check_code_first`). We track the per-turn
+-/// play count on `Relic.counter` so downstream beads can wire the
+-/// cost-0 hook once Python adds it. Bead `sts2-rs-70anj.1`.
++/// BrilliantScarf`). The display counter tracks completed plays; the core
++/// cost resolver uses manual first-in-series history for the fifth hand play.
+ #[allow(clippy::trivially_copy_pass_by_ref)]
+ fn listener_brilliant_scarf_card_played(
+     state: &mut CombatState,
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+index d82c366..b6691ba 100644
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -13007,6 +13007,16 @@ const MODIFY_MAX_ENERGY_KINDS: crate::PowerKindSet = crate::PowerKindSet::from_k
+ /// a zero-override, this fold would need a real two-pass split.)
+ #[must_use]
+ pub fn dispatch_modify_card_cost(state: &CombatState, ctx: &CardCostCtx) -> i32 {
++    // Scarf is a late absolute-zero hook, after additive power/relic costs.
++    if ctx.owner == CreatureRef::Player
++        && brilliant_scarf_cost_zeroed(state, ctx.base_cost, || {
++            ctx.card_uid
++                .and_then(|uid| crate::card_by_uid(&state.cards, uid))
++                .is_some_and(crate::cards::Card::is_x_cost)
++        })
++    {
++        return 0;
++    }
+     // Perf 2026-07-04: single presence-mask early-out. This dispatcher is
+     // on the `legal_actions` per-hand-card path (via `effective_card_cost`),
+     // so it runs several times per rollout step.
+@@ -13078,6 +13088,26 @@ fn relic_card_cost_add(
+     )
+ }
+ 
++/// The single hand-play ordinal made free by Brilliant Scarf each turn.
++const BRILLIANT_SCARF_FREE_PLAY_NUMBER: u32 = 5;
++
++/// Read the manual play-series history without mutating a physical card's cost.
++fn brilliant_scarf_cost_zeroed(
++    state: &CombatState,
++    base_cost: i32,
++    is_x_cost: impl FnOnce() -> bool,
++) -> bool {
++    base_cost >= 0
++        && brilliant_scarf_next_hand_play_free(state)
++        && !is_x_cost()
++}
++
++/// Share the same prior-manual-play gate between energy and star costs.
++pub(crate) fn brilliant_scarf_next_hand_play_free(state: &CombatState) -> bool {
++    state.player.cards_first_in_series_this_turn == BRILLIANT_SCARF_FREE_PLAY_NUMBER - 1
++        && state.relics.owns(crate::RelicKind::BrilliantScarf)
++}
++
+ /// Power kinds with a non-default arm in [`modify_card_cost`] (its relic arm is
+ /// always `None`). These cost-modifier kinds are rare, so gating the power walk
+ /// on their presence skips it for almost every card play. See
+@@ -13214,6 +13244,10 @@ pub fn effective_card_cost_inst_with_mask(
+         // The var is never set at v0.107.1, so this subtracts 0 there.
+         i32::from(card.cost) - card.combat_var(crate::cards::VarKey::CostReductionUntilPlayed)
+     };
++    // Keep the fast no-power-listener path consistent with the full dispatcher.
++    if brilliant_scarf_cost_zeroed(state, base_cost, || card.is_x_cost()) {
++        return 0;
++    }
+     // Perf 2026-07-04: the same presence-mask early-out
+     // [`dispatch_modify_card_cost`] opens with, hoisted BEFORE the ctx
+     // build — on the (dominant) mask-miss path this skips constructing the
+@@ -19650,6 +19684,38 @@ mod tests {
+         assert_eq!(effective_card_cost(&state, uid), 2);
+     }
+ 
++    /// Brilliant Scarf is one late override per turn, even with an early surcharge.
++    #[test]
++    fn brilliant_scarf_frees_only_the_fifth_manual_play() {
++        let mut state = CombatState::default();
++        for (index, kind) in [crate::RelicKind::BrilliantScarf, crate::RelicKind::SpikedGauntlets]
++            .into_iter().enumerate()
++        {
++            state.relics.push(crate::Relic {
++                id: std::num::NonZeroU32::new(index as u32 + 1).expect("nonzero"),
++                kind,
++                counter: 0,
++                is_wax: false,
++                is_melted: false,
++            });
++        }
++        let ctx = CardCostCtx {
++            base_cost: 2,
++            card_type: Some(crate::cards::CardType::Power),
++            ..CardCostCtx::default()
++        };
++        for (played, expected) in [(0, 3), (3, 3), (4, 0), (5, 3), (9, 3)] {
++            state.player.cards_first_in_series_this_turn = played;
++            assert_eq!(dispatch_modify_card_cost(&state, &ctx), expected);
++        }
++        state.player.cards_first_in_series_this_turn = 4;
++        assert!(!brilliant_scarf_cost_zeroed(&state, 2, || true));
++        assert!(!brilliant_scarf_cost_zeroed(&state, -1, || false));
++        // Scarf was inserted first; the store API also updates derived ownership.
++        state.relics.set_melted(0, true);
++        assert_eq!(dispatch_modify_card_cost(&state, &ctx), 3);
++    }
++
+     /// GH #742: C# `SpikedGauntlets.TryModifyEnergyCostInCombat` adds 1 to the
+     /// owner's Power cards in the EARLY pass, after the creature powers
+     /// (`CombatState.IterateHookListeners` yields powers before relics):
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -12939,7 +12939,7 @@
+ /// Star cost of `card` folding in DYNAMIC in-combat modifiers the static
+ /// [`effective_star_cost`] can't see.
+ ///
+-/// At this pin the only dynamic modifier is `VoidFormPower`. C#
++/// Includes Brilliant Scarf's fifth manual play and `VoidFormPower`. C#
+ /// `VoidFormPower.TryModifyStarCost` zeroes the star cost of the first
+ /// `Amount` cards the owner plays each turn — the EXACT mirror of its
+ /// `TryModifyEnergyCostInCombat` (which the energy path already honors via
+@@ -12963,6 +12963,9 @@
+ pub fn effective_star_cost_in_combat(state: &CombatState, card: &crate::cards::Card) -> i32 {
+     let base = effective_star_cost(card);
+     if base == 0 {
++        return 0;
++    }
++    if hooks::brilliant_scarf_next_hand_play_free(state) {
+         return 0;
+     }
+     let base = if state.game_version >= GameVersion::V0_111_0 {
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -7051,6 +7051,8 @@
+     // empty-bus combat short-circuits to `card.cost.max(0)` so the
+     // hot path stays branch-light.
+     let effective_cost = hooks::effective_card_cost(state, card_uid);
++    // Capture both resource costs before committing this manual play's history.
++    let star_cost = crate::effective_star_cost_in_combat(state, &card);
+     if i32::from(state.player.energy) < effective_cost {
+         return StepResult::Advanced;
+     }
+@@ -7227,7 +7229,6 @@
+     // turn / combat (TouchOfInsanity's `SetToFreeThisCombat`) spends 0 stars,
+     // matching C# `SpendResources`'s `GetStarCostWithModifiers` after the
+     // SetStarCostThisCombat(0).
+-    let star_cost = crate::effective_star_cost_in_combat(state, &card);
+     if star_cost > 0 {
+         state.spend_stars(star_cost);
+         if state.is_over {

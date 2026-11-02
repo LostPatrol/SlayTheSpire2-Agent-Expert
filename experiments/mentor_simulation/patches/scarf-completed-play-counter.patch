@@ -1,0 +1,74 @@
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -13089,10 +13089,10 @@
+     )
+ }
+ 
+-/// The single hand-play ordinal made free by Brilliant Scarf each turn.
++/// The single completed-play ordinal whose preceding hand cost is free each turn.
+ const BRILLIANT_SCARF_FREE_PLAY_NUMBER: u32 = 5;
+ 
+-/// Read the manual play-series history without mutating a physical card's cost.
++/// Read completed play history without mutating a physical card's cost.
+ fn brilliant_scarf_cost_zeroed(
+     state: &CombatState,
+     base_cost: i32,
+@@ -13103,9 +13103,9 @@
+         && !is_x_cost()
+ }
+ 
+-/// Share the same prior-manual-play gate between energy and star costs.
++/// Native Scarf counts completed plays, including Duplicator replays, before the next hand play.
+ pub(crate) fn brilliant_scarf_next_hand_play_free(state: &CombatState) -> bool {
+-    state.player.manual_card_series_this_turn == BRILLIANT_SCARF_FREE_PLAY_NUMBER - 1
++    state.combat_log.card_plays_finished_this_turn == BRILLIANT_SCARF_FREE_PLAY_NUMBER - 1
+         && state.relics.owns(crate::RelicKind::BrilliantScarf)
+ }
+ 
+@@ -19743,9 +19743,9 @@
+         assert_eq!(crate::effective_star_cost_in_combat(&state, &card), 0);
+     }
+ 
+-    /// Brilliant Scarf is one late override per turn, even with an early surcharge.
+-    #[test]
+-    fn brilliant_scarf_frees_only_the_fifth_manual_play() {
++    /// Brilliant Scarf is one completed-play threshold per turn, even with an early surcharge.
++    #[test]
++    fn brilliant_scarf_counts_completed_replays_for_next_hand_cost() {
+         let mut state = CombatState::default();
+         for (index, kind) in [crate::RelicKind::BrilliantScarf, crate::RelicKind::SpikedGauntlets]
+             .into_iter().enumerate()
+@@ -19767,14 +19767,14 @@
+             ..CardCostCtx::default()
+         };
+         for (played, expected) in [(0, 3), (3, 3), (4, 0), (5, 3), (9, 3)] {
+-            state.player.manual_card_series_this_turn = played;
++            state.combat_log.card_plays_finished_this_turn = played;
+             assert_eq!(dispatch_modify_card_cost(&state, &ctx), expected);
+         }
+-        // Automatic first-in-series plays do not advance Scarf's hand-play ordinal.
+-        state.player.cards_first_in_series_this_turn = 4;
+-        state.player.manual_card_series_this_turn = 0;
+-        assert_eq!(dispatch_modify_card_cost(&state, &ctx), 3);
+-        state.player.manual_card_series_this_turn = 4;
++        // Native Duplicator evidence: three manual plays can finish four plays.
++        state.player.cards_first_in_series_this_turn = 3;
++        state.player.manual_card_series_this_turn = 3;
++        state.combat_log.card_plays_finished_this_turn = 4;
++        assert_eq!(dispatch_modify_card_cost(&state, &ctx), 0);
+         assert!(!brilliant_scarf_cost_zeroed(&state, 2, || true));
+         assert!(!brilliant_scarf_cost_zeroed(&state, -1, || false));
+         // Pile cards do not inherit the next manual hand play's free cost.
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -1926,7 +1926,7 @@
+     pub cards_first_in_series_this_turn: u32,
+ 
+     /// Manual hand-play series started this turn, excluding automatic plays and replays.
+-    /// Brilliant Scarf uses this history rather than Echo Form's broader series count.
++    /// Public diagnostics keep started manual series separate from completed replay-inclusive history.
+     pub manual_card_series_this_turn: u32,
+ 
+     /// `VoidForm`-style "end this turn after the current play finishes"

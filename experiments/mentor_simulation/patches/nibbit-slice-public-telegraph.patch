@@ -1,0 +1,14 @@
+diff --git a/sts2-rs/crates/sts2-content/src/monsters/act1_weak.rs b/sts2-rs/crates/sts2-content/src/monsters/act1_weak.rs
+index 7a181d4..89f8e3f 100644
+--- a/sts2-rs/crates/sts2-content/src/monsters/act1_weak.rs
++++ b/sts2-rs/crates/sts2-content/src/monsters/act1_weak.rs
+@@ -295,7 +295,8 @@ pub fn create_nibbit_ai(is_alone: bool, is_front: bool) -> MonsterAi {
+             // 5 block applied in `nibbit_slice_effect` because `perform_intent`
+             // dispatches only the primary attack intent (bead `sts2-rs-5i8yj`).
+             effect: nibbit_slice_effect,
+-            intents: smallvec![Intent::Attack { damage: 6 }],
++            // Native SLICE announces both icons; its effect body still owns the block grant.
++            intents: smallvec![Intent::Attack { damage: 6 }, Intent::Defend { block: 5 }],
+             follow_up: Some("HISS"),
+             must_perform_once: false,
+         }),

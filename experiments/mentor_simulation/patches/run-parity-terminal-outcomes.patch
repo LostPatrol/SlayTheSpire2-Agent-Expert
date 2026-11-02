@@ -1,0 +1,81 @@
+diff --git a/sts2-pycli/python/run_parity.py b/sts2-pycli/python/run_parity.py
+index a03e822..c81222f 100644
+--- a/sts2-pycli/python/run_parity.py
++++ b/sts2-pycli/python/run_parity.py
+@@ -375,6 +375,34 @@ class RunResult:
+     trace: list[str] = field(default_factory=list)
+ 
+ 
++def _terminal_won(view: dict[str, Any]) -> bool | None:
++    """Use explicit victory flags, or death HP; terminal phase alone proves no win."""
++    flags = [view[key] for key in ("victory", "won") if isinstance(view.get(key), bool)]
++    if flags:
++        return flags[0] if all(flag == flags[0] for flag in flags) else None
++    hp = _player_of(view).get("hp")
++    if isinstance(hp, (int, float)) and not isinstance(hp, bool) and hp <= 0:
++        return False
++    return None
++
++
++def _finish_game_over(res: RunResult, cs_view: dict, rs_view: dict, step: int) -> None:
++    """Require both terminal phases and known, equal outcomes before declaring a match."""
++    res.cs_won, res.rs_won = _terminal_won(cs_view), _terminal_won(rs_view)
++    rs_phase = _phase_of(rs_view, "rs")
++    if rs_phase != "game_over":
++        fields, kind = [f"cs=game_over rs={rs_phase}"], "state"
++    elif res.cs_won is None or res.rs_won is None:
++        fields, kind = [f"terminal outcome unknown: cs={res.cs_won} rs={res.rs_won}"], "harness"
++    elif res.cs_won != res.rs_won:
++        fields, kind = [f"victory: cs={res.cs_won} rs={res.rs_won}"], "state"
++    else:
++        res.terminal = "diverged" if res.divergence is not None else "game_over_match"
++        return
++    res.divergence = Divergence(step, "game_over", fields, kind)
++    res.terminal = "error" if kind == "harness" else "diverged"
++
++
+ def run_one(
+     seed: str,
+     character: str = "Ironclad",
+@@ -477,19 +505,7 @@ def run_one(
+ 
+             # ---- terminal ----
+             if cs_dec == "game_over":
+-                res.cs_won = bool(cs_view.get("victory") or cs_view.get("won"))
+-                res.rs_won = bool(
+-                    rs_view.get("victory")
+-                    or rs_view.get("won")
+-                    or _phase_of(rs_view, "rs") == "game_over"
+-                )
+-                res.terminal = (
+-                    "game_over_match" if (_phase_of(rs_view, "rs") == "game_over") else "diverged"
+-                )
+-                if _phase_of(rs_view, "rs") != "game_over":
+-                    res.divergence = Divergence(
+-                        step, "game_over", [f"cs=game_over rs={rs_snap.phase}"], "state"
+-                    )
++                _finish_game_over(res, cs_view, rs_view, step)
+                 return res
+ 
+             # ---- choose (off C# oracle) + apply to both ----
+@@ -1478,19 +1494,7 @@ def _replay_against_rust(rec: dict[str, Any], stop_on_diverge: bool = True) -> R
+                     return res
+ 
+             if cs_dec == "game_over":
+-                res.cs_won = bool(cs_view.get("victory") or cs_view.get("won"))
+-                res.rs_won = bool(
+-                    rs_view.get("victory")
+-                    or rs_view.get("won")
+-                    or _phase_of(rs_view, "rs") == "game_over"
+-                )
+-                res.terminal = (
+-                    "game_over_match" if (_phase_of(rs_view, "rs") == "game_over") else "diverged"
+-                )
+-                if _phase_of(rs_view, "rs") != "game_over":
+-                    res.divergence = Divergence(
+-                        step, "game_over", [f"cs=game_over rs={rs_snap.phase}"], "state"
+-                    )
++                _finish_game_over(res, cs_view, rs_view, step)
+                 return res
+ 
+             verb = e["verb"]

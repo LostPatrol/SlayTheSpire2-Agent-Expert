@@ -1,0 +1,50 @@
+diff --git a/sts2-rs/crates/sts2-wire/src/scenario.rs b/sts2-rs/crates/sts2-wire/src/scenario.rs
+--- a/sts2-rs/crates/sts2-wire/src/scenario.rs
++++ b/sts2-rs/crates/sts2-wire/src/scenario.rs
+@@ -497,6 +497,9 @@ pub fn build_scenario_state_with_run_rng(
+         skills_played_this_turn: 0,
+         card_plays_started_this_turn: 0,
+         cards_first_in_series_this_turn: 0,
++        // A fresh scenario has no manual series or completed non-auto plays.
++        manual_card_series_this_turn: 0,
++        non_auto_card_plays_finished_this_turn: 0,
+         request_end_turn_after_play: false,
+         retain_this_turn: smallvec::SmallVec::new(),
+         sly_this_turn: smallvec::SmallVec::new(),
+diff --git a/sts2-rs/crates/sts2-wire/src/state_dict.rs b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+--- a/sts2-rs/crates/sts2-wire/src/state_dict.rs
++++ b/sts2-rs/crates/sts2-wire/src/state_dict.rs
+@@ -4253,6 +4253,9 @@ pub const fn var_key_wire_name(k: VarKey) -> &'static str {
+         VarKey::WireTransientCostThisTurn => "wire_transient_cost_this_turn",
+         VarKey::WireCostExpiringOnPlay => "wire_cost_expiring_on_play",
+         VarKey::WireCostStable => "wire_cost_stable",
++        // Public observed quotes use the same names in both wire directions.
++        VarKey::ObservedEnergyCost => "observed_energy_cost",
++        VarKey::ObservedStarCost => "observed_star_cost",
+         VarKey::Generic => "generic",
+         VarKey::SneckoRollLive => "snecko_roll_live",
+         VarKey::CostReductionUntilPlayed => "cost_reduction_until_played",
+@@ -4286,6 +4289,8 @@ pub fn var_key_from_wire(name: &str) -> Option<VarKey> {
+         VarKey::PendingBatchAutoPlay,
+         VarKey::AutoPlayStarX,
+         VarKey::WireTransientCostThisTurn,
++        VarKey::ObservedEnergyCost,
++        VarKey::ObservedStarCost,
+         VarKey::Generic,
+         VarKey::SneckoRollLive,
+     ];
+@@ -4307,6 +4312,14 @@ pub fn var_key_from_wire(name: &str) -> Option<VarKey> {
+ mod tests {
+     use super::*;
+     use sts2_content::monster_dispatch::build_ai;
++
++    /// Public observed cost quotes must survive wire serialization and parsing.
++    #[test]
++    fn observed_cost_quote_keys_round_trip() {
++        for key in [VarKey::ObservedEnergyCost, VarKey::ObservedStarCost] {
++            assert_eq!(var_key_from_wire(var_key_wire_name(key)), Some(key));
++        }
++    }
+     /// Every [`WIRE_MOVE_STATE_ALIASES`] target must exist as a move
+     /// state on the freshly-built AI of its monster — a content-side
+     /// state rename would otherwise silently revive the inert-enemy

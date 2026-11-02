@@ -1,0 +1,380 @@
+{
+  "allowed_uses": [
+    "retrieval",
+    "strategy_reference"
+  ],
+  "conflict_count": 4,
+  "corpus_sha256": "f627467fffee804352340c9e00730f67dd62f2c5f2abce934c85dabfc460fbb9",
+  "coverage": {
+    "acts": 4,
+    "afflictions": 7,
+    "ascensions": 11,
+    "cards": 556,
+    "characters": 5,
+    "enchantments": 22,
+    "encounters": 87,
+    "events": 66,
+    "glossary": 28,
+    "intents": 14,
+    "keywords": 7,
+    "mechanics": 24,
+    "monsters": 115,
+    "orbs": 5,
+    "potions": 63,
+    "powers": 257,
+    "relics": 296,
+    "rest_site_options": 9
+  },
+  "excluded_mechanics": [
+    "autoslay",
+    "dev-console",
+    "the-deprived"
+  ],
+  "files": [
+    {
+      "bytes": 3748,
+      "path": "API_TERMS.md",
+      "sha256": "37b890977ca1cc5ccf1b29d60b77265b4adf006475121acd5680c2a88af564ff"
+    },
+    {
+      "bytes": 4641,
+      "path": "LICENSE.md",
+      "sha256": "2f9aec3426be07b95de11700c1f2e5fda07f25eba974fb29741cbad8a1b6a6a0"
+    },
+    {
+      "bytes": 150186,
+      "path": "README.md",
+      "sha256": "6b0f0ee8e7d94748c94e1428e5a749188233ba02677e58fa8c656e7bc16b9b9a"
+    },
+    {
+      "bytes": 4401,
+      "path": "data/eng/acts.json",
+      "sha256": "a4c952aacd443c94bbae1efa6e5fbb8e8a066c521a033770e8fb17e81652de7c"
+    },
+    {
+      "bytes": 1381,
+      "path": "data/eng/afflictions.json",
+      "sha256": "10f301a733f75d61014de916cbe2dd444a2cb698bbb2489f0a9935b8c719adf6"
+    },
+    {
+      "bytes": 1548,
+      "path": "data/eng/ascensions.json",
+      "sha256": "6761e069cb15db051ac364d75793846739f840dac9d9c65b05c5f836f049afc6"
+    },
+    {
+      "bytes": 662881,
+      "path": "data/eng/cards.json",
+      "sha256": "134d8f135461bd5fbe87d1320e4b445291f91e1ced8adfeba7d34029bb0eb3d7"
+    },
+    {
+      "bytes": 62591,
+      "path": "data/eng/characters.json",
+      "sha256": "1859e629d5feeb4fed75dd24746ad84a3986831b36a66f44c628fab85a05b9a6"
+    },
+    {
+      "bytes": 8521,
+      "path": "data/eng/enchantments.json",
+      "sha256": "72310482921f36821792de160cb4bf48e121fa8ab6b652b4ccc4d1b145028dff"
+    },
+    {
+      "bytes": 35872,
+      "path": "data/eng/encounters.json",
+      "sha256": "cf74db5225ac70e209e9ee0a9d49ce10c9e624edd65dfbf7d496fd59b2474ef9"
+    },
+    {
+      "bytes": 214079,
+      "path": "data/eng/events.json",
+      "sha256": "0f118852df2f02629b1b13056a0baf2dfb6205608874bb091bfcd6e5f803f863"
+    },
+    {
+      "bytes": 5046,
+      "path": "data/eng/glossary.json",
+      "sha256": "ae0c187487207c2d992f785f9cec5659b94850c8b4d25409e9a39b3a95b04ea3"
+    },
+    {
+      "bytes": 2746,
+      "path": "data/eng/intents.json",
+      "sha256": "064a527eb8efd3ee5e8287eb97fb8a6a83112f95b1ea4cd213841a51b48f1d52"
+    },
+    {
+      "bytes": 957,
+      "path": "data/eng/keywords.json",
+      "sha256": "849205173d0e94bf421eb022e148ab3a17a5ea8a37a756e501efe6f03207fc88"
+    },
+    {
+      "bytes": 245469,
+      "path": "data/eng/monsters.json",
+      "sha256": "dbf5fc83a8b165223f9c70cc2220d2af2538e8bef7cca24cbc21fd2be467489b"
+    },
+    {
+      "bytes": 2492,
+      "path": "data/eng/orbs.json",
+      "sha256": "9fa9eb49f046486a7785471638b3ff22019042c41791f398f8363105ab061a61"
+    },
+    {
+      "bytes": 26768,
+      "path": "data/eng/potions.json",
+      "sha256": "c68c5cd7922248180482e090f96f7e3ee2bac7bb7a478f94448f10b4d99ca63c"
+    },
+    {
+      "bytes": 93499,
+      "path": "data/eng/powers.json",
+      "sha256": "ff460ce39c385869a90f9b6696cbd12bbe6d4cf957bc53dce809f8234aee96e6"
+    },
+    {
+      "bytes": 202478,
+      "path": "data/eng/relics.json",
+      "sha256": "2324c6f6f67d4053725f17a75042a98386a80f0b063f88c8b3213f44b81d4c77"
+    },
+    {
+      "bytes": 426,
+      "path": "data/eng/rest_site_options.json",
+      "sha256": "a3d2070ab38291d029598339b38079c3de788e388c8c7d3c459c034df6af5c1e"
+    },
+    {
+      "bytes": 2111,
+      "path": "data/mechanics_constants.json",
+      "sha256": "5bbd658f5b7d10e7c50c883adf2f2cf454757bf69007d55983a0c38f6f1efd35"
+    },
+    {
+      "bytes": 200,
+      "path": "data/mechanics_pages/ascension-modifiers.md",
+      "sha256": "65973da1ba83507ea6d0d1427a5d3c3ff3e9706f382c1809f439d50f8d959f87"
+    },
+    {
+      "bytes": 969,
+      "path": "data/mechanics_pages/bosses-and-elites.md",
+      "sha256": "162882d247f8822c4c8a7b6c2ea41649e279fbdc9390b8f3be0090f705b3c0cf"
+    },
+    {
+      "bytes": 523,
+      "path": "data/mechanics_pages/byrdpip.md",
+      "sha256": "98f5db5e290dca2c4ad9314a9b4722243a183307684244ee7af9c73d9e46d426"
+    },
+    {
+      "bytes": 793,
+      "path": "data/mechanics_pages/campfire-options.md",
+      "sha256": "889bdf3d994d2193355ed80c7118762ed2e673f3b1edc7735b1dca7166eda9a9"
+    },
+    {
+      "bytes": 12100,
+      "path": "data/mechanics_pages/card-rarity.md",
+      "sha256": "f957bf77c01dc4948fe44b8c0f87842164ae6a6c998ff4049e3007ff198f9169"
+    },
+    {
+      "bytes": 267,
+      "path": "data/mechanics_pages/character-stats.md",
+      "sha256": "1004580588695274980c9e80e0c57923c68ca3a2d8edd440860407414f616e4e"
+    },
+    {
+      "bytes": 3274,
+      "path": "data/mechanics_pages/combat-mechanics.md",
+      "sha256": "6465fefd93c44b17f64be848b2dc5642814f49f66d160948ee47b69026a5e189"
+    },
+    {
+      "bytes": 588,
+      "path": "data/mechanics_pages/crystal-sphere.md",
+      "sha256": "d58357c833889b18bf3971d7ec69fe25cb41de76a7c154e1237cd0104b0ce7de"
+    },
+    {
+      "bytes": 867,
+      "path": "data/mechanics_pages/enemy-ascension-scaling.md",
+      "sha256": "bf359c18f59c505699e5ec57787262d0c7577269c6010fb3ec3992cf6ba4dc3d"
+    },
+    {
+      "bytes": 619,
+      "path": "data/mechanics_pages/foul-potion.md",
+      "sha256": "0d788298c10d9090f40254b71f5295804a744c5130e0f69ea653b1520a72bcc0"
+    },
+    {
+      "bytes": 693,
+      "path": "data/mechanics_pages/gold-rewards.md",
+      "sha256": "166513df96694066618cc250e13b1bca5339bc98ee241af3b0d2479283916ec0"
+    },
+    {
+      "bytes": 1346,
+      "path": "data/mechanics_pages/map-generation.md",
+      "sha256": "89bafc4873ec358efbd4f6c31d39086e76917ffefdeec4c057038c349a485fb5"
+    },
+    {
+      "bytes": 608,
+      "path": "data/mechanics_pages/merchant-blacklist.md",
+      "sha256": "ea706b2b1853bc481f2eb38e6441203dc8cce3128aa405a43ce87f48c699a78c"
+    },
+    {
+      "bytes": 1377,
+      "path": "data/mechanics_pages/neow.md",
+      "sha256": "9f342d77cc4f623612d59e48dcd48090732f3260d5bcd7a29be2f514cc02a8f0"
+    },
+    {
+      "bytes": 697,
+      "path": "data/mechanics_pages/orb-mechanics.md",
+      "sha256": "bbbca426c650dbeabd7ec250a2d6203c3f7a95ff65e2ddc10501c2e5baa426bc"
+    },
+    {
+      "bytes": 825,
+      "path": "data/mechanics_pages/orobas-prismatic.md",
+      "sha256": "29c27dd87ae85b2bbc57f364256f45005a3164fb14eb78f5a5c828ce6ea4e66d"
+    },
+    {
+      "bytes": 2862,
+      "path": "data/mechanics_pages/potion-drop-rates.md",
+      "sha256": "b796aa1727287ea3a7e44b5a6bf644788ebbf6d55e59b3779f7b9171de197553"
+    },
+    {
+      "bytes": 480,
+      "path": "data/mechanics_pages/reflections.md",
+      "sha256": "ca8236bacb883664af31fb64d5581d1ab36617102e9678ad30138314d9e25d9e"
+    },
+    {
+      "bytes": 824,
+      "path": "data/mechanics_pages/relic-distribution.md",
+      "sha256": "5feb9e23f694e72e0944e6edff588b02e0e9e05652cb5e2094f9f5262fc19619"
+    },
+    {
+      "bytes": 3873,
+      "path": "data/mechanics_pages/score-formula.md",
+      "sha256": "d038335977e3a3daa65d6c9954db70e025f17eaf359fbf44a1b5fb7fa5b23649"
+    },
+    {
+      "bytes": 945,
+      "path": "data/mechanics_pages/shop-inventory.md",
+      "sha256": "c72c4e64a021730cec0d73efaa37e4e8e9f0c5d6cdf91b4aae4ac8b63c4ca318"
+    },
+    {
+      "bytes": 587,
+      "path": "data/mechanics_pages/the-architect.md",
+      "sha256": "8381107c9edc1a61f2b727f4d1629403045fcf158a28bf64dbb20dfac06ca40e"
+    },
+    {
+      "bytes": 2719,
+      "path": "data/mechanics_pages/unknown-rooms.md",
+      "sha256": "aaa606a5fe8afefdaeaa85e9e62f5273ca10ab8c19182596a778702b8387c4b9"
+    },
+    {
+      "bytes": 742,
+      "path": "data/mechanics_pages/wongo-loyalty.md",
+      "sha256": "eb71117c800e2a318c2499c54e161a881a8cf6091591f3c31b00195d3ea10ce8"
+    },
+    {
+      "bytes": 4396,
+      "path": "data/zhs/acts.json",
+      "sha256": "65b50ff1f80443c349fb4785ffd060594cc747dad07f0b8f62a28a08272d64ae"
+    },
+    {
+      "bytes": 1380,
+      "path": "data/zhs/afflictions.json",
+      "sha256": "c578316a991e833aa4dd178679b0e9cf53b72b5a275acfa7ec774b770d80140d"
+    },
+    {
+      "bytes": 1550,
+      "path": "data/zhs/ascensions.json",
+      "sha256": "d0044313a567d5cd357954156bae7cd680fbc3b906e07e0c8952974b4961b80d"
+    },
+    {
+      "bytes": 674807,
+      "path": "data/zhs/cards.json",
+      "sha256": "4d9adbb81bb24141899bb4fd36463dca0123fe6a11247c2837a8916ac129a5f7"
+    },
+    {
+      "bytes": 65041,
+      "path": "data/zhs/characters.json",
+      "sha256": "038a8fa8006877ad483f94c74c36717ec746927287c834a94674e1680c6bc291"
+    },
+    {
+      "bytes": 8551,
+      "path": "data/zhs/enchantments.json",
+      "sha256": "face5fd894ec7986c0f9ffa5e622ef8e56a179a89786050dee032e94ab311263"
+    },
+    {
+      "bytes": 36080,
+      "path": "data/zhs/encounters.json",
+      "sha256": "7a4631b6a122ad75cd874d300cd1db09633545e226c5c1bb0234a203378cef0b"
+    },
+    {
+      "bytes": 223960,
+      "path": "data/zhs/events.json",
+      "sha256": "80e4bd375d8b97c53cb3403a2e2927638af14d5aa9a17d8a9b92e29a8d3de209"
+    },
+    {
+      "bytes": 5162,
+      "path": "data/zhs/glossary.json",
+      "sha256": "ed069a97a3b660136d31b14af08e7df0181df46b7c76acf9b985295c4de01b8e"
+    },
+    {
+      "bytes": 2721,
+      "path": "data/zhs/intents.json",
+      "sha256": "65385ce9aa647b291457aad3bad564d6de4a6b14b847dabba5a1fb535472dfb7"
+    },
+    {
+      "bytes": 979,
+      "path": "data/zhs/keywords.json",
+      "sha256": "7040adacfd8d3b592d6e20ec3cdb00a0e9319f17749c4eae30c658d35baa8b6d"
+    },
+    {
+      "bytes": 245504,
+      "path": "data/zhs/monsters.json",
+      "sha256": "4435057b548af727aed6b0d49db64586a0c7c3bc9ec9819060d9caff915a1038"
+    },
+    {
+      "bytes": 2642,
+      "path": "data/zhs/orbs.json",
+      "sha256": "75db6a8194a1de007886c8af8271a269f93740b9132046b7b7d5ae9f7ac174b2"
+    },
+    {
+      "bytes": 27155,
+      "path": "data/zhs/potions.json",
+      "sha256": "d8c1bb9ad55f706ecb7800b7586a3b26f44171af7ad07917680c5b2c4e000004"
+    },
+    {
+      "bytes": 90433,
+      "path": "data/zhs/powers.json",
+      "sha256": "b2701b227f13beb1cc06cf4e54e9fcbfae9d3fba99a7d6215bf43f03776a522c"
+    },
+    {
+      "bytes": 200582,
+      "path": "data/zhs/relics.json",
+      "sha256": "5fb4faa7dfacce3701b52dfd0d02cb3a186a7f7ec739d46819b8aaea83aa39df"
+    },
+    {
+      "bytes": 439,
+      "path": "data/zhs/rest_site_options.json",
+      "sha256": "62eb1f1e41e5daeccfd4803cdb49b40199afd058e79b46341513cf6ad15d9faa"
+    },
+    {
+      "bytes": 670521,
+      "path": "extraction-manifests/public-stable.json.gz",
+      "sha256": "857879eb09012701c2691843ed94f2e27eb2788d36a66776aadcae828289fd66"
+    }
+  ],
+  "generated_utc": "2026-10-26T19:46:57.835914+00:00",
+  "limitations": [
+    "Matching extraction build does not independently validate parser rules.",
+    "Mechanics prose is not versioned and is only available in the human browser.",
+    "Static sample Power counts never replace current observed amounts.",
+    "No calculator or action-validation permission is granted by this corpus."
+  ],
+  "snapshot_id": "spire-codex-v0.107.1-2af6543c-f627467fff",
+  "source": {
+    "build_evidence": {
+      "build_id": "23811903",
+      "local_manifest": "D:\\Steam\\steamapps\\appmanifest_2868840.acf",
+      "matched": true,
+      "path": "extraction-manifests/public-stable.json.gz"
+    },
+    "license": "PolyForm Noncommercial 1.0.0",
+    "name": "Spire Codex",
+    "notice": "Copyright © 2025-present Peter Lord and Spire Codex contributors. Game content © Mega Crit.",
+    "repository": "https://github.com/ptrlrd/spire-codex",
+    "revision": "2af6543ca7a6c76acfde6be582651c7c05e88e50"
+  },
+  "target": {
+    "build_id": "23811903",
+    "channel": "stable",
+    "game": "STS2",
+    "mode": "single_player",
+    "rules_mods": [],
+    "version": "v0.107.1"
+  },
+  "verification": "source_build_matched"
+}

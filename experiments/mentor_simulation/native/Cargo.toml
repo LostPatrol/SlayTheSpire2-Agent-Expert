@@ -1,0 +1,21 @@
+# Python extension sharing original Mentor objects with the production search library.
+[package]
+name = "mentor-native"
+version = "0.1.0"
+edition = "2021"
+
+# Keep this extension independent of the pinned upstream workspace.
+[workspace]
+
+[lib]
+name = "mentor_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+mentor_simulation = { package = "mentor-simulation", path = "../host" }
+upstream_sts2_py = { package = "sts2-py", path = "../../../vendor/spire-mentor/sts2-rs/crates/sts2-py" }
+pyo3 = { version = "0.24", features = ["abi3-py311", "extension-module"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 2

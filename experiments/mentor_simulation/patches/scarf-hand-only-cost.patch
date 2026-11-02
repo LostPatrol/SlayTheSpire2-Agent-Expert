@@ -1,0 +1,55 @@
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -13009,6 +13009,7 @@
+ pub fn dispatch_modify_card_cost(state: &CombatState, ctx: &CardCostCtx) -> i32 {
+     // Scarf is a late absolute-zero hook, after additive power/relic costs.
+     if ctx.owner == CreatureRef::Player
++        && ctx.card_uid.is_some_and(|uid| state.player.hand.contains(&uid))
+         && brilliant_scarf_cost_zeroed(state, ctx.base_cost, || {
+             ctx.card_uid
+                 .and_then(|uid| crate::card_by_uid(&state.cards, uid))
+@@ -13250,7 +13251,8 @@
+         i32::from(card.cost) - card.combat_var(crate::cards::VarKey::CostReductionUntilPlayed)
+     };
+     // Keep the fast no-power-listener path consistent with the full dispatcher.
+-    if brilliant_scarf_cost_zeroed(state, base_cost, || card.is_x_cost()) {
++    if state.player.hand.contains(&card_uid)
++        && brilliant_scarf_cost_zeroed(state, base_cost, || card.is_x_cost()) {
+         return 0;
+     }
+     // Perf 2026-07-04: the same presence-mask early-out
+@@ -19756,7 +19758,10 @@
+                 is_melted: false,
+             });
+         }
++        let card_uid = crate::CardUid(std::num::NonZeroU32::new(1).unwrap());
++        state.player.hand.push(card_uid);
+         let ctx = CardCostCtx {
++            card_uid: Some(card_uid),
+             base_cost: 2,
+             card_type: Some(crate::cards::CardType::Power),
+             ..CardCostCtx::default()
+@@ -19772,6 +19777,10 @@
+         state.player.manual_card_series_this_turn = 4;
+         assert!(!brilliant_scarf_cost_zeroed(&state, 2, || true));
+         assert!(!brilliant_scarf_cost_zeroed(&state, -1, || false));
++        // Pile cards do not inherit the next manual hand play's free cost.
++        state.player.hand.clear();
++        assert_eq!(dispatch_modify_card_cost(&state, &ctx), 3);
++        state.player.hand.push(card_uid);
+         // Scarf was inserted first; the store API also updates derived ownership.
+         state.relics.set_melted(0, true);
+         assert_eq!(dispatch_modify_card_cost(&state, &ctx), 3);
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -12976,7 +12976,7 @@
+     if base == 0 {
+         return 0;
+     }
+-    if hooks::brilliant_scarf_next_hand_play_free(state) {
++    if state.player.hand.contains(&card.uid) && hooks::brilliant_scarf_next_hand_play_free(state) {
+         return 0;
+     }
+     let base = if state.game_version >= GameVersion::V0_111_0 {

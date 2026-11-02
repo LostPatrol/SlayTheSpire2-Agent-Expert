@@ -1,0 +1,15 @@
+<!-- Isolated managed host for the pinned upstream combat rules; no game DLLs. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../third_party/evangambit/Core/**/*.cs" LinkBase="Upstream/Core" />
+    <Compile Include="../third_party/evangambit/Generated/**/*.cs" LinkBase="Upstream/Generated" />
+  </ItemGroup>
+</Project>

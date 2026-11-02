@@ -1,0 +1,35 @@
+diff --git a/sts2-rs/crates/sts2-wire/src/emit/combat.rs b/sts2-rs/crates/sts2-wire/src/emit/combat.rs
+index d7a4142..e1914e1 100644
+--- a/sts2-rs/crates/sts2-wire/src/emit/combat.rs
++++ b/sts2-rs/crates/sts2-wire/src/emit/combat.rs
+@@ -503,6 +503,8 @@ pub fn powers_to_value(uids: &[PowerUid], arena: &[Power], path: &str) -> Result
+         // played and reset at the owner's turn start).
+         let display_amount = match pow.kind {
+             PowerKind::Slow => pow.counter.saturating_mul(10),
++            // Panache's counter is CardsLeft; -1 is its pre-source-play initialization marker.
++            PowerKind::Panache => if pow.counter == -1 { 5 } else { pow.counter },
+             // GH #363 A1: C# `OrbitPower.DisplayAmount => 4 - energySpent % 4`
+             // (`OrbitPower.cs:25`) — the energy still owed before the next
+             // grant, in 1..=4 (a fresh Orbit shows 4, not 0). The engine's
+@@ -1472,6 +1474,20 @@ mod tests {
+             .collect()
+     }
+ 
++    /// Native Panache displays CardsLeft, preserving damage amount and the actual accumulator.
++    #[test]
++    fn panache_display_is_remaining_cards_not_damage() {
++        let id = NonZeroU32::new(1).unwrap();
++        for (counter, display) in [(-1, 5), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5)] {
++            let power = Power { id, kind: PowerKind::Panache, amount: 10, counter,
++                applier: None, skip_next_tick: false };
++            let value = powers_to_value(&[PowerUid(id)], &[power], "$.powers").unwrap();
++            assert_eq!(value[0]["display_amount"], display);
++            assert_eq!(value[0]["amount"], 10);
++            assert_eq!(value[0]["counter"], counter);
++        }
++    }
++
+     #[test]
+     fn default_state_emits_the_top_level_wire_shape() {
+         let state = CombatState::default();
+

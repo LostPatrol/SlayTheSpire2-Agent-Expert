@@ -1,0 +1,79 @@
+diff --git a/sts2-pycli/python/realgame_adapter.py b/sts2-pycli/python/realgame_adapter.py
+--- a/sts2-pycli/python/realgame_adapter.py
++++ b/sts2-pycli/python/realgame_adapter.py
+@@ -517,20 +517,19 @@
+ def _orb_type_stem(orb: dict[str, Any]) -> str:
+     """Resolve a bridge Orb object onto an ``ORB_TITLE_TO_ID`` key.
+ 
+-    The rendered ``name`` IS that key (``"Lightning"``), so it is preferred --
+-    the same reason relics and enemies are emitted keyed by ``name``. The
+-    ``id`` fallback covers both spellings the producers use: CamelCase
+-    ``"LightningOrb"`` (``PROTOCOL.md``) and the live game's SCREAMING_SNAKE
+-    ``"LIGHTNING_ORB"``.
+-    """
+-    name = orb.get("name")
+-    if isinstance(name, str) and name.strip():
+-        return name
++    The stable ``id`` is preferred because the rendered ``name`` is localized
++    on a Chinese client and would miss the English title map. The id fallback
++    covers both producer spellings: CamelCase ``"LightningOrb"``
++    (``PROTOCOL.md``) and the live game's SCREAMING_SNAKE ``"LIGHTNING_ORB"``.
++    """
+     raw_id = orb.get("id") or ""
+     if raw_id.endswith(_ORB_ID_SUFFIX):
+         return raw_id[: -len(_ORB_ID_SUFFIX)]
+     if raw_id.endswith(_ORB_ID_SUFFIX_SNAKE):
+         return raw_id[: -len(_ORB_ID_SUFFIX_SNAKE)].replace("_", " ").title()
++    name = orb.get("name")
++    if isinstance(name, str) and name.strip():
++        return name
+     return raw_id
+ 
+ 
+diff --git a/sts2-pycli/python/sts2_hint/adapter.py b/sts2-pycli/python/sts2_hint/adapter.py
+--- a/sts2-pycli/python/sts2_hint/adapter.py
++++ b/sts2-pycli/python/sts2_hint/adapter.py
+@@ -96,6 +96,11 @@
+     "DecimillipedeSegmentMiddle",
+     "DecimillipedeSegmentBack",
+ }
++
++#: Registry potion ids, used to trust the bridge's stable ``id`` before a
++#: localized display title. The title map is English-only; a Chinese client
++#: would otherwise soft-drop every potion before native search sees it.
++_KNOWN_POTION_IDS = frozenset(POTION_TITLE_TO_ID.values())
+ 
+ #: Same specimen-template stripping ``display_maps.monster_title`` already
+ #: applies in the id->title direction (workbench display), reused here for
+@@ -404,10 +409,19 @@
+     return out
+ 
+ 
+-def _translate_potion(name: str | None, path: str) -> str | None:
+-    if name is None:
++def _translate_potion(raw: dict[str, Any] | str | None, path: str) -> str | None:
++    """Prefer the stable bridge id; retain display-title fallback for old producers."""
++    if raw is None:
+         return None
+-    pid = POTION_TITLE_TO_ID.get(name)
++    name = raw
++    if isinstance(raw, dict):
++        raw_id = raw.get("id") or raw.get("potion_id")
++        if isinstance(raw_id, str):
++            candidate = raw_id.strip().upper()
++            if candidate in _KNOWN_POTION_IDS:
++                return candidate
++        name = raw.get("name")
++    pid = POTION_TITLE_TO_ID.get(name) if isinstance(name, str) else None
+     if pid is None:
+         # Soft-drop: unported potion → empty slot. The MCTS rollouts
+         # won't model its effect, but hints remain usable.
+@@ -1103,7 +1117,7 @@
+         if not isinstance(p, dict):
+             potions.append(None)
+             continue
+-        potions.append(_translate_potion(p.get("name"), f"$.player.potions[{i}]"))
++        potions.append(_translate_potion(p, f"$.player.potions[{i}]"))
+ 
+     player_powers_raw = state.get("player_powers") or []
+     p_powers = _soft_translate_list(player_powers_raw, _translate_power, "$.player_powers")

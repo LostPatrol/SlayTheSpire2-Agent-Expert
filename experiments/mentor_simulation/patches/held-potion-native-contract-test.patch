@@ -1,0 +1,31 @@
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -18848,12 +18861,10 @@ mod tests {
+         );
+     }
+ 
+-    /// Character-locked potions are filtered out of `legal_actions`
+-    /// when the player's `character` does not match the potion's lock.
+-    /// Defect's `FocusPotion` is character-locked to `Defect`; an
+-    /// Ironclad holding it cannot drink it.
++    /// Character locks restrict generation, not use of an already-held potion.
++    /// Native Ironclad FocusPotion use was observed to grant two Focus.
+     #[test]
+-    fn legal_actions_filters_character_locked_potions() {
++    fn legal_actions_retains_held_character_locked_potions() {
+         let mut s = CombatState {
+             phase: CombatPhase::PlayerPlayPhase,
+             ..CombatState::default()
+@@ -18870,8 +18881,8 @@ mod tests {
+                 _ => None,
+             })
+             .collect();
+-        // Slot 0 (FocusPotion) filtered out; slots 1 + 2 retained.
+-        assert_eq!(kinds, vec![1, 2]);
++        // All held manual-use potions retain their actual belt slots.
++        assert_eq!(kinds, vec![0, 1, 2]);
+     }
+ 
+     /// When `player.character` is `None`, gating is disabled and
+

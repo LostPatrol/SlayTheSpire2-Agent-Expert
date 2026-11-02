@@ -1,0 +1,113 @@
+diff --git a/sts2-rs/crates/sts2-runai/src/policy/mod.rs b/sts2-rs/crates/sts2-runai/src/policy/mod.rs
+index ddf9c17..6284574 100644
+--- a/sts2-rs/crates/sts2-runai/src/policy/mod.rs
++++ b/sts2-rs/crates/sts2-runai/src/policy/mod.rs
+@@ -603,6 +603,22 @@ pub(crate) fn splitmix64(mut x: u64) -> u64 {
+     x ^ (x >> 31)
+ }
+ 
++/// Components selected by the original combat wrapper before constructing one tree.
++pub type CombatSearchSetup = (MctsConfig, LeafEval, sts2_mcts::SharedPolicy);
++
++/// Optional embedding hooks; absent hooks preserve the original wrapper's behavior.
++pub struct CombatSearchTransforms {
++    setup: Arc<dyn Fn(&RunManager, &CombatState, CombatSearchSetup) -> CombatSearchSetup + Send + Sync>,
++    tree: Arc<dyn Fn(Mcts<sts2_mcts::SharedPolicy>, &CombatState) -> Mcts<sts2_mcts::SharedPolicy> + Send + Sync>,
++}
++
++impl std::fmt::Debug for CombatSearchTransforms {
++    /// Report hook presence without formatting caller closures or addresses.
++    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        formatter.write_str("CombatSearchTransforms")
++    }
++}
++
+ /// Composite run policy: meta decisions (map / rewards / events / shop /
+ /// rest / …) go to the wrapped `meta` policy; `Phase::Combat` decisions
+ /// are picked by the combat MCTS under a frozen [`CombatBudget`].
+@@ -631,6 +647,8 @@ pub struct MctsCombatPolicy<M> {
+     meta: M,
+     budget: CombatBudget,
+     run_seed: i32,
++    /// Explicit embedding controls; fresh trees avoid applying initialization hooks on reused nodes.
++    search_transforms: Option<CombatSearchTransforms>,
+     /// Per-run combat-decision counter (seeds decision `k`'s search).
+     decisions: u64,
+     /// Of [`Self::decisions`], how many were made in elite / boss combats,
+@@ -1667,6 +1685,7 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+             meta,
+             budget,
+             run_seed,
++            search_transforms: None,
+             decisions: 0,
+             decisions_elite: 0,
+             decisions_boss: 0,
+@@ -1749,6 +1768,7 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+     }
+ 
+     fn tree_reuse_on(&self) -> bool {
++        if self.search_transforms.is_some() { return false; }
+         self.overrides.tree_reuse == Some(true)
+     }
+ 
+@@ -2116,9 +2136,9 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+                 kept.with_prior_cache(prior_cache_from_env())
+                     .with_leaf_eval(leaf_eval)
+             }
+-            None => Mcts::with_policy(combat.clone(), config, prior)
++            None => self.transform_search_tree(Mcts::with_policy(combat.clone(), config, prior)
+                 .with_prior_cache(prior_cache_from_env())
+-                .with_leaf_eval(leaf_eval),
++                .with_leaf_eval(leaf_eval), combat),
+         };
+         if let Some((f, _)) = filter.as_ref().filter(|(f, _)| f.fallback.is_none()) {
+             let allowed: Vec<Action> = f.allowed.iter().map(|(a, _)| a.clone()).collect();
+@@ -2218,9 +2238,27 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+             BudgetTier::from_room(rm.run_state.current_room.as_ref().map(|r| r.room_type))
+                 == BudgetTier::Boss;
+         let (config, leaf_eval, prior) = self.pick_search_setup(rm, combat, is_boss, sims, seed);
+-        Mcts::with_policy(combat.clone(), config, prior)
++        self.transform_search_tree(Mcts::with_policy(combat.clone(), config, prior)
+             .with_prior_cache(prior_cache_from_env())
+-            .with_leaf_eval(leaf_eval)
++            .with_leaf_eval(leaf_eval), combat)
++    }
++
++    /// Apply explicit embedding controls while retaining wrapper seeds, guards, vetoes and actions.
++    /// Hooks use fresh trees; retained-tree reuse is disabled while either hook is installed.
++    pub fn with_search_transforms<S, T>(mut self, setup: S, tree: T) -> Self
++    where
++        S: Fn(&RunManager, &CombatState, CombatSearchSetup) -> CombatSearchSetup + Send + Sync + 'static,
++        T: Fn(Mcts<sts2_mcts::SharedPolicy>, &CombatState) -> Mcts<sts2_mcts::SharedPolicy> + Send + Sync + 'static,
++    {
++        self.search_transforms = Some(CombatSearchTransforms {setup: Arc::new(setup), tree: Arc::new(tree)});
++        self.retained = None;
++        self
++    }
++
++    /// Transform a fresh tree only when the embedding caller explicitly installed a hook.
++    fn transform_search_tree(&self, tree: Mcts<sts2_mcts::SharedPolicy>, combat: &CombatState)
++        -> Mcts<sts2_mcts::SharedPolicy> {
++        match self.search_transforms.as_ref() {Some(hooks) => (hooks.tree)(tree, combat), None => tree}
+     }
+ 
+     /// The search `mcts_pick` runs for one decision: [`Self::search_config`]'s
+@@ -2233,7 +2271,7 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+     /// the whole difference from `search_config`, and none of them is read by
+     /// a playout; a test pins that, so the playouts [`deployed_value_config`]
+     /// scores (`sts2_rs.values_many`, GH #830) stay the pilot's own.
+-    fn pick_search_setup(
++    pub fn pick_search_setup(
+         &mut self,
+         rm: &RunManager,
+         combat: &CombatState,
+@@ -2308,7 +2346,8 @@ impl<M: RunPolicy> MctsCombatPolicy<M> {
+         if self.potion_ablation == Some(potion_ablation::PotionAblation::NoDrinks) {
+             config.root_drink_mask = true;
+         }
+-        (config, leaf_eval, prior)
++        let setup=(config, leaf_eval, prior);
++        match self.search_transforms.as_ref() {Some(hooks) => (hooks.setup)(rm, combat, setup), None => setup}
+     }
+ 
+     /// The search configuration and leaf evaluator one combat search of

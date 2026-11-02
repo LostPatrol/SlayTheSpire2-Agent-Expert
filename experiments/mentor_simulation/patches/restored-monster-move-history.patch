@@ -1,0 +1,67 @@
+diff --git a/sts2-rs/crates/sts2-core/src/monster_ai.rs b/sts2-rs/crates/sts2-core/src/monster_ai.rs
+index 174b32c..6c84178 100644
+--- a/sts2-rs/crates/sts2-core/src/monster_ai.rs
++++ b/sts2-rs/crates/sts2-core/src/monster_ai.rs
+@@ -706,6 +706,62 @@ impl MonsterAi {
+         &self.state_log
+     }
+ 
++    /// Restore witnessed performed moves without replaying their effects or consuming RNG.
++    pub fn restore_move_history(&mut self, names: &[String]) -> bool {
++        let mut lookup = self.clone();
++        let mut history = SmallVec::new();
++        for name in names {
++            if !lookup.force_current_state_by_name_relaxed(name) {
++                return false;
++            }
++            history.push(lookup.current_state_id());
++        }
++        self.state_log = history;
++        self.performed_first_move = !self.state_log.is_empty();
++        self.performed_at_least_once = false;
++        self.initial_resolved = true;
++        true
++    }
++
++    /// Enumerate public rule branches without reading or advancing a live RNG stream.
++    pub fn move_distribution(&self, combat: &CombatState, opening: bool) -> Option<Vec<(StateId, f64)>> {
++        let start = if opening {
++            self.initial
++        } else if (!self.performed_first_move && self.cur().is_move()) || !self.can_transition_away() {
++            self.current
++        } else if let Some(forced) = self.forced_next_state {
++            forced
++        } else {
++            match self.cur() { MonsterState::Move(movement) => movement.follow_up?, _ => self.current }
++        };
++        let mut pending = vec![(start, 1.0, 0_u8)];
++        let mut result = BTreeMap::new();
++        while let Some((current, probability, depth)) = pending.pop() {
++            // Match the existing resolver's finite graph-walk bound; never drop probability mass.
++            if depth >= 100 { return None; }
++            match self.states.get(current)? {
++                MonsterState::Move(_) => { *result.entry(current).or_insert(0.0) += probability; }
++                MonsterState::RandomBranch(branch) => {
++                    let weights: Vec<_> = branch.branches.iter().map(|entry| entry.effective_weight(&self.state_log)).collect();
++                    let total: f64 = weights.iter().sum();
++                    if total <= 0.0 {
++                        pending.push((branch.branches.first()?.state_id, probability, depth + 1));
++                    } else {
++                        for (entry, weight) in branch.branches.iter().zip(weights) {
++                            if weight > 0.0 { pending.push((entry.state_id, probability * weight / total, depth + 1)); }
++                        }
++                    }
++                }
++                MonsterState::ConditionalBranch(branch) => {
++                    let entry = branch.branches.iter().find(|entry|
++                        entry.condition.resolve(combat, self.owner_uid, self.counter))?;
++                    pending.push((entry.state_id, probability, depth + 1));
++                }
++            }
++        }
++        Some(result.into_iter().collect())
++    }
++
+     /// Carry the per-instance move-machine state that no wire dialect can
+     /// express, from a mirror of the same creature onto a fresh
+     /// reconstruction.

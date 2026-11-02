@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "STS2 NoSL public controller configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bridge", "provider", "policy", "limits", "logging"],
+  "properties": {
+    "bridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_url", "expected_pid", "expected_game_version", "require_atomic"],
+      "properties": {
+        "base_url": {"type": "string", "pattern": "^http://(127\\.0\\.0\\.1|localhost):[0-9]+/?$"},
+        "expected_pid": {"type": ["integer", "null"], "minimum": 1},
+        "expected_game_version": {"type": "string", "minLength": 1},
+        "require_atomic": {"const": true}
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["api_base", "api_key_file", "model", "thinking", "reasoning_effort", "max_tokens", "timeout_seconds", "transient_retries", "format_repair_attempts"],
+      "properties": {
+        "api_base": {"enum": ["https://api.deepseek.com", "https://api.deepseek.com/v1"]},
+        "api_key_file": {"type": "string", "minLength": 1},
+        "model": {"const": "deepseek-flash"},
+        "thinking": {"enum": ["enabled", "disabled"],
+          "description": "DeepSeek thinking-mode toggle; disabled sends no reasoning_effort."},
+        "reasoning_effort": {"enum": ["low", "high", "max"],
+          "description": "Applied only while thinking is enabled."},
+        "max_tokens": {"type": "integer", "minimum": 1, "maximum": 393216},
+        "stream": {"type": "boolean"},
+        "use_env_proxy": {"type": "boolean"},
+        "compact_simulation_tool_results": {"type": "boolean", "default": false,
+          "description": "Return only candidate outcomes, coverage and one endpoint instead of per-sample states."},
+        "model_view": {"enum": ["off", "safe"], "default": "off",
+          "description": "Model-only payload projection; off preserves the legacy full payload."},
+        "context_max_turns": {"type": "integer", "minimum": 0, "maximum": 100,
+          "description": "Maximum retained user/assistant pairs before rebuilding a complete public context."},
+        "context_max_characters": {"type": "integer", "minimum": 1000, "maximum": 1000000,
+          "description": "Retained history character budget, excluding the complete current message and fixed system instructions."},
+        "timeout_seconds": {"type": "number", "minimum": 1, "maximum": 600},
+        "transient_retries": {"type": "integer", "minimum": 0, "maximum": 2},
+        "format_repair_attempts": {"type": "integer", "minimum": 0, "maximum": 1}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "deliberation", "character", "ascension"],
+      "properties": {
+        "mode": {"const": "nosl"},
+        "deliberation": {"enum": ["calculation_only", "public_simulation"]},
+        "character": {"type": "string", "minLength": 1},
+        "ascension": {"type": "integer", "minimum": 0}
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_provider_requests_per_run", "max_run_wall_minutes", "max_actions"],
+      "properties": {
+        "max_provider_requests_per_run": {"type": "integer", "minimum": 1},
+        "max_run_wall_minutes": {"type": "number", "exclusiveMinimum": 0},
+        "max_actions": {"type": "integer", "minimum": 1}
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "backend": {"enum": ["mentor", "evangambit"]},
+        "read_access": {"enum": ["public", "internal"], "default": "public"},
+        "candidate_source": {"enum": ["model", "mcts"], "default": "mcts"},
+        "combat_decision_mode": {"enum": ["llm", "assist", "upstream"], "default": "assist"},
+        "run_decision_mode": {"enum": ["llm", "assist", "upstream"], "default": "llm"},
+        "rollout_policy": {"enum": ["upstream", "heuristic"], "default": "upstream"},
+        "action_prior": {"enum": ["upstream", "off"], "default": "upstream"},
+        "value_model": {"enum": ["texel", "learned"], "default": "texel"},
+        "search_profile": {"enum": ["upstream", "base"], "default": "upstream"},
+        "reward_pool": {"enum": ["known", "full_unlock"], "default": "known",
+          "description": "Declare a fully unlocked public reward catalogue only when explicitly known; otherwise keep unavailable pools unknown."},
+        "search_strength": {"type": "number", "minimum": 1, "maximum": 5, "default": 3},
+        "search_strategy": {"enum": ["mcts", "beam", "greedy", "exhaustive", "compare"],
+          "description": "Use one online planner, or compare all three for offline audits."},
+        "prediction_mode": {"enum": ["inline", "background"],
+          "description": "Run the selected-action audit inline or concurrently after action admission."},
+        "episode_search_requests": {"type": "integer", "minimum": 1, "maximum": 60},
+        "preview_samples": {"type": "integer", "minimum": 1, "maximum": 12},
+        "max_depth": {"type": "integer", "minimum": 1, "maximum": 6},
+        "beam_width": {"type": "integer", "minimum": 1, "maximum": 128},
+        "exhaustive_limit": {"type": "integer", "minimum": 1, "maximum": 20000},
+        "timeout_seconds": {"type": "number", "minimum": 1, "maximum": 30}
+      }
+    },
+    "automatic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {"enabled": {"type": "boolean"}}
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["public_observations_only"],
+      "properties": {"public_observations_only": {"const": true}}
+    }
+  }
+}

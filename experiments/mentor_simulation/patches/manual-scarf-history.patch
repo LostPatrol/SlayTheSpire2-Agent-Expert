@@ -1,0 +1,65 @@
+diff --git a/sts2-rs/crates/sts2-core/src/lib.rs b/sts2-rs/crates/sts2-core/src/lib.rs
+--- a/sts2-rs/crates/sts2-core/src/lib.rs
++++ b/sts2-rs/crates/sts2-core/src/lib.rs
+@@ -1924,6 +1924,10 @@
+     /// gains and let a single card drain the whole budget: Defect sweep
+     /// `ORB_STATE|HOTFIX`/`ORB_STATE|CHILL`/`PLAYER_STATE|THE_BOMB`.)
+     pub cards_first_in_series_this_turn: u32,
++
++    /// Manual hand-play series started this turn, excluding automatic plays and replays.
++    /// Brilliant Scarf uses this history rather than Echo Form's broader series count.
++    pub manual_card_series_this_turn: u32,
+ 
+     /// `VoidForm`-style "end this turn after the current play finishes"
+     /// rider. Set by `combat.request_end_turn_after_current_play()` in
+diff --git a/sts2-rs/crates/sts2-core/src/hooks.rs b/sts2-rs/crates/sts2-core/src/hooks.rs
+--- a/sts2-rs/crates/sts2-core/src/hooks.rs
++++ b/sts2-rs/crates/sts2-core/src/hooks.rs
+@@ -13104,7 +13104,7 @@
+ 
+ /// Share the same prior-manual-play gate between energy and star costs.
+ pub(crate) fn brilliant_scarf_next_hand_play_free(state: &CombatState) -> bool {
+-    state.player.cards_first_in_series_this_turn == BRILLIANT_SCARF_FREE_PLAY_NUMBER - 1
++    state.player.manual_card_series_this_turn == BRILLIANT_SCARF_FREE_PLAY_NUMBER - 1
+         && state.relics.owns(crate::RelicKind::BrilliantScarf)
+ }
+ 
+@@ -19762,10 +19762,14 @@
+             ..CardCostCtx::default()
+         };
+         for (played, expected) in [(0, 3), (3, 3), (4, 0), (5, 3), (9, 3)] {
+-            state.player.cards_first_in_series_this_turn = played;
++            state.player.manual_card_series_this_turn = played;
+             assert_eq!(dispatch_modify_card_cost(&state, &ctx), expected);
+         }
++        // Automatic first-in-series plays do not advance Scarf's hand-play ordinal.
+         state.player.cards_first_in_series_this_turn = 4;
++        state.player.manual_card_series_this_turn = 0;
++        assert_eq!(dispatch_modify_card_cost(&state, &ctx), 3);
++        state.player.manual_card_series_this_turn = 4;
+         assert!(!brilliant_scarf_cost_zeroed(&state, 2, || true));
+         assert!(!brilliant_scarf_cost_zeroed(&state, -1, || false));
+         // Scarf was inserted first; the store API also updates derived ownership.
+diff --git a/sts2-rs/crates/sts2-core/src/combat_loop.rs b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -556,6 +556,7 @@
+     // in `play_card`). The prior turn-start snapshot of the EchoForm stack sum
+     // missed mid-turn gains and let one card drain the whole budget.
+     state.player.cards_first_in_series_this_turn = 0;
++    state.player.manual_card_series_this_turn = 0;
+     // ...and the wire-durable twin of the same tally (GH #368.1). Both are
+     // reset here so `echo_form_first_in_series_this_turn`'s max cannot be held
+     // up by a stale half.
+@@ -7169,6 +7170,11 @@
+         .player
+         .cards_first_in_series_this_turn
+         .saturating_add(1);
++    // Scarf counts only this manual series, never its automatic children or replays.
++    state.player.manual_card_series_this_turn = state
++        .player
++        .manual_card_series_this_turn
++        .saturating_add(1);
+     bump_echo_form_series_tally(state);
+ 
+     let energy_spent_for_hook = spend_card_energy(state, card_idx, effective_cost);

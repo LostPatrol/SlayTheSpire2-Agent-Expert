@@ -1,0 +1,81 @@
+--- a/sts2-rs/crates/sts2-core/src/combat_loop.rs
++++ b/sts2-rs/crates/sts2-core/src/combat_loop.rs
+@@ -639,6 +639,16 @@
+ ///   * `Action::EndTurn` dispatch (P3-7, sts2-rs-e3k) — that bead
+ ///     wires the call site that follows the play phase.
+ pub fn start_player_turn(state: &mut CombatState) -> StepResult {
++    start_player_turn_until(state, false)
++}
++
++/// Run normal next-turn setup, stopping before hand-draw modifiers or card draws.
++pub fn start_player_turn_before_draw(state: &mut CombatState) -> StepResult {
++    start_player_turn_until(state, true)
++}
++
++/// Share all reset and turn-start hooks between full and pre-draw settlement.
++fn start_player_turn_until(state: &mut CombatState, before_draw: bool) -> StepResult {
+     // Step 1: combat-end short-circuit.
+     if state.is_over {
+         return if state.player_won {
+@@ -736,7 +746,7 @@
+         return StepResult::PendingChoice;
+     }
+ 
+-    continue_player_turn_setup(state)
++    continue_player_turn_setup_until(state, before_draw)
+ }
+ 
+ /// Second half of `_start_player_turn` — runs after any
+@@ -752,6 +762,11 @@
+ /// Bead `sts2-rs-l2nz`: extracted so the resume path triggered from
+ /// `apply(Action::ResolveChoice)` runs the same body.
+ pub(crate) fn continue_player_turn_setup(state: &mut CombatState) -> StepResult {
++    continue_player_turn_setup_until(state, false)
++}
++
++/// Preserve the original continuation while exposing its exact pre-draw boundary.
++fn continue_player_turn_setup_until(state: &mut CombatState, before_draw: bool) -> StepResult {
+     // Step 5: clear block (round > 1) + fire after_block_cleared.
+     // Python's `combat_player_states` walk is single-element at this
+     // Phase-3 pin (allies omitted); we operate directly on
+@@ -847,6 +862,9 @@
+     }
+     state.player.max_energy = max_energy_i8;
+ 
++    if before_draw {
++        return StepResult::Advanced;
++    }
+     // Step 7: hand draw. modify_hand_draw is an additive chain over
+     // BASE_DRAW (Python: `modify_hand_draw(BASE_DRAW, self)` returns
+     // base + sum(listener deltas)). Round-1 innate handling sorts
+@@ -6136,6 +6154,15 @@
+ }
+ 
+ pub fn enemy_turn_end(state: &mut CombatState) -> StepResult {
++    let result = enemy_turn_end_before_next_intent(state);
++    if result != StepResult::Advanced || state.phase != CombatPhase::EnemyTurnEnd {
++        return result;
++    }
++    finish_enemy_turn_after_effects(state)
++}
++
++/// Resolve enemy-end effects without rolling an unobserved next move.
++pub fn enemy_turn_end_before_next_intent(state: &mut CombatState) -> StepResult {
+     // Step 1: combat-end short-circuit.
+     if state.is_over {
+         return if state.player_won {
+@@ -6217,6 +6244,14 @@
+         }
+     }
+ 
++    StepResult::Advanced
++}
++
++/// Continue the ordinary enemy-end tail exactly once after its effect checkpoint.
++pub fn finish_enemy_turn_after_effects(state: &mut CombatState) -> StepResult {
++    if state.phase != CombatPhase::EnemyTurnEnd {
++        return StepResult::Advanced;
++    }
+     // Bead `sts2-rs-c8why` follow-up: NOW (after after_turn_end resolved any
+     // end-of-turn self-damage deaths, and the combat-end re-check above) roll
+     // each surviving enemy's next-turn intent. This is the relocated Step-4
