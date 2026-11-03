@@ -408,7 +408,7 @@ svg { display: block; }
   letter-spacing: .2em; color: var(--ink-faint);
 }
 .masthead-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: 0 0 auto; }
-/* layout switch: the only control that changes the page structure */
+/* Segmented toolbar controls share one visual treatment. */
 .layout-switch {
   display: inline-flex; align-items: stretch; height: 30px; flex: none;
   border: 1px solid var(--edge-soft); border-radius: 2px; overflow: hidden;
@@ -419,6 +419,16 @@ svg { display: block; }
   transition: color .15s, background .15s;
 }
 .layout-option + .layout-option { border-left: 1px solid var(--edge-soft); }
+/* A sliding highlight identifies the selected language. */
+.language-switch { position: relative; width: 120px; }
+.language-switch::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 50%;
+  background: color-mix(in srgb, var(--brass) 12%, transparent);
+  transition: transform .15s var(--ease); pointer-events: none;
+}
+.language-switch[data-language="en"]::before { transform: translateX(100%); }
+.language-option { position: relative; z-index: 1; width: 50%; padding: 0 6px; }
+.language-switch .language-option[aria-pressed="true"] { background: transparent; }
 .layout-option:hover { color: var(--ink); }
 .layout-option[aria-pressed="true"] {
   color: var(--brass); background: color-mix(in srgb, var(--brass) 12%, transparent);
@@ -736,10 +746,6 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
 .run-divider::before, .run-divider::after { content: ""; height: 1px; flex: 1; background: var(--edge-soft); }
 .run-divider span { font: 500 9px/1 var(--font-mono); letter-spacing: .14em; color: var(--ink-faint); white-space: nowrap; }
 .newrun { display: grid; grid-template-columns: minmax(0, 1fr) 84px auto; gap: 7px; align-items: end; }
-/* Keep the pre-run language selection separate from native launch controls. */
-.presentation-settings { margin-bottom: 10px; }
-.presentation-settings select { width: 100%; }
-.presentation-settings .fineprint { margin-top: 5px; }
 .asc-field output { float: right; font-size: 10px; }
 .asc-field input { margin-top: 2px; }
 .start-compact { height: 31px; padding: 0 9px; font-size: 11px; }

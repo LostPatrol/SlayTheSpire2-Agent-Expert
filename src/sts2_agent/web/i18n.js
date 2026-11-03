@@ -725,21 +725,28 @@
     apply();
   }
 
-  /** Explain pre-run availability and the independent game-language setting. */
+  /** Reflect the selected language and pre-run availability in the toolbar. */
   function renderSettings() {
-    const select = document.getElementById("language-select");
-    const note = document.getElementById("language-note");
-    if (!select || !note) return;
-    select.disabled = view.saving || !view.settings?.editable;
-    select.value = view.settings?.language || view.language;
-    if (view.saving) note.textContent = t("正在保存语言设置…");
-    else if (!view.settings) note.textContent = t("语言设置暂不可用。");
-    else if (view.settings.reason) note.textContent = t(view.settings.reason);
+    const group = document.getElementById("language-switch");
+    if (!group) return;
+    group.dataset.language = view.settings?.language || view.language;
+    let hint;
+    if (view.saving) hint = t("正在保存语言设置…");
+    else if (!view.settings) hint = t("语言设置暂不可用。");
+    else if (view.settings.reason) hint = t(view.settings.reason);
     else if (view.settings.current_language && view.settings.current_language !== view.settings.language) {
-      note.textContent = t("当前局语言：{language}；所选语言用于下一局。", {
+      hint = t("当前局语言：{language}；所选语言用于下一局。", {
         language: view.settings.current_language === "en" ? "English" : "中文"
       });
-    } else note.textContent = t("开局前选择；请在游戏设置中选择对应语言。");
+    } else hint = t("开局前选择；请在游戏设置中选择对应语言。");
+    group.title = hint;
+    for (const id of ["language-zh", "language-en"]) {
+      const button = document.getElementById(id);
+      if (!button) continue;
+      button.disabled = view.saving || !view.settings?.editable;
+      button.setAttribute("aria-pressed", String(button.dataset.languageMode === group.dataset.language));
+      button.title = hint;
+    }
   }
 
   /** Restore server presentation settings using a read-only snapshot. */
@@ -756,7 +763,7 @@
   /** Save only an explicit language selection, then rebuild display from a fresh page. */
   async function chooseLanguage(event) {
     if (view.saving || !view.settings?.editable) { renderSettings(); return; }
-    const language = event.target.value;
+    const language = event.currentTarget.dataset.languageMode;
     if (language === view.settings.language) return;
     view.saving = true;
     renderSettings();
@@ -773,13 +780,11 @@
       // Reloading never starts the session; it refreshes translated view-only state.
       window.location.reload();
     } catch (error) {
-      const note = document.getElementById("language-note");
-      if (note) note.textContent = t("语言设置未保存：{message}", {message: error.message});
+      window.toast?.(t("语言设置未保存：{message}", {message: error.message}), true);
     } finally {
       clearTimeout(timeout);
       view.saving = false;
-      const select = document.getElementById("language-select");
-      if (select) { select.disabled = !view.settings?.editable; select.value = view.settings?.language || view.language; }
+      renderSettings();
     }
   }
 
@@ -787,7 +792,9 @@
   function initialize() {
     if (view.initialized) return;
     view.initialized = true;
-    document.getElementById("language-select")?.addEventListener("change", chooseLanguage);
+    for (const id of ["language-zh", "language-en"]) {
+      document.getElementById(id)?.addEventListener("click", chooseLanguage);
+    }
     renderSettings();
   }
 

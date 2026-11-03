@@ -41,9 +41,8 @@ To use the language model, create `secrets/` and put your API key in `secrets/ap
 No language-model calls are made when both combat and noncombat decisions are handled directly by the simulation policies.
 
 1. Double-click **启动仪表盘.cmd** in the project root to open the local dashboard at `http://127.0.0.1:18766`.
-2. Choose **English** or **中文** under **Prepare next run**. Select the matching language in the game's settings; dashboard and model-plan language is fixed for each run.
-3. Click **Launch game** (启动游戏).
-4. Click **Start automatic play** (开始自动游玩).
+2. Click **Launch game** (启动游戏).
+3. Click **Start automatic play** (开始自动游玩).
 
 Without opening a browser:
 
