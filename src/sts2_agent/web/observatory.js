@@ -80,7 +80,8 @@
   function applyLayout(mode, persist = true) {
     const layout = mode === "split" ? "split" : "stream";
     document.documentElement.dataset.layout = layout;
-    document.querySelectorAll(".layout-option").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.layoutMode === layout)));
+    // Language buttons reuse the segmented styling but never participate in layout state.
+    document.querySelectorAll(".layout-option[data-layout-mode]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.layoutMode === layout)));
     if (persist) {
       const url = new URL(location.href);
       url.searchParams.set("layout", layout);
@@ -383,7 +384,8 @@
     });
     systemTheme.addEventListener("change", () => { if (view.theme === "system") applyTheme("system", false); });
     window.addEventListener("storage", event => { if (event.key === THEME_KEY || event.key === null) applyTheme(event.newValue, false); });
-    document.querySelectorAll(".layout-option").forEach(button => button.addEventListener("click", () => applyLayout(button.dataset.layoutMode)));
+    // Bind layout changes only to real layout controls; language buttons are separate.
+    document.querySelectorAll(".layout-option[data-layout-mode]").forEach(button => button.addEventListener("click", () => applyLayout(button.dataset.layoutMode)));
     applyLayout(new URLSearchParams(location.search).get("layout"), false);
     window.matchMedia("(min-width: 1500px)").addEventListener("change", placeTelemetry);
     window.matchMedia("(min-width: 1181px)").addEventListener("change", placeTelemetry);

@@ -650,6 +650,7 @@
     "上游直接战斗决策需要 MCTS；请调整搜索配置。": "Mentor combat decisions require MCTS; adjust the search settings.",
     "该局历史日志不可用。": "History logs for this run are unavailable.",
     "该决策的历史记录不存在。": "This decision's history record was not found.",
+    "历史日志暂时无法读取，请稍后重试。": "History logs are temporarily unavailable; retry shortly.",
     "无法定位 APPDATA，不能校验游戏存档。": "APPDATA could not be located; the game save cannot be checked."
   };
   // These new backend guidance strings also need the default Chinese display.
