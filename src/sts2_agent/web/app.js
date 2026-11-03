@@ -1,6 +1,14 @@
 /** Local dashboard client: observe snapshots, follow SSE, and submit explicit controls. */
 "use strict";
 
+/** Translate display text while retaining the Chinese default in older clients. */
+function tr(source, params = {}) {
+  if (typeof source !== "string") return source;
+  return window.ObservatoryI18n ? window.ObservatoryI18n.t(source, params)
+    : source.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? `{${key}}`));
+}
+
+
 // Snapshot refreshes coalesce streaming events without delaying control commands.
 const SNAPSHOT_DELAY_MS = 280;
 // Quiet paused sessions still accrue backend wall time without emitting SSE events.
@@ -11,9 +19,9 @@ const RECONNECT_BASE_MS = 1500;
 const MAX_TIMELINE_ROWS = 100;
 // The live throughput curve always shows the last ten seconds.
 const SPEED_WINDOW_MS = 10000;
-// Sample the curve at most twice per second; rendering adds no API requests.
-const SPEED_SAMPLE_MS = 400;
-// Speed decays during quiet network intervals without making another API request.
+// Dense curve samples keep the live edge moving; rendering adds no API requests.
+const SPEED_SAMPLE_MS = 120;
+// Speed text decays during quiet network intervals without making another API request.
 const SPEED_REFRESH_MS = 500;
 // Recent same-model API counts calibrate text estimates without altering billing.
 const SPEED_CALIBRATION_REQUESTS = 8;
@@ -51,7 +59,7 @@ const DECISION_STATUS_LABELS = {
 const PHASE_LABELS = {
   idle: "未开始", created: "会话就绪", starting: "正在创建会话", observing: "读取公开观测",
   observation: "读取公开观测", thinking: "模型正在思考", generating: "模型正在生成",
-  model: "模型正在生成", model_request: "模型正在生成", deciding: "正在形成决策", upstream_generating: "上游程序正在决策",
+  model: "模型正在生成", model_request: "模型正在生成", deciding: "正在形成决策", upstream_generating: "Mentor 正在决策",
   calculating: "有限计算中", evaluating: "有限计算中", model_generating: "模型正在生成",
   decision_ready: "方案就绪", executing: "正在提交动作", submitting: "正在提交动作",
   settling: "等待游戏结算", waiting: "等待稳定状态", waiting_settlement: "等待游戏结算",
@@ -123,7 +131,7 @@ function publicRulesText(value, fallback = "—") {
   return printable(value, fallback)
     .replace(/(?:res|uid):\/\/[^\s\[\]<>"。！？；，]+?\.(?:png|webp|svg|jpg)(?:\?[^\s\[\]<>"。！？；，]*)?/gi, resource => {
       const name = resource.split("/").at(-1).split("?")[0];
-      return /_energy_icon\.png$/i.test(name) ? "⚡" : `〔图标:${name.replace(/\.[^.]+$/, "")}〕`;
+      return /_energy_icon\.png$/i.test(name) ? "⚡" : tr("〔图标:{p0}〕", {p0: name.replace(/\.[^.]+$/, "")});
     })
     .replace(/\[\/?(?:[a-z_]+)(?:[= ][^\]]+)?\]/gi, "");
 }
@@ -132,7 +140,7 @@ function publicRulesText(value, fallback = "—") {
 function numeric(value) { return typeof value === "number" && Number.isFinite(value); }
 
 /** Format a measured count; missing usage stays visibly unknown. */
-function count(value, fallback = "未知") { return numeric(value) ? value.toLocaleString("zh-CN") : fallback; }
+function count(value, fallback = tr("未知")) { return numeric(value) ? value.toLocaleString(window.ObservatoryI18n?.locale || "zh-CN") : fallback; }
 
 /** Format controller wall time without inventing a running client clock. */
 function duration(value) {
@@ -146,7 +154,7 @@ function duration(value) {
 /** Convert a backend timestamp to local time with its machine-readable original. */
 function localTime(value) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleTimeString("zh-CN", { hour12: false });
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleTimeString(window.ObservatoryI18n?.locale || "zh-CN", { hour12: false });
 }
 
 /** Construct safe text nodes for dynamic cards and timeline rows. */
@@ -185,10 +193,10 @@ function healthText(value, maximum) {
 function renderConnection(message) {
   const online = state.apiAvailable && state.streamConnected;
   byId("connection").className = `conn ${online ? "online" : "offline"}`;
-  setText("connection-text", online ? "本地控制器已连接" : state.snapshot ? "连接恢复中" : "等待连接");
+  setText("connection-text", online ? tr("本地控制器已连接") : state.snapshot ? tr("连接恢复中") : tr("等待连接"));
   const banner = byId("connection-banner");
   banner.hidden = online;
-  if (!online) banner.textContent = message || (state.snapshot ? "事件连接中断，保留最后快照；正在自动重连。" : "正在连接本地控制器，页面不会自动启动 Agent。");
+  if (!online) banner.textContent = message || (state.snapshot ? tr("事件连接中断，保留最后快照；正在自动重连。") : tr("正在连接本地控制器，页面不会自动启动 Agent。"));
   renderControls();
 }
 
@@ -204,12 +212,12 @@ function renderGameLaunch(snapshot) {
   const launch = snapshot?.game_launch || {};
   const status = String(launch.status || "idle").toLowerCase();
   const awaiting = state.launchPending && status !== "starting";
-  const fallback = status === "error" ? "游戏启动失败，请检查程序执行时间线后重试。"
-    : status === "starting" ? "正在准备游戏；自动游玩保持暂停。"
-    : status === "ready" ? "游戏已就绪，自动游玩保持暂停。" : "";
-  const message = awaiting ? "启动请求已收到，正在准备游戏；自动游玩保持暂停。"
-    : isGameOver(snapshot) && status === "ready" ? "本局已结束，点击启动游戏准备下一局。"
-    : printable(launch.message, fallback);
+  const fallback = status === "error" ? tr("游戏启动失败，请检查程序执行时间线后重试。")
+    : status === "starting" ? tr("正在准备游戏；自动游玩保持暂停。")
+    : status === "ready" ? tr("游戏已就绪，自动游玩保持暂停。") : "";
+  const message = awaiting ? tr("启动请求已收到，正在准备游戏；自动游玩保持暂停。")
+    : isGameOver(snapshot) && status === "ready" ? tr("本局已结束，点击启动游戏准备下一局。")
+    : tr(printable(launch.message, fallback));
   const banner = byId("game-launch-banner");
   banner.hidden = !state.launchPending && status !== "starting" && status !== "error";
   banner.textContent = message;
@@ -241,23 +249,23 @@ function renderSession(snapshot) {
   const terminal = terminalStates.includes(status) ? status : terminalStates.includes(phase) ? phase : null;
   const evidenceVictory = snapshot.terminal_evidence?.game_over?.victory;
   const victory = typeof snapshot.victory === "boolean" ? snapshot.victory : evidenceVictory;
-  const label = gameOver ? victory === true ? "已通关" : victory === false ? "本局失败" : "游戏已结束"
-    : terminal ? PHASE_LABELS[terminal]
-    : wantsPause && !safePaused ? "正在等待安全点" : safePaused ? "已暂停" : PHASE_LABELS[phase] || PHASE_LABELS[status] || printable(snapshot.phase || snapshot.status);
+  const label = gameOver ? victory === true ? tr("已通关") : victory === false ? tr("本局失败") : tr("游戏已结束")
+    : terminal ? tr(PHASE_LABELS[terminal])
+    : wantsPause && !safePaused ? tr("正在等待安全点") : safePaused ? tr("已暂停") : tr(PHASE_LABELS[phase]) || tr(PHASE_LABELS[status]) || printable(snapshot.phase || snapshot.status);
   setText("phase-label", label);
-  let detail = "开始自动游玩后，Agent 会持续行动；单步只放行一个原生合法动作。";
-  if (gameOver) detail = `${typeof victory === "boolean" ? "结果已保存。" : "结果已保存，胜负尚未确认。"}点击启动游戏准备新会话，旧局记录会保留。`;
-  else if (["error", "failed"].includes(terminal)) detail = printable(snapshot.error || snapshot.last_error, "请查看程序执行时间线中的错误信息。");
-  else if (cancellation === "cancelling") detail = hasInflight ? "正在停止模型输出；已提交动作仍需等待结算。" : "正在停止模型输出，等待请求退出。";
-  else if (terminal) detail = "本次控制循环已结束，累计用量与事件仍可查看。";
-  else if (!snapshot.connection?.connected) detail = "点击启动游戏，等待游戏桥连接就绪后点击开始自动游玩。";
-  else if (wantsPause && !safePaused) detail = hasInflight ? "已禁止新动作提交，等待已提交动作结算。" : "暂停请求已收到，等待控制器进入安全点。";
-  else if (safePaused && modelPending) detail = "游戏动作已暂停，等待模型请求退出。";
-  else if (safePaused) detail = snapshot.budget_started_utc ? "动作提交已暂停，已有记忆、方案与预算保持保留。" : "游戏已连接，点击开始自动游玩；当前不会调用模型或提交动作。";
-  else if (hasInflight) detail = "动作已提交，等待游戏回执与自然结算。";
-  else if (modelPending) detail = "正在接收模型响应，完整校验后才能提交游戏动作。";
-  if (state.launchPending) detail = "启动请求已收到，正在准备游戏；自动游玩保持暂停。";
-  else if (snapshot.game_launch?.status === "starting") detail = printable(snapshot.game_launch?.message, "正在准备游戏；自动游玩保持暂停。");
+  let detail = tr("开始自动游玩后，Agent 会持续行动；单步只放行一个原生合法动作。");
+  if (gameOver) detail = tr("{p0}点击启动游戏准备新会话，旧局记录会保留。", {p0: typeof victory === "boolean" ? tr("结果已保存。") : tr("结果已保存，胜负尚未确认。")});
+  else if (["error", "failed"].includes(terminal)) detail = tr(printable(snapshot.error || snapshot.last_error, tr("请查看程序执行时间线中的错误信息。")));
+  else if (cancellation === "cancelling") detail = hasInflight ? tr("正在停止模型输出；已提交动作仍需等待结算。") : tr("正在停止模型输出，等待请求退出。");
+  else if (terminal) detail = tr("本次控制循环已结束，累计用量与事件仍可查看。");
+  else if (!snapshot.connection?.connected) detail = tr("点击启动游戏，等待游戏桥连接就绪后点击开始自动游玩。");
+  else if (wantsPause && !safePaused) detail = hasInflight ? tr("已禁止新动作提交，等待已提交动作结算。") : tr("暂停请求已收到，等待控制器进入安全点。");
+  else if (safePaused && modelPending) detail = tr("游戏动作已暂停，等待模型请求退出。");
+  else if (safePaused) detail = snapshot.budget_started_utc ? tr("动作提交已暂停，已有记忆、方案与预算保持保留。") : tr("游戏已连接，点击开始自动游玩；当前不会调用模型或提交动作。");
+  else if (hasInflight) detail = tr("动作已提交，等待游戏回执与自然结算。");
+  else if (modelPending) detail = tr("正在接收模型响应，完整校验后才能提交游戏动作。");
+  if (state.launchPending) detail = tr("启动请求已收到，正在准备游戏；自动游玩保持暂停。");
+  else if (snapshot.game_launch?.status === "starting") detail = tr(printable(snapshot.game_launch?.message, tr("正在准备游戏；自动游玩保持暂停。")));
   const showDetail = ["error", "failed", "budget_stop"].includes(terminal) || hasInflight || modelPending || cancellation === "cancelling";
   setText("phase-detail", showDetail ? detail : "");
   byId("phase-detail").hidden = !showDetail;
@@ -267,12 +275,12 @@ function renderSession(snapshot) {
   else if (safePaused || wantsPause) orbClass = "paused";
   byId("phase-orb").className = `orb ${orbClass}`;
   const connection = snapshot.connection || {};
-  setText("run-identity", snapshot.run_id ? `本局 ${snapshot.run_id}` : "等待会话");
-  setText("version", `游戏 ${printable(connection.game_version)} · Mod ${printable(connection.mod_version)} · PID ${printable(connection.pid)}`);
-  byId("connection").title = connection.connected ? "控制器已连接游戏桥" : printable(connection.error, "游戏桥尚未连接，等待公开观测");
+  setText("run-identity", snapshot.run_id ? tr("本局 {p0}", {p0: snapshot.run_id}) : tr("等待会话"));
+  setText("version", tr("游戏 {p0} · Mod {p1} · PID {p2}", {p0: printable(connection.game_version), p1: printable(connection.mod_version), p2: printable(connection.pid)}));
+  byId("connection").title = connection.connected ? tr("控制器已连接游戏桥") : tr(printable(connection.error, tr("游戏桥尚未连接，等待公开观测")));
   if (state.apiAvailable && state.streamConnected && connection.connected === false) {
     byId("connection-banner").hidden = false;
-    setText("connection-banner", `控制器已连接，游戏桥尚未就绪。${printable(connection.error, "等待游戏连接。")}`);
+    setText("connection-banner", tr("控制器已连接，游戏桥尚未就绪。{p0}", {p0: printable(connection.error, tr("等待游戏连接。"))}));
   }
   renderGameLaunch(snapshot);
 }
@@ -287,7 +295,7 @@ function renderGame(observation) {
   const maxHp = player.max_hp ?? player.maxHp ?? run.max_hp ?? run.maxHp;
   const [currentHp, maximumHp] = healthParts(hp, maxHp);
   const screen = observationState.screen || observation?.screen;
-  setText("screen-label", screen ? SCREEN_LABELS[String(screen).toUpperCase()] || screen : "等待观测");
+  setText("screen-label", screen ? tr(SCREEN_LABELS[String(screen).toUpperCase()]) || screen : tr("等待观测"));
   setText("hp-value", currentHp);
   setText("hp-max", maximumHp);
   setMeter("hp-bar", currentHp, maximumHp);
@@ -304,14 +312,14 @@ function renderGame(observation) {
     meter.setAttribute("aria-valuemax", numeric(Number(maximumHp)) ? maximumHp : 100);
     meter.setAttribute("aria-valuetext", healthText(hp, maxHp));
   }
-  setText("obs-screen", screen ? SCREEN_LABELS[String(screen).toUpperCase()] || screen : "—");
+  setText("obs-screen", screen ? tr(SCREEN_LABELS[String(screen).toUpperCase()]) || screen : "—");
   setText("obs-energy", player.energy);
   setText("obs-block", player.block);
   setText("obs-gold", run.gold);
   setText("obs-enemies", Array.isArray(combat.enemies) ? combat.enemies.length : "—");
   setText("obs-hand", Array.isArray(combat.hand) ? combat.hand.length : "—");
   renderAssets(run);
-  setText("obs-json", observation ? JSON.stringify(observation, null, 2) : "尚无公开观测");
+  setText("obs-json", observation ? JSON.stringify(observation, null, 2) : tr("尚无公开观测"));
 }
 
 /** Show reported run assets without counting aggregated deck rows as individual cards. */
@@ -319,20 +327,20 @@ function renderAssets(run) {
   const relics = Array.isArray(run.relics) ? run.relics : [];
   const potions = Array.isArray(run.potions) ? run.potions.filter(item => item.occupied || item.potion_id) : [];
   const deck = Array.isArray(run.deck) ? run.deck : [];
-  setText("assets-count", `${Array.isArray(run.relics) ? relics.length : "—"} 遗物 · ${Array.isArray(run.potions) ? potions.length : "—"} 药水`);
+  setText("assets-count", tr("{p0} 遗物 · {p1} 药水", {p0: Array.isArray(run.relics) ? relics.length : "—", p1: Array.isArray(run.potions) ? potions.length : "—"}));
   replaceCollection("asset-relics", relics.map((item, index) => {
     const chip = element("b", "", typeof item === "string" ? item : item.name || item.relic_id);
     chip.title = publicRulesText(run.relic_descriptions?.[index] || item.description, "");
     return chip;
-  }), Array.isArray(run.relics) ? "无遗物" : "尚无遗物记录");
+  }), Array.isArray(run.relics) ? tr("无遗物") : tr("尚无遗物记录"));
   replaceCollection("asset-potions", potions.map(item => {
     const chip = element("b", "", publicRulesText(item.name || item.line || item.potion_id));
     chip.title = publicRulesText(item.description, "");
     return chip;
-  }), Array.isArray(run.potions) ? "无药水" : "尚无药水记录");
+  }), Array.isArray(run.potions) ? tr("无药水") : tr("尚无药水记录"));
   const total = numeric(run.deck_size) ? run.deck_size : deck.length && deck.every(item => numeric(item.card_count)) ? deck.reduce((sum, item) => sum + item.card_count, 0) : null;
-  setText("asset-deck-count", numeric(total) ? `${total} 张` : deck.length ? `${deck.length} 条牌组记录 · 总张数未提供` : "尚无牌组记录");
-  replaceCollection("asset-deck", deck.map(item => element("b", "", publicRulesText(typeof item === "string" ? item : item.name || item.line || item.card_id))), "尚无牌组记录");
+  setText("asset-deck-count", numeric(total) ? tr("{p0} 张", {p0: total}) : deck.length ? tr("{p0} 条牌组记录 · 总张数未提供", {p0: deck.length}) : tr("尚无牌组记录"));
+  replaceCollection("asset-deck", deck.map(item => element("b", "", publicRulesText(typeof item === "string" ? item : item.name || item.line || item.card_id))), tr("尚无牌组记录"));
 }
 
 /** Render cumulative budgets and measured token usage without zero-filling gaps. */
@@ -353,7 +361,7 @@ function renderMetrics(metrics) {
   for (const [id, value] of [["mix-hit", metrics.prompt_cache_hit_tokens], ["mix-miss", metrics.prompt_cache_miss_tokens], ["mix-out", metrics.completion_tokens]]) {
     setMeter(id, value, metrics.total_tokens);
   }
-  byId("total-tokens").title = numeric(metrics.unknown_usage_requests) && metrics.unknown_usage_requests > 0 ? `未知用量请求：${metrics.unknown_usage_requests}` : "";
+  byId("total-tokens").title = numeric(metrics.unknown_usage_requests) && metrics.unknown_usage_requests > 0 ? tr("未知用量请求：{p0}", {p0: metrics.unknown_usage_requests}) : "";
 }
 
 /** Keep historical requests separate and follow the newest unless explicitly pinned. */
@@ -367,9 +375,9 @@ function renderRequests(requests) {
   }
   const select = byId("request-select");
   select.replaceChildren();
-  if (!list.length) select.append(element("option", "", "等待模型请求"));
+  if (!list.length) select.append(element("option", "", tr("等待模型请求")));
   list.slice().reverse().forEach((request, index) => {
-    const option = element("option", "", `${index === 0 ? "最新 · " : ""}请求 ${list.length - index} · ${REQUEST_LABELS[request.status] || printable(request.status)}`);
+    const option = element("option", "", tr("{p0}请求 {p1} · {p2}", {p0: index === 0 ? tr("最新 · ") : "", p1: list.length - index, p2: tr(REQUEST_LABELS[request.status]) || printable(request.status)}));
     option.value = request.model_request_id;
     option.title = request.model_request_id;
     select.append(option);
@@ -394,18 +402,18 @@ function renderStream() {
   const empty = byId("stream-empty");
   const latest = requests.at(-1);
   const selectedCancellation = request === latest && cancellation ? cancellation : ["cancelling", "cancelled"].includes(request?.status) ? request.status : "";
-  empty.querySelector("strong").textContent = selectedCancellation ? REQUEST_LABELS[selectedCancellation] : request ? state.stream === "reasoning" ? "暂无推理文本" : "等待最终响应" : "等待下一次思考";
-  empty.querySelector("p").textContent = selectedCancellation ? "该请求的已有输出保留在记录中，不会作为完整决策提交。" : request ? state.stream === "reasoning" ? "该请求尚未返回推理文本，或服务端未提供此字段。" : "完整响应到达后显示；流中的半成品不会提交到游戏。" : "这里展示 API 返回的推理文本。启动游戏后仍保持暂停。";
+  empty.querySelector("strong").textContent = selectedCancellation ? tr(REQUEST_LABELS[selectedCancellation]) : request ? state.stream === "reasoning" ? tr("暂无推理文本") : tr("等待最终响应") : tr("等待下一次思考");
+  empty.querySelector("p").textContent = selectedCancellation ? tr("该请求的已有输出保留在记录中，不会作为完整决策提交。") : request ? state.stream === "reasoning" ? tr("该请求尚未返回推理文本，或服务端未提供此字段。") : tr("完整响应到达后显示；流中的半成品不会提交到游戏。") : tr("这里展示 API 返回的推理文本。启动游戏后仍保持暂停。");
   const retaining = !state.requestPinned && latest && latest !== request && !latest[state.stream];
-  setText("request-status", retaining ? `${cancellation ? REQUEST_LABELS[cancellation] : "等待新输出"} · 保留上一轮` : selectedCancellation ? REQUEST_LABELS[selectedCancellation] : request ? REQUEST_LABELS[request.status] || request.status : "未开始");
-  setText("model-activity", cancellation ? `${REQUEST_LABELS[cancellation]} · API 原始输出` : state.snapshot?.request_pending ? "正在生成 · API 原始输出" : text ? "已有输出 · API 原始文本" : "查看推理与 JSON");
+  setText("request-status", retaining ? tr("{p0} · 保留上一轮", {p0: cancellation ? tr(REQUEST_LABELS[cancellation]) : tr("等待新输出")}) : selectedCancellation ? tr(REQUEST_LABELS[selectedCancellation]) : request ? tr(REQUEST_LABELS[request.status]) || request.status : tr("未开始"));
+  setText("model-activity", cancellation ? tr("{p0} · API 原始输出", {p0: tr(REQUEST_LABELS[cancellation])}) : state.snapshot?.request_pending ? tr("正在生成 · API 原始输出") : text ? tr("已有输出 · API 原始文本") : tr("查看推理与 JSON"));
   const metadata = [];
   if (request?.model) metadata.push(String(request.model));
-  if (request?.decision_id) metadata.push(`决策 ${request.decision_id}`);
+  if (request?.decision_id) metadata.push(tr("决策 {p0}", {p0: request.decision_id}));
   if (request?.decision_epoch !== undefined) metadata.push(`epoch ${request.decision_epoch}`);
   if (request?.error) metadata.push(printable(request.error));
-  setText("request-meta", metadata.length ? metadata.join(" · ") : "API 推理文本不代表全部内部计算");
-  setText("stream-length", request ? `${text.length.toLocaleString("zh-CN")} 字符` : "—");
+  setText("request-meta", metadata.length ? metadata.join(" · ") : tr("API 推理文本不代表全部内部计算"));
+  setText("stream-length", request ? tr("{p0} 字符", {p0: text.length.toLocaleString(window.ObservatoryI18n?.locale || "zh-CN")}) : "—");
   if (state.follow) box.scrollTop = box.scrollHeight;
   else box.scrollTop = previousScroll;
 }
@@ -419,42 +427,42 @@ function renderDecision(decision) {
   const localPending = state.snapshot?.phase === "upstream_generating";
   const upstream = String(visible?.decision_source || "").startsWith("upstream_");
   const request = (state.snapshot?.model_requests || []).findLast(item => item.decision_id === visible?.decision_id);
-  setText("decision-engine", localPending ? "上游程序" : upstream
-    ? visible.decision_source === "upstream_ppo" ? "上游 PPO" : "上游 MCTS"
-    : visible?.decision_source === "automatic" ? "自动流程" : request?.actual_model && request.actual_model !== "unknown" ? request.actual_model : request?.requested_model || (visible ? "大模型" : "—"));
-  setText("decision-status", cancellation === "cancelling" ? "正在停止输出" : thinking ? localPending ? "上游程序正在决策" : "正在思考下一步"
-    : cancellation === "cancelled" ? "本轮生成已取消"
-    : visible?.decision_source === "automatic" ? "自动流程"
-    : upstream && visible.status === "proposed" ? "上游提案"
-    : visible ? DECISION_STATUS_LABELS[visible.status] || "最近完整决策" : "等待决策");
+  setText("decision-engine", localPending ? "Mentor" : upstream
+    ? visible.decision_source === "upstream_ppo" ? "Mentor PPO" : "Mentor MCTS"
+    : visible?.decision_source === "automatic" ? tr("自动流程") : request?.actual_model && request.actual_model !== "unknown" ? request.actual_model : request?.requested_model || (visible ? tr("大模型") : "—"));
+  setText("decision-status", cancellation === "cancelling" ? tr("正在停止输出") : thinking ? localPending ? tr("Mentor 正在决策") : tr("正在思考下一步")
+    : cancellation === "cancelled" ? tr("本轮生成已取消")
+    : visible?.decision_source === "automatic" ? tr("自动流程")
+    : upstream && visible.status === "proposed" ? tr("Mentor 提案")
+    : visible ? tr(DECISION_STATUS_LABELS[visible.status]) || tr("最近完整决策") : tr("等待决策"));
   byId("decision-status").classList.toggle("generating", thinking && cancellation !== "cancelling");
-  setText("decision-identity", visible?.decision_id ? `决策 ${visible.decision_id.slice(0, 8)}` : "—");
+  setText("decision-identity", visible?.decision_id ? tr("决策 {p0}", {p0: visible.decision_id.slice(0, 8)}) : "—");
   byId("decision-identity").title = visible?.decision_id || "";
-  setText("decision-time", thinking && visible ? "保留上一条完整说明" : visible?.timestamp_utc ? localTime(visible.timestamp_utc) : visible ? "完整方案" : "尚无有效方案");
+  setText("decision-time", thinking && visible ? tr("保留上一条完整说明") : visible?.timestamp_utc ? localTime(visible.timestamp_utc) : visible ? tr("完整方案") : tr("尚无有效方案"));
   const label = visible?.action_label !== visible?.action?.type ? visible?.action_label : null;
   // Completed actions belong to an earlier root; live indices may already refer to other cards.
   const currentRoot = decision?.action && ["proposed", "ready", "pending", "validated"].includes(visible?.status);
   setText("decision-action", publicRulesText(label || actionLabel(visible?.action, currentRoot ? state.snapshot?.observation : null)));
   const target = visible?.action?.target_index;
   const targetEnemy = currentRoot ? state.snapshot?.observation?.state?.combat?.enemies?.find(enemy => enemy.i === target) : null;
-  setText("decision-target", target === undefined ? "" : `目标：${targetEnemy?.name || `公开目标 #${target}`}`);
+  setText("decision-target", target === undefined ? "" : tr("目标：{p0}", {p0: targetEnemy?.name || tr("公开目标 #{p0}", {p0: target})}));
   byId("decision-target").hidden = target === undefined;
-  setText("decision-json", visible?.action ? JSON.stringify(visible.action, null, 2) : "尚无完整动作");
-  setText("decision-reason", visible?.reason || "完整决策到达后，说明会保留在这里。");
+  setText("decision-json", visible?.action ? JSON.stringify(visible.action, null, 2) : tr("尚无完整动作"));
+  setText("decision-reason", visible?.reason || tr("完整决策到达后，说明会保留在这里。"));
   setText("decision-plan", state.snapshot?.build_plan ?? state.snapshot?.plan ?? visible?.build_plan ?? visible?.plan ?? "—");
   setText("scene-plan", state.snapshot?.scene_plan ?? visible?.scene_plan ?? "—");
 }
 
 /** Describe an action using only its associated current public observation. */
 function actionLabel(action, observation) {
-  if (!action) return "等待模型给出完整动作";
-  const label = ACTION_LABELS[action.type] || action.type;
+  if (!action) return tr("等待模型给出完整动作");
+  const label = tr(ACTION_LABELS[action.type]) || action.type;
   if (action.type === "play_card") {
     const card = observation?.state?.combat?.hand?.find(item => item.i === action.card_index);
     const name = card?.name || card?.line?.split(/[\[：:]/)[0].trim();
-    return `${label} · ${name || `手牌 #${action.card_index}`}`;
+    return `${label} · ${name || tr("手牌 #{p0}", {p0: action.card_index})}`;
   }
-  return action.option_index === undefined ? label : `${label} · 选项 #${action.option_index}`;
+  return action.option_index === undefined ? label : tr("{p0} · 选项 #{p1}", {p0: label, p1: action.option_index});
 }
 
 /** Retain complete explanations without treating raw responses as game receipts. */
@@ -523,12 +531,10 @@ function formatRate(value) {
   return clamped >= 10 ? String(Math.round(clamped)) : String(Math.round(clamped * 10) / 10);
 }
 
-/** Show calibrated rolling generation and distinguish API generation from request latency. */
-function renderLiveUsage() {
-  const request = state.snapshot?.model_requests?.at(-1);
+/** Measure decode-only speed for the newest request; prefill and first-token wait stay excluded. */
+function measureSpeed(request, now) {
   const cancellation = generationCancellation();
   const active = !cancellation && request && ["generating", "streaming", "running", "pending"].includes(request.status);
-  const now = Date.now();
   const calibration = tokenCalibration(request, state.snapshot?.model_requests);
   const estimated = estimateTokens(request, calibration);
   const billedOutput = request?.usage?.completion_tokens;
@@ -536,45 +542,90 @@ function renderLiveUsage() {
   const measured = !active && !cancellation && numeric(billedOutput) && numeric(generationMs);
   const totalMeasured = !active && !cancellation && !measured && numeric(billedOutput) && numeric(request?.duration_ms) && request.duration_ms > 0;
   const firstDelta = Date.parse(request?.first_delta_utc);
-  // Decode span only: prefill and first-token wait are excluded, as in DSH.
   let speed = null;
   if (active && estimated && Number.isFinite(firstDelta)) speed = decodeRate(estimated, firstDelta, now);
   else if (measured) speed = billedOutput / (generationMs / 1000);
   else if (totalMeasured) speed = billedOutput / (request.duration_ms / 1000);
   if (cancellation) speed = null;
-  // The curve is time-based and survives request boundaries; idle samples fall to zero.
-  if (now - state.speedPointAt >= SPEED_SAMPLE_MS) {
-    state.speedPointAt = now;
-    state.speedHistory.push({time: now, value: active && numeric(speed) ? Math.max(0, speed) : 0});
-  }
+  return {cancellation, active, estimated, measured, totalMeasured, speed};
+}
+
+/** Record one bounded-rate curve sample; idle samples fall to zero. */
+function sampleSpeed(now, speed, active) {
+  if (now - state.speedPointAt < SPEED_SAMPLE_MS) return;
+  state.speedPointAt = now;
+  state.speedHistory.push({time: now, value: active && numeric(speed) ? Math.max(0, speed) : 0});
   // Keep one sample beyond the window so the curve's left edge can be interpolated.
   state.speedHistory = state.speedHistory.filter(point => point.time >= now - SPEED_WINDOW_MS - SPEED_SAMPLE_MS * 2);
+}
+
+/** Draw the curve, optionally with the continuously updated live value at its right edge. */
+function drawSpeed(now, speed, active) {
+  window.Observatory?.renderSpeed(state.speedHistory, now, SPEED_WINDOW_MS,
+    active && numeric(speed) ? Math.max(0, speed) : null);
+}
+
+// Identifies the animation loop so visibility changes and request ends cannot stack frames.
+let speedFrameId = 0;
+
+/** Advance the live curve at display cadence without touching the API or the text panel. */
+function speedFrame() {
+  speedFrameId = 0;
+  const now = Date.now();
+  const request = state.snapshot?.model_requests?.at(-1);
+  const view = measureSpeed(request, now);
+  sampleSpeed(now, view.speed, view.active);
+  drawSpeed(now, view.speed, view.active);
+  if (view.active && !document.hidden) speedFrameId = window.requestAnimationFrame(speedFrame);
+}
+
+/** Start the curve loop only while a request is streaming. */
+function startSpeedLoop() {
+  if (speedFrameId || typeof window.requestAnimationFrame !== "function" || document.hidden) return;
+  speedFrameId = window.requestAnimationFrame(speedFrame);
+}
+
+/** Stop the curve loop when no request is active. */
+function stopSpeedLoop() {
+  if (!speedFrameId) return;
+  if (typeof window.cancelAnimationFrame === "function") window.cancelAnimationFrame(speedFrameId);
+  speedFrameId = 0;
+}
+
+/** Show calibrated rolling generation and distinguish API generation from request latency. */
+function renderLiveUsage() {
+  const request = state.snapshot?.model_requests?.at(-1);
+  const now = Date.now();
+  const view = measureSpeed(request, now);
+  const speed = view.speed;
+  sampleSpeed(now, speed, view.active);
   setText("token-speed", numeric(speed) ? formatRate(speed) : "—");
-  setText("speed-state", cancellation ? REQUEST_LABELS[cancellation] : active ? estimated ? "生成中" : "等待首字" : request ? "已结束" : "待机");
-  byId("speed-state").classList.toggle("active", Boolean(active));
-  byId("token-speed").title = cancellation ? "取消的请求不显示生成速率" : measured ? "按解码时长计算（首字→完成）" : totalMeasured ? "含首字等待" : active ? "按解码时长计算（首字→当前）" : "尚无生成记录";
-  byId("speed-state").dataset.state = cancellation || (active ? "generating" : "paused");
-  window.Observatory?.renderSpeed(state.speedHistory, now, SPEED_WINDOW_MS);
+  setText("speed-state", view.cancellation ? tr(REQUEST_LABELS[view.cancellation]) : view.active ? view.estimated ? tr("生成中") : tr("等待首字") : request ? tr("已结束") : tr("待机"));
+  byId("speed-state").classList.toggle("active", Boolean(view.active));
+  byId("token-speed").title = view.cancellation ? tr("取消的请求不显示生成速率") : view.measured ? tr("按解码时长计算（首字→完成）") : view.totalMeasured ? tr("含首字等待") : view.active ? tr("按解码时长计算（首字→当前）") : tr("尚无生成记录");
+  byId("speed-state").dataset.state = view.cancellation || (view.active ? "generating" : "paused");
+  if (view.active) startSpeedLoop(); else stopSpeedLoop();
+  drawSpeed(now, speed, view.active);
 }
 
 /** Render instruction lifecycle records and revoke only active instructions. */
 function renderInstructions(instructions) {
   const list = Array.isArray(instructions) ? instructions : [];
   setText("guide-count", list.filter(item => !["consumed", "expired", "revoked", "replaced", "rejected"].includes(item.status)).length);
-  setText("instruction-count", `${list.length} 条`);
+  setText("instruction-count", tr("{p0} 条", {p0: list.length}));
   replaceCollection("instruction-list", list.slice().reverse().map(instruction => {
     const node = element("div", "instruction-card");
     const meta = element("div", "instruction-meta");
     const inactive = ["consumed", "expired", "revoked", "replaced", "rejected"].includes(instruction.status);
-    const status = element("span", `instruction-state${instruction.status === "injected" ? " injected" : inactive ? " inactive" : ""}`, INSTRUCTION_LABELS[instruction.status] || instruction.status);
-    meta.append(status, element("span", "", SCOPE_LABELS[instruction.scope] || instruction.scope));
+    const status = element("span", `instruction-state${instruction.status === "injected" ? " injected" : inactive ? " inactive" : ""}`, tr(INSTRUCTION_LABELS[instruction.status]) || instruction.status);
+    meta.append(status, element("span", "", tr(SCOPE_LABELS[instruction.scope]) || instruction.scope));
     const bottom = element("div", "instruction-bottom");
-    const association = instruction.decision_id ? `决策 ${instruction.decision_id}` : `指令 ${printable(instruction.id)}`;
+    const association = instruction.decision_id ? tr("决策 {p0}", {p0: instruction.decision_id}) : tr("指令 {p0}", {p0: printable(instruction.id)});
     const label = element("span", "", association);
     label.title = association;
     bottom.append(label);
     if (!inactive && instruction.id !== undefined) {
-      const revoke = element("button", "revoke-button", "撤销");
+      const revoke = element("button", "revoke-button", tr("撤销"));
       revoke.type = "button";
       revoke.disabled = state.busy || !state.apiAvailable;
       revoke.addEventListener("click", () => revokeInstruction(instruction.id));
@@ -582,7 +633,7 @@ function renderInstructions(instructions) {
     }
     node.append(meta, element("p", "", instruction.text), bottom);
     return node;
-  }), "还没有人工指令。");
+  }), tr("还没有人工指令。"));
 }
 
 /** Build a compact expandable inspector without interpreting result text as markup. */
@@ -596,27 +647,84 @@ function resultInspector(title, value) {
 function toolSummary(call) {
   if (call.error) return printable(call.error);
   const result = call.result;
-  if (result === null || result === undefined) return call.status === "started" || call.status === "running" ? "正在执行…" : "尚无返回内容";
+  if (result === null || result === undefined) return call.status === "started" || call.status === "running" ? tr("正在执行…") : tr("尚无返回内容");
   if (typeof result === "string") return result.slice(0, 220);
   if (result.summary || result.message || result.error) return printable(result.summary || result.message || result.error).slice(0, 220);
   const entries = result.entries || result.results || result.events || result.matches;
-  if (Array.isArray(entries)) return `返回 ${entries.length} 条记录${result.status ? ` · ${result.status}` : ""}`;
+  if (Array.isArray(entries)) return tr("返回 {p0} 条记录{p1}", {p0: entries.length, p1: result.status ? ` · ${result.status}` : ""});
   const candidates = result.candidates || result.result?.candidates;
-  if (Array.isArray(candidates)) return `已评估 ${candidates.length} 个候选${result.status ? ` · ${result.status}` : ""}`;
-  return result.status ? printable(result.status) : "已返回结果";
+  if (Array.isArray(candidates)) return tr("已评估 {p0} 个候选{p1}", {p0: candidates.length, p1: result.status ? ` · ${result.status}` : ""});
+  return result.status ? printable(result.status) : tr("已返回结果");
 }
 
 /** Label only an explicitly reported projection boundary, never inferred survival. */
 function simulationHorizon(endpoint) {
   const horizon = String(endpoint?.horizon || "");
-  const stages = {player_turn_end: "我方回合末", enemy_actions_end: "敌方行动结束",
-    enemy_turn_end: "敌方回合末", before_next_player_draw: "下一回合抽牌前",
-    next_player_turn_before_draw: "下一回合抽牌前",
-    after_first_action_before_combat_rollouts: "首动作后继（后续战斗见统计）"};
+  const stages = {player_turn_end: tr("我方回合末"), enemy_actions_end: tr("敌方行动结束"),
+    enemy_turn_end: tr("敌方回合末"), before_next_player_draw: tr("下一回合抽牌前"),
+    next_player_turn_before_draw: tr("下一回合抽牌前"),
+    after_first_action_before_combat_rollouts: tr("首动作后继（后续战斗见统计）")};
   if (stages[horizon]) return stages[horizon];
-  if (/next_player|next_turn|enemy_turn_resolved|after_enemy/.test(horizon)) return "回合结算后";
-  if (/before|current_player_turn/.test(horizon)) return "当前回合出牌后";
-  return horizon || "局部推演";
+  if (/next_player|next_turn|enemy_turn_resolved|after_enemy/.test(horizon)) return tr("回合结算后");
+  if (/before|current_player_turn/.test(horizon)) return tr("当前回合出牌后");
+  return horizon || tr("局部推演");
+}
+
+/** Candidate ranking metric: policy probability or search/score value, never merged. */
+function candidateMetric(row) {
+  if (row.policy_candidate) return numeric(row.probability) ? {value: row.probability, kind: "probability"} : null;
+  if (numeric(row.score)) return {value: row.score, kind: "score"};
+  if (numeric(row.mcts?.mean)) return {value: row.mcts.mean, kind: "score"};
+  return null;
+}
+
+/** Min-max scale per metric kind so near-ties still get distinguishable bars. */
+function candidateScale(rows) {
+  const groups = {score: [], probability: []};
+  for (const row of rows) {
+    const metric = candidateMetric(row);
+    if (metric) groups[metric.kind].push(metric.value);
+  }
+  const result = {};
+  for (const [kind, values] of Object.entries(groups)) {
+    if (!values.length) continue;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    result[kind] = {min, max, span: max - min};
+  }
+  return result;
+}
+
+/** Relative 0-100 fill; identical values share a full bar because no ordering exists. */
+function candidateFill(metric, scale) {
+  const group = scale?.[metric.kind];
+  if (!group) return 0;
+  if (!(group.span > 0)) return 100;
+  return Math.max(0, Math.min(1, (metric.value - group.min) / group.span)) * 100;
+}
+
+/** Format enough significant digits to separate near-identical candidate values. */
+function formatMetric(metric) {
+  if (metric.kind === "probability") {
+    const percent = metric.value * 100;
+    // Preserve near-certain vs certain instead of rounding both to 100.0%.
+    if (percent >= 99.95) return `${percent.toFixed(3)}%`;
+    if (percent >= 1) return `${percent.toFixed(1)}%`;
+    if (percent >= 0.01) return `${percent.toFixed(3)}%`;
+    return `${percent.toPrecision(3)}%`;
+  }
+  const text = metric.value.toPrecision(5);
+  return text.includes(".") ? text.replace(/0+$/, "").replace(/\.$/, "") : text;
+}
+
+/** Build one relative value bar shared by cards, drawer rows, and telemetry rows. */
+function candidateMeter(metric, scale, className = "candidate-meter") {
+  const meter = element("div", className);
+  meter.title = tr("相对当前候选范围；非实战胜率");
+  const fill = element("i");
+  fill.style.width = `${candidateFill(metric, scale).toFixed(1)}%`;
+  meter.append(fill);
+  return meter;
 }
 
 /** Present candidate resources and support gaps without treating a score as a win probability. */
@@ -629,18 +737,18 @@ function renderSimulation(simulation) {
   const previews = advice.bounded_action_previews || {};
   const strategies = advice.strategies || {};
   const rows = Object.entries(strategies).flatMap(([name, value]) => {
-    const best = {name: name === "mcts" ? "MCTS 推荐候选" : name, ...value};
+    const best = {name: name === "mcts" ? tr("MCTS 推荐候选") : name, ...value};
     return name === "mcts" ? [best, ...(value.alternatives || []).map((item, index) =>
-      ({...item, name: `其他候选 ${index + 1}`, status: "advisory"}))] : [best];
+      ({...item, name: tr("其他候选 {p0}", {p0: index + 1}), status: "advisory"}))] : [best];
   });
   const runPolicy = Object.hasOwn(advice, "policy_status");
   if (runPolicy) {
     // Preserve the upstream grouped decoder's choice instead of ranking raw probabilities.
     rows.push(...(advice.candidates || []).map(item => ({...item,
-      name: `PPO${item.selected ? " 推荐" : ""} · ${item.label || "动作"}`,
+      name: `PPO${item.selected ? tr(" 推荐") : ""} · ${item.label || tr("动作")}`,
       status: "advisory", policy_candidate: true})));
-    if (!rows.length) rows.push({name: "PPO 整局策略", status: "unavailable",
-      reason: [...(advice.errors || []), ...(advice.support?.reasons || [])].join(" · ") || "当前公开状态不可用"});
+    if (!rows.length) rows.push({name: tr("PPO 整局策略"), status: "unavailable",
+      reason: [...(advice.errors || []), ...(advice.support?.reasons || [])].join(" · ") || tr("当前公开状态不可用")});
   }
   rows.push(...(previews.candidates || []).map(item => ({...item, name: item.id, preview: true})));
   const prefix = data.prediction?.deterministic_prefix;
@@ -650,30 +758,31 @@ function renderSimulation(simulation) {
     }
   }
   const hypotheses = data.prediction?.uncertainty_evaluation?.candidates || [];
-  rows.push(...hypotheses.map(item => ({...item, name: "抽牌后假想", preview: true})));
+  rows.push(...hypotheses.map(item => ({...item, name: tr("抽牌后假想"), preview: true})));
   if (!runPolicy && rows.length && rows.every(row => ["unavailable", "unsupported", "skipped"].includes(row.status))) {
     const reasons = [...new Set(rows.flatMap(row => [row.reason, ...(row.support?.reasons || row.search_support_reasons || [])]).filter(Boolean))];
-    rows.splice(0, rows.length, {name: "搜索", status: "unavailable", reason: "当前局面无法比较出牌",
+    rows.splice(0, rows.length, {name: tr("搜索"), status: "unavailable", reason: tr("当前局面无法比较出牌"),
       support: {reasons}, strategies});
   }
   const available = rows.some(row => row.status === "advisory" || row.status === "completed");
-  const labels = {available: "可用", advisory: "PPO 建议", partial: "部分可用", unavailable: "不可用", skipped: advice.status === "model_candidates" ? "等待模型提案" : "未启用", disabled: "未启用", model_candidates: "等待模型提案"};
-  setText("sim-badge", prefix?.checkpoints?.length ? "分阶段可用"
-    : labels[data.status] || (available ? "有候选" : data.status || "等待局面"));
+  const labels = {available: tr("可用"), advisory: tr("PPO 建议"), partial: tr("部分可用"), unavailable: tr("不可用"), skipped: advice.status === "model_candidates" ? tr("等待模型提案") : tr("未启用"), disabled: tr("未启用"), model_candidates: tr("等待模型提案")};
+  setText("sim-badge", prefix?.checkpoints?.length ? tr("分阶段可用")
+    : labels[data.status] || (available ? tr("有候选") : data.status || tr("等待局面")));
   const meta = [data.backend || advice.backend, numeric(data.elapsed_ms) ? `${(data.elapsed_ms / 1000).toFixed(2)}s` : ""].filter(Boolean);
   const total = strategies.mcts?.search_mcts;
-  if (total) meta.push(`搜索总量 ${total.simulations_completed ?? total.visits ?? "—"} / 目标 ${total.simulations_requested ?? "—"} 次`,
-    `总胜 ${total.wins ?? "—"} · 总败 ${total.losses ?? "—"} · 总未终局 ${total.cutoffs ?? "—"}（跨候选自适应分配）`);
-  if (runPolicy && numeric(advice.value)) meta.push(`critic 估值 ${advice.value.toFixed(3)}（非胜率）`);
+  if (total) meta.push(tr("搜索总量 {p0} / 目标 {p1} 次", {p0: total.simulations_completed ?? total.visits ?? "—", p1: total.simulations_requested ?? "—"}),
+    tr("总胜 {p0} · 总败 {p1} · 总未终局 {p2}（跨候选自适应分配）", {p0: total.wins ?? "—", p1: total.losses ?? "—", p2: total.cutoffs ?? "—"}));
+  if (runPolicy && numeric(advice.value)) meta.push(tr("critic 估值 {p0}（非胜率）", {p0: advice.value.toFixed(3)}));
   if (runPolicy && advice.uncertainty) {
     const worlds = advice.uncertainty;
-    meta.push(`公开假想世界 ${worlds.completed ?? "—"} / ${worlds.world_count ?? "—"} · 失败 ${worlds.failed ?? "—"}`);
+    meta.push(tr("公开假想世界 {p0} / {p1} · 失败 {p2}", {p0: worlds.completed ?? "—", p1: worlds.world_count ?? "—", p2: worlds.failed ?? "—"}));
   }
   setText("sim-meta", meta.join(" · "));
+  const scale = candidateScale(rows);
   const cards = rows.map(row => {
     const card = element("article", "simulation-card");
     const top = element("div", "simulation-card-top");
-    top.append(element("strong", "", row.name), element("span", "small-badge", row.policy_candidate && row.selected ? "已选" : row.status === "advisory" ? "候选" : row.status || "未知"));
+    top.append(element("strong", "", row.name), element("span", "small-badge", row.policy_candidate && row.selected ? tr("已选") : row.status === "advisory" ? tr("候选") : row.status || tr("未知")));
     card.append(top);
     if (row.first_action || row.action) card.append(element("p", "simulation-action", actionLabel(row.first_action || row.action, state.snapshot?.observation)));
     const endpoint = row.endpoint || row.illustrative_sample?.endpoint;
@@ -681,27 +790,34 @@ function renderSimulation(simulation) {
       const player = endpoint.player || {};
       const facts = [simulationHorizon(endpoint)];
       if (player.hp !== undefined) facts.push(`HP ${healthText(player.hp, player.max_hp)}`);
-      if (player.block !== undefined) facts.push(`格挡 ${player.block}`);
-      if (player.energy !== undefined) facts.push(`能量 ${player.energy}`);
+      if (player.block !== undefined) facts.push(tr("格挡 {p0}", {p0: player.block}));
+      if (player.energy !== undefined) facts.push(tr("能量 {p0}", {p0: player.energy}));
       card.append(element("p", "simulation-facts", facts.join(" · ")));
     }
-    if (numeric(row.score)) card.append(element("span", "simulation-score", `${row.mcts ? "搜索价值" : "战术评分"} ${row.score.toFixed(1)}`));
-    if (row.policy_candidate) card.append(element("p", "simulation-facts", numeric(row.probability)
-      ? `策略概率 ${(row.probability * 100).toFixed(1)}%（非胜率）` : "原生唯一动作 · 无网络评分"));
+    const metric = candidateMetric(row);
+    if (row.policy_candidate) {
+      card.append(element("p", "simulation-facts", metric
+        ? tr("策略概率 {p0}（非胜率）", {p0: formatMetric(metric)}) : tr("原生唯一动作 · 无网络评分")));
+      if (metric) card.append(candidateMeter(metric, scale));
+    } else if (metric) {
+      const score = element("span", "simulation-score", `${row.mcts ? tr("搜索价值") : tr("战术评分")} ${formatMetric(metric)}`);
+      score.title = tr("精确值 {p0}；条形为当前候选内的相对位置，非实战胜率", {p0: metric.value});
+      card.append(score, candidateMeter(metric, scale));
+    }
     if (row.mcts) {
       const stats = row.mcts;
-      card.append(element("p", "simulation-facts", `以该首动作为条件：模拟访问 ${stats.visits ?? "—"} · 胜 ${stats.wins ?? "—"} · 败 ${stats.losses ?? "—"} · 未终局 ${stats.cutoffs ?? "—"}`));
-      if (numeric(stats.mean)) card.append(element("p", "simulation-facts", `模拟均值 ${stats.mean.toFixed(3)}（非实战胜率）`));
+      card.append(element("p", "simulation-facts", tr("以该首动作为条件：模拟访问 {p0} · 胜 {p1} · 败 {p2} · 未终局 {p3}", {p0: stats.visits ?? "—", p1: stats.wins ?? "—", p2: stats.losses ?? "—", p3: stats.cutoffs ?? "—"})));
+      if (numeric(stats.mean)) card.append(element("p", "simulation-facts", tr("模拟均值 {p0}（非实战胜率）", {p0: formatMetric({value: stats.mean, kind: "score"})})));
     }
-    if (numeric(row.sample_count)) card.append(element("p", "simulation-facts", `采样完成 ${row.completed_samples ?? "—"} / ${row.sample_count}`));
-    if (row.reason) card.append(element("p", "simulation-gap", row.reason));
+    if (numeric(row.sample_count)) card.append(element("p", "simulation-facts", tr("采样完成 {p0} / {p1}", {p0: row.completed_samples ?? "—", p1: row.sample_count})));
+    if (row.reason) card.append(element("p", "simulation-gap", tr(row.reason)));
     const gaps = row.support?.reasons || row.search_support_reasons;
-    if (Array.isArray(gaps) && gaps.length) card.append(element("p", "simulation-gap", [...new Set(gaps)].slice(0, 3).join(" · ")));
-    card.append(resultInspector("候选详情", row));
+    if (Array.isArray(gaps) && gaps.length) card.append(element("p", "simulation-gap", [...new Set(gaps)].slice(0, 3).map(gap => tr(gap)).join(" · ")));
+    card.append(resultInspector(tr("候选详情"), row));
     return card;
   });
-  if (!cards.length && data.diagnostics?.length) cards.push(element("p", "simulation-gap", data.diagnostics.map(item => item.code || item.message).filter(Boolean).join(" · ")));
-  replaceCollection("sim-results", cards, "暂无推演。");
+  if (!cards.length && data.diagnostics?.length) cards.push(element("p", "simulation-gap", data.diagnostics.map(item => item.code || tr(item.message)).filter(Boolean).join(" · ")));
+  replaceCollection("sim-results", cards, tr("暂无推演。"));
   setText("simulation-json", simulation ? JSON.stringify(simulation, null, 2) : "—");
   renderCandidateSummary(rows, total, data);
 }
@@ -709,6 +825,7 @@ function renderSimulation(simulation) {
 /** Reuse reported candidate order and selection in the compact telemetry bay. */
 function renderCandidateSummary(rows, total, data) {
   const candidates = rows.filter(row => row.first_action || row.action);
+  const scale = candidateScale(candidates);
   const empty = simulationEmptyState(data, rows);
   const recommended = candidates.find(row => row.selected) || candidates.find(row => !row.policy_candidate);
   setText("sim-summary-time", numeric(data.elapsed_ms) ? `${(data.elapsed_ms / 1000).toFixed(2)}s` : "—");
@@ -717,18 +834,21 @@ function renderCandidateSummary(rows, total, data) {
   setText("sim-summary-best", recommended ? actionLabel(recommended.first_action || recommended.action, state.snapshot?.observation) : "—");
   setText("sim-summary-search", total ? `${count(total.simulations_completed ?? total.visits)} / ${count(total.simulations_requested)}` : "—");
   setText("sim-summary-outcomes", total ? `${count(total.wins)} / ${count(total.losses)} / ${count(total.cutoffs)}` : "—");
-  setText("side-candidate-meta", candidates.length ? `${candidates.length} 个候选 · 非实战胜率` : empty.label);
+  setText("side-candidate-meta", candidates.length ? tr("{p0} 个候选 · 非实战胜率", {p0: candidates.length}) : empty.label);
   setText("side-candidate-best", recommended ? candidateValue(recommended) : "—");
   replaceCollection("decision-candidate-list", candidates.map(row => {
     const node = element("div", "decision-candidate");
     const top = element("div", "decision-candidate-top");
     top.append(element("b", "", actionLabel(row.first_action || row.action, state.snapshot?.observation)), element("span", "", candidateValue(row)));
-    node.append(top, element("p", "decision-candidate-facts", row.selected ? "PPO 选定动作" : row.mcts ? `模拟访问 ${count(row.mcts.visits)}` : row.reason || row.name));
+    node.append(top);
+    const metric = candidateMetric(row);
+    if (metric) node.append(candidateMeter(metric, scale, "decision-candidate-bar"));
+    node.append(element("p", "decision-candidate-facts", row.selected ? tr("PPO 选定动作") : row.mcts ? tr("模拟访问 {p0}", {p0: count(row.mcts.visits)}) : tr(row.reason) || row.name));
     return node;
   }), empty.message);
   const head = element("div", "bay-head");
-  head.append(element("span", "", "推演候选"), element("b", "", candidates.length ? `${Math.min(3, candidates.length)} / ${candidates.length}` : empty.label));
-  const all = element("button", "bay-all", "全部候选");
+  head.append(element("span", "", tr("推演候选")), element("b", "", candidates.length ? `${Math.min(3, candidates.length)} / ${candidates.length}` : empty.label));
+  const all = element("button", "bay-all", tr("全部候选"));
   all.type = "button";
   all.addEventListener("click", () => window.Observatory?.openDrawer("sim"));
   head.append(all);
@@ -736,7 +856,9 @@ function renderCandidateSummary(rows, total, data) {
   for (const [index, row] of candidates.slice(0, 3).entries()) {
     const item = element("li", "bay-row");
     item.append(element("span", "bay-rank", String(index + 1).padStart(2, "0")), element("span", "bay-name", actionLabel(row.first_action || row.action, state.snapshot?.observation)), element("span", "bay-score", candidateValue(row)));
-    item.title = row.policy_candidate ? "策略概率，非实战胜率" : "原生搜索价值，非实战胜率";
+    const metric = candidateMetric(row);
+    if (metric) item.style.setProperty("--v", `${candidateFill(metric, scale).toFixed(1)}%`);
+    item.title = row.policy_candidate ? tr("策略概率，非实战胜率") : tr("原生搜索价值，非实战胜率；条形为当前候选内的相对位置");
     list.append(item);
   }
   if (!candidates.length) list.append(element("li", "empty-state", empty.message));
@@ -753,23 +875,24 @@ function simulationEmptyState(data, rows) {
   ].filter(Boolean).map(item => printable(item)))];
   const screen = state.snapshot?.observation?.state?.screen;
   if (reasons.includes("ppo_public_hp_missing") && ["MAIN_MENU", "CHARACTER_SELECT"].includes(screen)) {
-    return {label: "当前场景不适用", message: "进入对局后提供推演候选。"};
+    return {label: tr("当前场景不适用"), message: tr("进入对局后提供推演候选。")};
   }
   if (data.status === "unavailable" || reasons.includes("upstream_mirror_request_failed")) {
     const message = reasons.includes("upstream_mirror_request_failed")
-      ? "推演进程请求失败（upstream_mirror_request_failed）"
-      : reasons.join(" · ") || "后端未能完成本次推演。";
-    return {label: "推演失败", message};
+      ? tr("推演进程请求失败（upstream_mirror_request_failed）")
+      : reasons.join(" · ") || tr("后端未能完成本次推演。");
+    return {label: tr("推演失败"), message};
   }
-  if (advice.status === "model_candidates") return {label: "等待模型提案", message: "本步由模型提出候选后再评估。"};
-  if (["skipped", "disabled"].includes(data.status)) return {label: "本步未推演", message: reasons.join(" · ") || "当前步骤未运行候选推演。"};
-  return {label: "等待推演", message: reasons.join(" · ") || "尚未收到本次推演结果。"};
+  if (advice.status === "model_candidates") return {label: tr("等待模型提案"), message: tr("本步由模型提出候选后再评估。")};
+  if (["skipped", "disabled"].includes(data.status)) return {label: tr("本步未推演"), message: reasons.join(" · ") || tr("当前步骤未运行候选推演。")};
+  return {label: tr("等待推演"), message: reasons.join(" · ") || tr("尚未收到本次推演结果。")};
 }
 
 /** Keep policy probability distinct from MCTS search value and absent measurements. */
 function candidateValue(row) {
-  return row.policy_candidate ? numeric(row.probability) ? `${(row.probability * 100).toFixed(1)}%${row.selected ? " · 已选" : ""}` : "未评分"
-    : numeric(row.score) ? row.score.toFixed(2) : numeric(row.mcts?.mean) ? row.mcts.mean.toFixed(2) : "—";
+  const metric = candidateMetric(row);
+  if (!metric) return "—";
+  return `${formatMetric(metric)}${row.selected ? tr(" · 已选") : ""}`;
 }
 
 /** Classify factual program and tool events for the compact execution timeline. */
@@ -780,28 +903,29 @@ function eventPresentation(event) {
   let title = type.replaceAll("_", " ").replaceAll(".", " · ");
   if (/reasoning|content_delta|model.*delta/.test(lower)) return null;
   if (EVENT_PRESENTATIONS[lower]) [category, title] = EVENT_PRESENTATIONS[lower];
-  else if (/calculat/.test(lower)) { category = "calculator"; title = "有限计算结果"; }
-  else if (/receipt|settled|accepted|action.*result/.test(lower)) { category = "execution"; title = "游戏回执 / 结算"; }
-  else if (/submit|dispatch|action_sent/.test(lower)) { category = "execution"; title = "程序提交动作"; }
-  else if (/decision.*(ready|complete|valid)|decision_created/.test(lower)) { category = "model"; title = "模型决策已形成"; }
-  else if (/model|provider|request/.test(lower)) { category = "model"; title = /complete|finish|success/.test(lower) ? "模型响应已完成" : /start|begin|sent/.test(lower) ? "发起模型请求" : "模型请求事件"; }
-  else if (/observ/.test(lower)) title = "公开观测已更新";
-  else if (/instruct/.test(lower)) title = "人工指令状态";
-  else if (/command|control/.test(lower)) title = "控制命令回执";
-  else if (/error|fail/.test(lower)) title = "程序错误";
-  else if (/pause/.test(lower)) title = "控制器暂停状态";
+  else if (/calculat/.test(lower)) { category = "calculator"; title = tr("有限计算结果"); }
+  else if (/receipt|settled|accepted|action.*result/.test(lower)) { category = "execution"; title = tr("游戏回执 / 结算"); }
+  else if (/submit|dispatch|action_sent/.test(lower)) { category = "execution"; title = tr("程序提交动作"); }
+  else if (/decision.*(ready|complete|valid)|decision_created/.test(lower)) { category = "model"; title = tr("模型决策已形成"); }
+  else if (/model|provider|request/.test(lower)) { category = "model"; title = /complete|finish|success/.test(lower) ? tr("模型响应已完成") : /start|begin|sent/.test(lower) ? tr("发起模型请求") : tr("模型请求事件"); }
+  else if (/observ/.test(lower)) title = tr("公开观测已更新");
+  else if (/instruct/.test(lower)) title = tr("人工指令状态");
+  else if (/command|control/.test(lower)) title = tr("控制命令回执");
+  else if (/error|fail/.test(lower)) title = tr("程序错误");
+  else if (/pause/.test(lower)) title = tr("控制器暂停状态");
+  title = tr(title);
   const payload = event.payload || {};
   const summary = payload.summary ?? payload.message ?? payload.error ?? payload.reason;
   const parts = [];
-  if (summary !== undefined) parts.push(printable(summary));
-  if (payload.action) parts.push(`动作 ${printable(payload.action)}`);
-  if (payload.status) parts.push(`状态 ${payload.status}`);
-  if (payload.command) parts.push(`命令 ${payload.command}`);
-  if (payload.model_request_id) parts.push(`请求 ${payload.model_request_id}`);
-  if (payload.decision_id) parts.push(`决策 ${payload.decision_id}`);
+  if (summary !== undefined) parts.push(tr(printable(summary)));
+  if (payload.action) parts.push(tr("动作 {p0}", {p0: printable(payload.action)}));
+  if (payload.status) parts.push(tr("状态 {p0}", {p0: payload.status}));
+  if (payload.command) parts.push(tr("命令 {p0}", {p0: payload.command}));
+  if (payload.model_request_id) parts.push(tr("请求 {p0}", {p0: payload.model_request_id}));
+  if (payload.decision_id) parts.push(tr("决策 {p0}", {p0: payload.decision_id}));
   if (payload.result && category === "calculator") parts.push(printable(payload.result));
-  if (category === "tool") parts.push(payload.name || payload.tool_name || "工具");
-  return { category, title, summary: (parts.join(" · ") || `事件 #${printable(event.seq)} · ${title}`).slice(0, 700) };
+  if (category === "tool") parts.push(payload.name || payload.tool_name || tr("工具"));
+  return { category, title, summary: (parts.join(" · ") || tr("事件 #{p0} · {p1}", {p0: printable(event.seq), p1: title})).slice(0, 700) };
 }
 
 /** Drop session-bound view state and reconnect with the new run's event cursor. */
@@ -828,7 +952,8 @@ function resetRunView() {
 
 /** Compare sequence numbers only within the same authoritative run. */
 function acceptSnapshot(snapshot, reset = false) {
-  if (!snapshot || typeof snapshot !== "object") throw new Error("控制器未返回有效快照");
+  if (!snapshot || typeof snapshot !== "object") throw new Error(tr("控制器未返回有效快照"));
+  window.ObservatoryI18n?.sync?.(snapshot.presentation_settings);
   const runId = snapshot.run_id || "";
   if (state.runId !== runId) {
     resetRunView();
@@ -862,11 +987,11 @@ async function api(path, options = {}) {
   try {
     const response = await fetch(path, { cache: "no-store", ...options, signal: abort.signal });
     const body = await response.json().catch(() => null);
-    if (!response.ok || body?.ok === false) throw new Error(printable(body?.detail || body?.error || body?.message, `请求失败（HTTP ${response.status}）`));
-    if (body === null) throw new Error("控制器返回了无法读取的响应");
+    if (!response.ok || body?.ok === false) throw new Error(tr(printable(body?.detail || body?.error || body?.message, tr("请求失败（HTTP {p0}）", {p0: response.status}))));
+    if (body === null) throw new Error(tr("控制器返回了无法读取的响应"));
     return body;
   } catch (error) {
-    if (error.name === "AbortError") throw new Error("本地请求超时；命令是否执行请以控制器后续快照为准。");
+    if (error.name === "AbortError") throw new Error(tr("本地请求超时；命令是否执行请以控制器后续快照为准。"));
     throw error;
   } finally { clearTimeout(timeout); }
 }
@@ -888,7 +1013,7 @@ async function refreshSnapshot(reset = false) {
     if (!state.source) connectEvents();
   } catch (error) {
     state.apiAvailable = false;
-    renderConnection(`无法读取本地控制器：${error.message}${state.snapshot ? " 保留最后快照，正在自动重连。" : " 正在自动重试。"}`);
+    renderConnection(tr("无法读取本地控制器：{p0}{p1}", {p0: error.message, p1: state.snapshot ? tr(" 保留最后快照，正在自动重连。") : tr(" 正在自动重试。")}));
     scheduleReconnect();
   } finally {
     state.snapshotBusy = false;
@@ -959,7 +1084,7 @@ function renderLaunchSettings(available, launching) {
     if (signature !== state.launchChoicesSignature) {
       state.launchChoicesSignature = signature;
       character.replaceChildren(...settings.choices.map(choice => {
-        const option = element("option", "", choice.label);
+        const option = element("option", "", tr(choice.label));
         option.value = choice.id;
         return option;
       }));
@@ -972,8 +1097,8 @@ function renderLaunchSettings(available, launching) {
     state.launchSettingsDirty = false;
   }
   character.disabled = ascension.disabled = !available || launching || settings?.editable !== true;
-  byId("launch-settings").title = settings?.reason || "选择新一局的角色与难度，点击启动游戏后生效。";
-  setText("launch-settings-note", settings?.reason || (settings?.editable ? "启动后仍保持暂停。" : "角色与难度暂不可修改。"));
+  byId("launch-settings").title = tr(settings?.reason) || tr("选择新一局的角色与难度，点击启动游戏后生效。");
+  setText("launch-settings-note", tr(settings?.reason) || (settings?.editable ? tr("启动后仍保持暂停。") : tr("角色与难度暂不可修改。")));
   updateAscensionLabel();
 }
 
@@ -981,7 +1106,7 @@ function renderLaunchSettings(available, launching) {
 function updateAscensionLabel() {
   const value = byId("ascension").value || "0";
   setText("asc-value", `A${value}`);
-  byId("ascension").setAttribute("aria-valuetext", `进阶 ${value}`);
+  byId("ascension").setAttribute("aria-valuetext", tr("进阶 {p0}", {p0: value}));
 }
 
 /** Describe rollout effort without treating it as a live outcome prediction. */
@@ -1002,7 +1127,7 @@ function updateSimulationStrength() {
   effects.classList.toggle("charged", progress > 0.6);
   effects.classList.toggle("overdrive", progress > 0.85);
   byId("strength-fill").style.width = `${progress * 100}%`;
-  const text = `${value.toFixed(2)}${value === 3 ? " · 上游生产默认" : ""} · 目标普通 ${simulations} / Boss ${simulations * 4} 次`;
+  const text = tr("{p0}{p1} · 目标普通 {p2} / Boss {p3} 次", {p0: value.toFixed(2), p1: value === 3 ? tr(" · Mentor 默认") : "", p2: simulations, p3: simulations * 4});
   setText("simulation-strength-value", text);
   slider.setAttribute("aria-valuetext", text);
 }
@@ -1021,9 +1146,9 @@ function renderSimulationSettings(available) {
   }
   for (const id of [...Object.values(SIMULATION_SELECTS), "simulation-strength", "simulation-settings-save"]) byId(id).disabled = !available || !settings.editable;
   document.querySelectorAll("[data-network-preset]").forEach(button => { button.disabled = !available || !settings.editable; });
-  setText("policy-tag", `NoSL · ${settings.read_access === "internal" ? "内部数据" : "公开信息"}`);
-  byId("policy-tag").title = state.snapshot?.human_assisted ? "本局包含人工策略辅助" : "以控制器记录的公平性边界为准";
-  setText("simulation-settings-note", settings.editable ? state.simulationSettingsDirty ? "有未保存的设置" : "设置已与控制器同步" : "暂停并等待在途工作完成后可修改");
+  setText("policy-tag", `NoSL · ${settings.read_access === "internal" ? tr("内部数据") : tr("公开信息")}`);
+  byId("policy-tag").title = state.snapshot?.human_assisted ? tr("本局包含人工策略辅助") : tr("以控制器记录的公平性边界为准");
+  setText("simulation-settings-note", settings.editable ? state.simulationSettingsDirty ? tr("有未保存的设置") : tr("设置已与控制器同步") : tr("暂停并等待在途工作完成后可修改"));
   updateSimulationStrength();
   updateDecisionModeNote();
 }
@@ -1034,8 +1159,8 @@ function updateDecisionModeNote() {
   const run = byId("simulation-run-mode").value;
   const direct = combat === "upstream" && run === "upstream";
   setText("simulation-decision-note", direct
-    ? `两类决策均由上游程序执行，不调用大模型；${byId("simulation-reward-pool").value === "full_unlock" ? "随机奖励按全解锁池推演；" : "奖励池未知时会明确暂停；"}保存后生效。`
-    : "大模型仅参与选择了大模型的决策阶段；预设和选项保存后生效。");
+    ? tr("两类决策均由Mentor执行，不调用大模型；{p0}保存后生效。", {p0: byId("simulation-reward-pool").value === "full_unlock" ? tr("随机奖励按全解锁池推演；") : tr("奖励池未知时会明确暂停；")})
+    : tr("大模型仅参与选择了大模型的决策阶段；预设和选项保存后生效。"));
 }
 
 /** Fill an inspectable draft; even a no-LLM preset still requires the explicit save button. */
@@ -1062,7 +1187,7 @@ async function saveSimulationSettings(event) {
     const result = await api("/api/simulation/settings", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
     state.snapshot.simulation_settings = result.simulation_settings;
     state.simulationSettingsDirty = false;
-    toast("推演设置已保存，已消耗预算保留。");
+    toast(tr("推演设置已保存，已消耗预算保留。"));
     renderControls();
   } catch (error) { toast(error.message, true); }
 }
@@ -1081,16 +1206,16 @@ function renderControls() {
   renderLaunchSettings(available, launching);
   renderSimulationSettings(available);
   byId("start").hidden = false;
-  setText("start-label", launching ? "启动中…" : "启动");
+  setText("start-label", launching ? tr("启动中…") : tr("启动"));
   byId("start").disabled = !available || launching;
   const toggle = byId("run-toggle");
   const pausing = !paused && snapshot?.desired_state === "paused";
   const pauseMode = !inactive && !paused;
   toggle.dataset.mode = pauseMode ? "pause" : "resume";
-  toggle.querySelector("span").textContent = pauseMode ? pausing ? "暂停中" : "暂停" : hasPlayed ? "继续" : "开始";
+  toggle.querySelector("span").textContent = pauseMode ? pausing ? tr("暂停中") : tr("暂停") : hasPlayed ? tr("继续") : tr("开始");
   toggle.querySelector("use").setAttribute("href", pauseMode ? "#i-pause" : "#i-play");
   toggle.disabled = pauseMode ? !available || pausing : !canPlay || !paused;
-  toggle.title = pauseMode ? "暂停自动游玩，等待在途工作完成" : hasPlayed ? "继续自动游玩" : "开始自动游玩";
+  toggle.title = pauseMode ? tr("暂停自动游玩，等待在途工作完成") : hasPlayed ? tr("继续自动游玩") : tr("开始自动游玩");
   toggle.setAttribute("aria-label", toggle.title);
   byId("step").disabled = !canPlay || !paused;
   byId("stop").disabled = !available || inactive;
@@ -1103,7 +1228,7 @@ function renderControls() {
 function toast(message, error = false) {
   const node = byId("toast");
   clearTimeout(state.toastTimer);
-  node.textContent = message;
+  node.textContent = tr(message);
   node.className = `toast${error ? " error" : ""}`;
   node.hidden = false;
   state.toastTimer = setTimeout(() => { node.hidden = true; }, error ? 9000 : 5000);
@@ -1119,7 +1244,7 @@ async function postCommand(path, payload, successMessage) {
     if (result.snapshot) acceptSnapshot(result.snapshot);
     const receiptStatus = result.receipt?.status;
     if (["rejected", "failed", "error"].includes(receiptStatus)) {
-      toast(printable(result.receipt?.message || result.receipt?.reason, "控制器拒绝了本次请求，请查看时间线。"), true);
+      toast(printable(result.receipt?.message || result.receipt?.reason, tr("控制器拒绝了本次请求，请查看时间线。")), true);
       scheduleSnapshot();
       return false;
     }
@@ -1127,7 +1252,7 @@ async function postCommand(path, payload, successMessage) {
     scheduleSnapshot();
     return true;
   } catch (error) {
-    toast(`请求未确认：${error.message}`, true);
+    toast(tr("请求未确认：{p0}", {p0: error.message}), true);
     scheduleSnapshot();
     return false;
   } finally { state.busy = false; renderControls(); }
@@ -1149,7 +1274,7 @@ async function startGame() {
       state.launchSettingsDirty = false;
     } catch (error) {
       state.launchPending = false;
-      toast(`设置未保存：${error.message}`, true);
+      toast(tr("设置未保存：{p0}", {p0: error.message}), true);
       scheduleSnapshot();
       return;
     } finally {
@@ -1158,7 +1283,7 @@ async function startGame() {
       renderGameLaunch(state.snapshot);
     }
   }
-  const accepted = await postCommand("/api/game/start", {}, "启动请求已收到，游戏就绪后仍保持暂停。");
+  const accepted = await postCommand("/api/game/start", {}, tr("启动请求已收到，游戏就绪后仍保持暂停。"));
   if (!accepted) state.launchPending = false;
   renderControls();
   renderGameLaunch(state.snapshot);
@@ -1166,7 +1291,7 @@ async function startGame() {
 
 /** Send only an explicit controller command chosen by the user. */
 async function sendControl(command) {
-  const messages = { start: "会话创建请求已收到；控制器将保持暂停。", pause: "暂停请求已收到，等待安全点确认。", resume: "继续请求已收到，请以运行状态为准。", step: "单步请求已收到，仅放行一个原生合法动作。", redecide: "重决策请求已收到，新方案生成后保持暂停。", stop: "停止请求已收到，等待控制器确认。" };
+  const messages = { start: tr("会话创建请求已收到；控制器将保持暂停。"), pause: tr("暂停请求已收到，等待安全点确认。"), resume: tr("继续请求已收到，请以运行状态为准。"), step: tr("单步请求已收到，仅放行一个原生合法动作。"), redecide: tr("重决策请求已收到，新方案生成后保持暂停。"), stop: tr("停止请求已收到，等待控制器确认。") };
   await postCommand("/api/commands", { command }, messages[command]);
 }
 
@@ -1178,8 +1303,8 @@ async function submitInstruction(timing) {
     if (timing === "redecide") await sendControl("redecide");
     return;
   }
-  if (text.length > 3000) { toast("指导内容最多 3000 字符。", true); return; }
-  const success = await postCommand("/api/instructions", { text, scope: byId("instruction-scope").value, timing }, timing === "redecide" ? "指导与重决策请求已收到，新方案生成后保持暂停。" : "指导已提交，将在下一次完整决策加入。");
+  if (text.length > 3000) { toast(tr("指导内容最多 3000 字符。"), true); return; }
+  const success = await postCommand("/api/instructions", { text, scope: byId("instruction-scope").value, timing }, timing === "redecide" ? tr("指导与重决策请求已收到，新方案生成后保持暂停。") : tr("指导已提交，将在下一次完整决策加入。"));
   if (success && input.value.trim() === text) {
     input.value = "";
     updateInput();
@@ -1188,7 +1313,7 @@ async function submitInstruction(timing) {
 
 /** Revoke future instruction use without claiming earlier model input is undone. */
 async function revokeInstruction(id) {
-  await postCommand(`/api/instructions/${encodeURIComponent(id)}/revoke`, {}, "撤销请求已收到，默认影响后续完整决策。");
+  await postCommand(`/api/instructions/${encodeURIComponent(id)}/revoke`, {}, tr("撤销请求已收到，默认影响后续完整决策。"));
 }
 
 /** Update guidance character count and readiness as the user types. */
@@ -1203,12 +1328,13 @@ function setFollowing(follow) {
   const button = byId("follow-button");
   button.classList.toggle("active", follow);
   button.setAttribute("aria-pressed", String(follow));
-  button.textContent = follow ? "↓ 跟随输出" : "↓ 恢复跟随";
+  button.textContent = follow ? tr("↓ 跟随输出") : tr("↓ 恢复跟随");
   if (follow) byId("stream-box").scrollTop = byId("stream-box").scrollHeight;
 }
 
 /** Bind local view interactions and begin read-only transport discovery. */
 function initialize() {
+  window.ObservatoryI18n?.initialize?.();
   window.Observatory?.initialize();
   window.ObservatoryTimeline?.initialize?.();
   byId("simulation-settings").addEventListener("submit", saveSimulationSettings);

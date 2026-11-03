@@ -31,7 +31,7 @@ const context = vm.createContext({console, AbortController, crypto: {randomUUID:
 // Load the actual shipped client so display behavior cannot drift from the test.
 const source = fs.readFileSync(path.join(__dirname, "../src/sts2_agent/web/app.js"), "utf8");
 vm.runInContext(source.replace(/initialize\(\);\s*$/, "") +
-  "\nglobalThis.usage = {state, renderLiveUsage, renderRequests, renderDecision, renderMetrics, renderSimulation, simulationHorizon, tokenCalibration, estimateTokens, generationMilliseconds, acceptSnapshot, renderControls, renderSession, startGame, initialize, refreshSnapshot, selectNetworkPreset, saveSimulationSettings, submitInstruction};", context);
+  "\nglobalThis.usage = {state, renderLiveUsage, renderRequests, renderDecision, renderMetrics, renderSimulation, simulationHorizon, tokenCalibration, estimateTokens, generationMilliseconds, acceptSnapshot, renderControls, renderSession, startGame, initialize, refreshSnapshot, selectNetworkPreset, saveSimulationSettings, submitInstruction, candidateMetric, candidateScale, candidateFill, formatMetric};", context);
 const ui = context.usage;
 // API-counted responses can calibrate a new request before its model identity arrives.
 const historical = {model_request_id: "old", requested_model: "flash", actual_model: "flash-v1",
@@ -232,7 +232,17 @@ ui.renderSimulation({status: "partial", simulation_advice: {strategies: {mcts: {
 }}}});
 assert.match(node("sim-meta").textContent, /搜索总量 100.*250.*跨候选自适应分配/);
 assert.equal(node("sim-results").children.length, 2);
-assert.match(node("sim-results").children[0].children[3].textContent, /以该首动作为条件.*40.*20.*10/);
+assert.match(node("sim-results").children[0].children[4].textContent, /以该首动作为条件.*40.*20.*10/);
+// Near-tied candidates get a relative bar: 1.2 is the best, 0.8 the worst in this set.
+assert.match(node("sim-results").children[0].children[2].textContent, /搜索价值 1\.2/);
+assert.equal(node("sim-results").children[0].children[3].children[0].style.width, "100.0%");
+assert.equal(node("sim-results").children[1].children[3].children[0].style.width, "0.0%");
+// Five significant digits and a min-max bar separate near-tied search values.
+assert.equal(ui.formatMetric({value: 0.51234, kind: "score"}), "0.51234");
+assert.notEqual(ui.formatMetric({value: 0.51234, kind: "score"}), ui.formatMetric({value: 0.51233, kind: "score"}));
+const tiedScale = ui.candidateScale([{score: 0.51234}, {score: 0.51233}]);
+assert.equal(ui.candidateFill({value: 0.51234, kind: "score"}, tiedScale).toFixed(1), "100.0");
+assert.equal(ui.candidateFill({value: 0.51233, kind: "score"}, tiedScale).toFixed(1), "0.0");
 
 // PPO keeps grouped selection distinct from the largest individual probability and critic value.
 ui.renderSimulation({status: "advisory", simulation_advice: {policy_status: "public_approximation",

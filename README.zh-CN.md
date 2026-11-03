@@ -6,7 +6,7 @@
 在 Windows 运行 *Slay the Spire 2* 的 AI Agent，通过游戏 Mod 的结构化观测与动作接口操作游戏。
 
 - 支持 DeepSeek 决策、 MCTS 战斗推演以及 PPO 整局策略。
-- 提供本地仪表盘，查看流式推理、动作回执、完整历史与预算，支持暂停、继续、单步和人工指导。
+- 提供中英文本地仪表盘，查看流式推理、动作回执、完整历史与预算，支持暂停、继续、单步和人工指导。
 - 内置中英文静态知识库；默认模型与公开推演使用公开信息。
 - 支持五角色和 A0–A10 配置。
 
@@ -42,8 +42,9 @@ Set-Location SlayTheSpire2-Agent-Expert
 使用大模型时，创建 `secrets/` 并把  API 密钥放入 `secrets/apikey-deepseek.txt`，也可设置当前进程的 `DEEPSEEK_API_KEY`。将战斗和整局都设为由推演直接决定时，不调用大模型。
 
 1. 双击根目录 **启动仪表盘.cmd**，打开本地网页 `http://127.0.0.1:18766`。
-2. 点击 **启动游戏**。
-3. 点击 **开始自动游玩**。
+2. 在“准备下一局”中选择 **中文** 或 **English**，并在游戏设置中选择对应语言；仪表盘及模型计划语言在单局内固定。
+3. 点击 **启动游戏**。
+4. 点击 **开始自动游玩**。
 
 无网页：
 
@@ -58,7 +59,7 @@ Set-Location SlayTheSpire2-Agent-Expert
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
-node --test tests/test_dashboard_timeline.js tests/test_dashboard_usage.js
+node --test tests/test_dashboard_timeline.js tests/test_dashboard_usage.js tests/test_dashboard_language.js
 ```
 
 [文档索引](docs/README.md)

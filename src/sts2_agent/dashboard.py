@@ -79,6 +79,13 @@ class SimulationSettingsRequest(BaseModel):
     reward_pool: Literal["known", "full_unlock"] = "known"
 
 
+class PresentationSettingsRequest(BaseModel):
+    """Select spectator language before a run without changing native game settings."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    language: Literal["en", "zh-CN"]
+
+
 def _local_request(request: Request) -> bool:
     """Require a loopback Host and an exactly matching browser origin."""
     try:
@@ -249,6 +256,12 @@ def create_app(config: dict, root: Path, *, session=None) -> FastAPI:
         return FileResponse(WEB_DIRECTORY / "observatory.js", media_type="text/javascript",
                             headers={"Cache-Control": "no-cache"})
 
+    @app.get("/i18n.js")
+    def presentation_javascript():
+        """Serve the fixed spectator translation catalog without arbitrary file access."""
+        return FileResponse(WEB_DIRECTORY / "i18n.js", media_type="text/javascript",
+                            headers={"Cache-Control": "no-cache"})
+
     @app.get("/timeline.js")
     def timeline_javascript():
         """Serve the read-only correlated history client."""
@@ -315,6 +328,11 @@ def create_app(config: dict, root: Path, *, session=None) -> FastAPI:
                 raise HTTPException(503, "This host does not expose service shutdown.")
             server.should_exit = True
             return {"ok": True, "status": "stopping"}
+
+    @app.post("/api/presentation/settings")
+    def presentation_settings(body: PresentationSettingsRequest):
+        """Apply only an explicit, paused pre-run spectator language preference."""
+        return {"ok": True, "presentation_settings": launcher.set_presentation_settings(body.language)}
 
     @app.post("/api/simulation/settings")
     def simulation_settings(body: SimulationSettingsRequest):

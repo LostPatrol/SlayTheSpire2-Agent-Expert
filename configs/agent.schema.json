@@ -100,6 +100,14 @@
       "additionalProperties": false,
       "properties": {"enabled": {"type": "boolean"}}
     },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "language": {"enum": ["zh-CN", "en"], "default": "zh-CN",
+          "description": "Spectator interface and model output language; native game settings remain independent."}
+      }
+    },
     "logging": {
       "type": "object",
       "additionalProperties": false,

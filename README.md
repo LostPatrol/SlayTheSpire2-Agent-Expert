@@ -6,7 +6,7 @@
 An AI agent for *Slay the Spire 2* on Windows, using a game mod's structured observations and action interface.
 
 - Supports DeepSeek decisions, MCTS combat simulation, and a PPO policy for full runs.
-- Provides a local dashboard for streaming reasoning, action receipts, full history, and budgets, with pause, resume, single-step, and manual guidance.
+- Provides a bilingual local dashboard for streaming reasoning, action receipts, full history, and budgets, with pause, resume, single-step, and manual guidance.
 - Includes an English and Chinese static knowledge base; the model and public simulations use public information by default.
 - Supports all five characters and A0–A10 configurations.
 
@@ -41,8 +41,9 @@ To use the language model, create `secrets/` and put your API key in `secrets/ap
 No language-model calls are made when both combat and noncombat decisions are handled directly by the simulation policies.
 
 1. Double-click **启动仪表盘.cmd** in the project root to open the local dashboard at `http://127.0.0.1:18766`.
-2. Click **启动游戏** (Start game).
-3. Click **开始自动游玩** (Start automatic play).
+2. Choose **English** or **中文** under **Prepare next run**. Select the matching language in the game's settings; dashboard and model-plan language is fixed for each run.
+3. Click **Launch game** (启动游戏).
+4. Click **Start automatic play** (开始自动游玩).
 
 Without opening a browser:
 
@@ -57,7 +58,7 @@ Without opening a browser:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
-node --test tests/test_dashboard_timeline.js tests/test_dashboard_usage.js
+node --test tests/test_dashboard_timeline.js tests/test_dashboard_usage.js tests/test_dashboard_language.js
 ```
 
 [Documentation index](docs/README.md)

@@ -2,6 +2,12 @@
 "use strict";
 
 (() => {
+  /** Translate display prose while preserving the default Chinese client. */
+  function tr(source, params = {}) {
+    return window.ObservatoryI18n ? window.ObservatoryI18n.t(source, params)
+      : source.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? `{${key}}`));
+  }
+
   // Native action types determine the visual category, independently of execution status.
   const ACTIONS = {play_card: "打出卡牌", end_turn: "结束回合", use_potion: "使用药水", discard_potion: "丢弃药水",
     choose_map_node: "选择路线", claim_reward: "领取奖励", choose_reward_card: "选择奖励卡牌", skip_reward_cards: "跳过选牌",
@@ -64,7 +70,7 @@
   function timestamp(value) { const result = Date.parse(value); return Number.isFinite(result) ? result : 0; }
 
   /** Show local clock time while retaining the original ISO timestamp on the element. */
-  function clock(value) { return timestamp(value) ? new Date(value).toLocaleTimeString("zh-CN", {hour12: false}) : "—"; }
+  function clock(value) { return timestamp(value) ? new Date(value).toLocaleTimeString(window.ObservatoryI18n?.locale || "zh-CN", {hour12: false}) : "—"; }
 
   /** Create a safe element with optional visible text. */
   function el(tag, className = "", value) {
@@ -97,17 +103,17 @@
   function seal(status) {
     const tone = ["executed", "completed"].includes(status) ? "verd"
       : ["discarded", "rejected", "failed"].includes(status) ? "blood" : "brass";
-    return el("span", `seal seal-${tone}`, STATUS[status] || status);
+    return el("span", `seal seal-${tone}`, tr(STATUS[status] || status));
   }
 
   /** Read the recorded action label without resolving old indices against current state. */
   function actionText(record) {
     if (record.action_label && record.action_label !== record.action?.type) return text(record.action_label);
     const action = record.action;
-    if (!action) return "未形成完整决策";
-    const label = ACTIONS[action.type] || text(action.type, "动作");
-    if (action.card_index !== undefined) return `${label} · 手牌 #${action.card_index}`;
-    if (action.option_index !== undefined) return `${label} · 选项 #${action.option_index}`;
+    if (!action) return tr("未形成完整决策");
+    const label = tr(ACTIONS[action.type] || text(action.type, "动作"));
+    if (action.card_index !== undefined) return tr("{label} · 手牌 #{index}", {label, index: action.card_index});
+    if (action.option_index !== undefined) return tr("{label} · 选项 #{index}", {label, index: action.option_index});
     return label;
   }
 
@@ -125,11 +131,11 @@
   function toolSummary(call) {
     const result = call.result;
     if (call.error) return text(call.error);
-    if (result === undefined) return call.status === "running" ? "正在执行" : "尚无返回";
+    if (result === undefined) return tr(call.status === "running" ? "正在执行" : "尚无返回");
     if (typeof result === "string") return result;
     if (result?.summary || result?.message || result?.error) return text(result.summary || result.message || result.error);
     const entries = result?.entries || result?.results || result?.events || result?.matches || result?.candidates;
-    return Array.isArray(entries) ? `返回 ${entries.length} 条记录` : text(result?.status, "已返回结果");
+    return Array.isArray(entries) ? tr("返回 {count} 条记录", {count: entries.length}) : text(result?.status, tr("已返回结果"));
   }
 
   /** Classify explicit events while omitting token deltas from the human timeline. */
@@ -141,8 +147,8 @@
       : /model|request|decision/.test(type) ? "model" : /tool/.test(type) ? "tool"
       : /action|receipt/.test(type) ? "execution" : "observe", type.replaceAll("_", " ")];
     const meta = [payload.summary ?? payload.message ?? payload.error ?? payload.reason,
-      payload.status, payload.command].filter(value => value !== undefined && value !== null).map(value => text(value)).join(" · ");
-    return {key: `event:${event.id || event.seq}`, kind: "event", category, name, meta,
+      payload.status, payload.command].filter(value => value !== undefined && value !== null).map(value => tr(text(value))).join(" · ");
+    return {key: `event:${event.id || event.seq}`, kind: "event", category, name: tr(name), meta,
       at: event.timestamp_utc, seq: event.seq, decisionId: payload.decision_id || "", actionId: payload.action_id || "",
       status: type === "model_request_cancelled" ? "cancelled" : /failed|rejected|discarded|error/.test(type) ? "failed" : text(payload.status, "recorded"),
       tail: event.seq === undefined ? "" : `#${event.seq}`, source: event};
@@ -203,7 +209,7 @@
     /** Create a stable decision bucket or an explicit unassociated session bucket. */
     function groupFor(id) {
       const key = id ? `decision:${id}` : "session";
-      if (!groups.has(key)) groups.set(key, {key, decisionId: id, record: null, name: id ? "等待完整决策" : "会话事件",
+      if (!groups.has(key)) groups.set(key, {key, decisionId: id, record: null, name: tr(id ? "等待完整决策" : "会话事件"),
         status: id ? "pending" : "session", type: "other", at: "", reason: "", plan: "", children: []});
       return groups.get(key);
     }
@@ -216,11 +222,11 @@
     });
     const rows = [
       ...tools.map((call, index) => ({key: `tool:${call.tool_call_id || index}`, kind: "tool", category: "tool",
-        name: text(call.name || call.tool_name, "工具"), meta: toolSummary(call), at: call.started_utc || "",
+        name: text(call.name || call.tool_name, tr("工具")), meta: toolSummary(call), at: call.started_utc || "",
         tail: elapsed(call.elapsed_ms), status: call.status || "running", decisionId: call.decision_id || "", source: call})),
       ...requests.map((request, index) => ({key: `request:${request.model_request_id || index}`, kind: "request", category: "model",
-        name: text(request.actual_model || request.model || request.requested_model, "模型请求"),
-        meta: `${STATUS[request.status] || text(request.status)} · ${text(request.model_request_id)}`,
+        name: text(request.actual_model || request.model || request.requested_model, tr("模型请求")),
+        meta: `${tr(STATUS[request.status] || text(request.status))} · ${text(request.model_request_id)}`,
         at: request.started_utc || request.timestamp_utc || "", tail: elapsed(request.duration_ms),
         status: request.status || "generating", decisionId: request.decision_id || "", source: request})),
       ...events.map(eventRow).filter(Boolean),
@@ -248,8 +254,8 @@
         const cancelled = latestRequest?.status === "cancelled" || (!latestRequest && group.children.some(row => row.status === "cancelled"));
         group.status = cancelling ? "cancelling" : active ? "pending" : cancelled ? "cancelled"
           : group.record?._history_complete ? "no_decision" : "unresolved";
-        if (!group.record || group.status === "cancelling" || group.status === "cancelled") group.name = cancelling ? "正在停止模型输出"
-          : cancelled && !active ? "本轮生成已取消" : active ? "正在形成决策" : "历史决策详情待载入";
+        if (!group.record || group.status === "cancelling" || group.status === "cancelled") group.name = tr(cancelling ? "正在停止模型输出"
+          : cancelled && !active ? "本轮生成已取消" : active ? "正在形成决策" : "历史决策详情待载入");
       }
     });
     result.sort((a, b) => timestamp(b.at) - timestamp(a.at) || a.key.localeCompare(b.key));
@@ -272,9 +278,9 @@
     content.style.maxHeight = "420px";
     content.style.overflow = "auto";
     const controls = el("div", "history-detail-pages");
-    const previous = el("button", "link-button", "上一页");
-    const next = el("button", "link-button", "下一页");
-    const download = el("button", "link-button", "下载完整 JSON");
+    const previous = el("button", "link-button", tr("上一页"));
+    const next = el("button", "link-button", tr("下一页"));
+    const download = el("button", "link-button", tr("下载完整 JSON"));
     const label = el("span");
     previous.type = next.type = download.type = "button";
     controls.append(previous, label, next, download);
@@ -324,7 +330,7 @@
     meta.title = row.meta || "";
     let inspector = null;
     if (row.source) {
-      const inspect = el("button", "link-button history-inspect-button", "详情");
+      const inspect = el("button", "link-button history-inspect-button", tr("详情"));
       inspect.type = "button";
       inspect.setAttribute("aria-expanded", String(view.inspectors.get(row.key) === true));
       inspect.addEventListener("click", () => {
@@ -341,7 +347,7 @@
       });
       meta.append(inspect);
     }
-    node.append(timeNode(row.at, "stream-row-time"), el("span", "stream-row-kind", KINDS[row.kind]), name, meta,
+    node.append(timeNode(row.at, "stream-row-time"), el("span", "stream-row-kind", tr(KINDS[row.kind])), name, meta,
       el("em", "stream-row-tail", row.tail));
     container.append(node);
     if (view.inspectors.get(row.key) && row.source) {
@@ -371,33 +377,33 @@
       item.dataset.groupId = group.key;
       const head = el("button", "stream-group-head");
       head.type = "button";
-      head.title = group.decisionId || "未关联到具体决策的会话事件";
+      head.title = group.decisionId || tr("未关联到具体决策的会话事件");
       head.setAttribute("aria-expanded", item.dataset.open);
       const glyph = el("span", "stream-glyph");
       glyph.append(icon(GLYPHS[group.type]));
       const counts = group.counts;
-      const countText = `${counts.tool} 工具 · ${counts.request} 请求 · ${counts.event} 事件`;
+      const countText = tr("{tools} 工具 · {requests} 请求 · {events} 事件", {tools: counts.tool, requests: counts.request, events: counts.event});
       head.append(timeNode(group.at, "stream-time"), glyph, seal(group.status), el("b", "stream-action", group.name),
         el("span", "stream-excerpt", group.reason),
         el("span", "stream-counts", group.countsComplete ? countText
-          : group.children.length ? `已载入 ${countText}` : "详情待载入"),
+          : group.children.length ? tr("已载入 {summary}", {summary: countText}) : tr("详情待载入")),
         el("span", "stream-score", ""), icon("chevron", "stream-chevron"));
       const detail = el("div", "stream-detail");
       if (group.reason) detail.append(el("p", "stream-reason", group.reason));
-      if (group.plan) detail.append(el("p", "stream-plan", `当时的计划：${group.plan}`));
+      if (group.plan) detail.append(el("p", "stream-plan", tr("当时的计划：{plan}", {plan: group.plan})));
       const rows = el("div", "stream-rows");
       group.children.forEach(row => appendStreamRow(rows, row));
       const loading = view.detailStatus.get(group.decisionId);
       if (["loading", "indexing"].includes(loading)) rows.append(el("p", "empty-note", loading === "indexing"
-        ? "正在建立完整历史索引…" : "正在读取完整历史详情…"));
+        ? tr("正在建立完整历史索引…") : tr("正在读取完整历史详情…")));
       else if (loading?.startsWith("error:")) {
         rows.append(el("p", "empty-note", loading.slice(6)));
-        const retry = el("button", "link-button", "重试读取详情");
+        const retry = el("button", "link-button", tr("重试读取详情"));
         retry.type = "button";
         retry.addEventListener("click", () => loadDetail(group.decisionId, true));
         rows.append(retry);
       } else if (!group.children.length) rows.append(el("p", "empty-note", group.record && !view.details.has(group.decisionId)
-        ? "展开后读取完整请求、工具和事件。" : "日志中没有可关联的请求、工具或事件。"));
+        ? tr("展开后读取完整请求、工具和事件。") : tr("日志中没有可关联的请求、工具或事件。")));
       detail.append(rows);
       item.append(head, detail);
       head.addEventListener("click", () => {
@@ -410,7 +416,7 @@
       });
       return item;
     }));
-    if (!groups.length) list.append(el("li", "empty-note", "尚无决策记录。"));
+    if (!groups.length) list.append(el("li", "empty-note", tr("尚无决策记录。")));
     if (inspectorScroll.size) {
       list.querySelectorAll(".history-raw-inspector .json-block").forEach(content => {
         const row = content.closest(".history-raw-inspector")?.previousElementSibling;
@@ -418,7 +424,8 @@
         if (offset) content.scrollTop = offset;
       });
     }
-    setText("stream-count", `已加载 ${data.decisions.length}${Number.isFinite(view.totalDecisions) ? ` / ${view.totalDecisions}` : ""} 条决策记录`);
+    setText("stream-count", tr("已加载 {count}{total} 条决策记录", {count: data.decisions.length,
+      total: Number.isFinite(view.totalDecisions) ? ` / ${view.totalDecisions}` : ""}));
     for (const kind of ["tool", "request", "event"]) {
       const count = groups.reduce((total, group) => total + group.counts[kind], 0);
       setText(`stream-${kind === "request" ? "requests" : `${kind}s`}`, count);
@@ -440,13 +447,13 @@
       const body = el("div", "log-body");
       const head = el("div", "log-head");
       head.append(seal(group.status), el("h3", "", group.name));
-      body.append(head, el("p", "", group.reason || "未提供说明"));
-      if (group.plan) body.append(el("p", "history-plan", `当时的计划：${group.plan}`));
+      body.append(head, el("p", "", group.reason || tr("未提供说明")));
+      if (group.plan) body.append(el("p", "history-plan", tr("当时的计划：{plan}", {plan: group.plan})));
       item.append(timeNode(group.at, "log-time"), body);
       return item;
     }));
-    if (!records.length) list.append(el("li", "empty-note", "暂无此前决策。"));
-    setText("history-count", `此前 ${records.length} 条 · 当前决策见上方`);
+    if (!records.length) list.append(el("li", "empty-note", tr("暂无此前决策。")));
+    setText("history-count", tr("此前 {count} 条 · 当前决策见上方", {count: records.length}));
   }
 
   /** Keep each tool's full arguments and returned payload inspectable in split mode. */
@@ -462,14 +469,14 @@
       head.type = "button";
       head.setAttribute("aria-expanded", String(opened));
       const right = el("span", "tool-right");
-      right.append(el("span", "tool-time", row.tail), el("span", `tool-state ${row.status}`, STATUS[row.status] || row.status), icon("chevron", "ico tool-chevron"));
+      right.append(el("span", "tool-time", row.tail), el("span", `tool-state ${row.status}`, tr(STATUS[row.status] || row.status)), icon("chevron", "ico tool-chevron"));
       head.append(icon("tool", "ico tool-icon"), el("span", "tool-name", row.name), el("span", "tool-summary", row.meta), right);
       const detail = el("div", "tool-detail");
       detail.hidden = !opened;
       /** Serialize split-view payloads only after an explicit expansion. */
       function fillDetail() {
-        detail.append(el("span", "tool-label", "参数"), rawInspector(row.source.arguments, `${row.key}:arguments`),
-          el("span", "tool-label", "返回值"), rawInspector(row.source.result ?? row.source.error ?? "尚无返回", `${row.key}:result`));
+        detail.append(el("span", "tool-label", tr("参数")), rawInspector(row.source.arguments, `${row.key}:arguments`),
+          el("span", "tool-label", tr("返回值")), rawInspector(row.source.result ?? row.source.error ?? tr("尚无返回"), `${row.key}:result`));
       }
       if (opened) fillDetail();
       head.addEventListener("click", () => {
@@ -483,8 +490,8 @@
       card.append(head, detail);
       return card;
     }));
-    if (!rows.length) list.append(el("p", "empty-note", "暂无工具调用。"));
-    setText("tool-count", `${rows.length} 次已载入`);
+    if (!rows.length) list.append(el("p", "empty-note", tr("暂无工具调用。")));
+    setText("tool-count", tr("{count} 次已载入", {count: rows.length}));
     const finished = data.tools.filter(call => ["completed", "failed", "error"].includes(call.status));
     const measured = finished.filter(call => Number.isFinite(call.elapsed_ms));
     const average = measured.length ? elapsed(measured.reduce((sum, call) => sum + call.elapsed_ms, 0) / measured.length) : "—";
@@ -505,9 +512,9 @@
         row.append(timeNode(event.at), el("i", `dot ${event.category}`), body);
         return row;
       }));
-      if (!events.length) list.append(el("p", "empty-note", "暂无程序事件。"));
+      if (!events.length) list.append(el("p", "empty-note", tr("暂无程序事件。")));
       if (view.moreSession) {
-        const more = el("button", "link-button", view.sessionBusy ? "读取中…" : "加载更早的会话事件");
+        const more = el("button", "link-button", tr(view.sessionBusy ? "读取中…" : "加载更早的会话事件"));
         more.type = "button";
         more.disabled = view.sessionBusy;
         more.addEventListener("click", () => loadSession(true));
@@ -527,8 +534,8 @@
         axis.append(el("i"));
         const content = el("div", "pipe-content");
         const head = el("div", "pipe-head");
-        head.append(el("span", "pipe-type", KINDS[row.kind]), el("b", "pipe-title", row.name),
-          el("span", "pipe-meta", STATUS[row.status] || row.status));
+        head.append(el("span", "pipe-type", tr(KINDS[row.kind])), el("b", "pipe-title", row.name),
+          el("span", "pipe-meta", tr(STATUS[row.status] || row.status)));
         content.append(head, el("p", "pipe-detail", row.meta));
         node.append(timeNode(row.at, "pipe-time"), axis, content);
         return node;
@@ -537,8 +544,8 @@
     setText("pipeline-tool-count", data.counts.tool);
     setText("pipeline-decision-count", data.decisions.length);
     setText("pipeline-event-count", data.counts.event);
-    setText("timeline-count", `${events.length} 条已载入事件`);
-    setText("event-count", `${events.length} 条已载入`);
+    setText("timeline-count", tr("{count} 条已载入事件", {count: events.length}));
+    setText("event-count", tr("{count} 条已载入", {count: events.length}));
     ["observe", "model", "calculator", "execution", "tool"].forEach(category => {
       const count = events.filter(event => event.category === category).length;
       setText(`event-stat-${category}`, events.length ? count : "—");
@@ -586,7 +593,7 @@
       controls.id = "stream-history-controls";
       list.parentElement.insertBefore(controls, list);
     }
-    const status = view.historyError || view.sessionError || view.archiveError || (view.indexing ? "正在建立完整历史索引…"
+    const status = view.historyError || view.sessionError || view.archiveError || tr(view.indexing ? "正在建立完整历史索引…"
       : view.historyBusy ? "正在读取历史…" : view.historyLoaded ? "" : "正在连接历史档案…");
     controls.replaceChildren();
     if (status) {
@@ -596,24 +603,24 @@
     }
     if (view.issueCount || view.issues.length) {
       const issues = el("details", "history-issues");
-      issues.append(el("summary", "", `日志异常 ${view.issueCount || view.issues.length} 项（${view.issues.length} 个位置示例）`),
+      issues.append(el("summary", "", tr("日志异常 {count} 项（{examples} 个位置示例）", {count: view.issueCount || view.issues.length, examples: view.issues.length})),
         el("pre", "json-block", text(view.issues)));
       controls.append(issues);
     }
     if (view.pendingTail.length) {
-      const pending = el("span", "", `日志末尾有未写完记录（${view.pendingTail.length} 个文件），写完后继续载入。`);
+      const pending = el("span", "", tr("日志末尾有未写完记录（{count} 个文件），写完后继续载入。", {count: view.pendingTail.length}));
       pending.title = view.pendingTail.join(" · ");
       controls.append(pending);
     }
     if (view.moreHistory) {
-      const more = el("button", "link-button", "加载更早决策");
+      const more = el("button", "link-button", tr("加载更早决策"));
       more.type = "button";
       more.disabled = view.historyBusy;
       more.addEventListener("click", () => loadHistory(true));
       controls.append(more);
     }
     if (view.historyError || view.sessionError || view.archiveError) {
-      const retry = el("button", "link-button", "重试历史读取");
+      const retry = el("button", "link-button", tr("重试历史读取"));
       retry.type = "button";
       retry.addEventListener("click", () => { loadHistory(); loadSession(); });
       controls.append(retry);
@@ -652,8 +659,8 @@
     const params = new URLSearchParams({run_id: view.runId, ...query});
     const response = await fetch(`${path}?${params}`, {headers: {Accept: "application/json"}, cache: "no-store"});
     if (!response.ok) {
-      let message = `历史读取失败（HTTP ${response.status}）`;
-      try { const body = await response.json(); message = text(body.detail || body.error, message); } catch { /* Keep the HTTP status. */ }
+      let message = tr("历史读取失败（HTTP {status}）", {status: response.status});
+      try { const body = await response.json(); message = tr(text(body.detail || body.error, message)); } catch { /* Keep the HTTP status. */ }
       throw new Error(message);
     }
     return response.json();
@@ -664,7 +671,7 @@
     if (Object.hasOwn(page, "issues")) view.issues = page.issues || [];
     if (Object.hasOwn(page, "issue_count")) view.issueCount = page.issue_count || 0;
     if (Object.hasOwn(page, "pending_tail")) view.pendingTail = page.pending_tail || [];
-    if (Object.hasOwn(page, "error")) view.archiveError = text(page.error, "");
+    if (Object.hasOwn(page, "error")) view.archiveError = tr(text(page.error, ""));
   }
 
   /** Poll an explicitly building index without retrying unrelated failures indefinitely. */

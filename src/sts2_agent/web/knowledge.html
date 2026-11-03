@@ -4,11 +4,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>STS2 · 离线知识库</title>
+  <title data-i18n="STS2 · 离线知识库">STS2 · 离线知识库</title>
   <meta name="color-scheme" content="light dark">
+  <script src="/i18n.js" defer></script>
   <script>
     /** Apply the saved appearance before paint; keep storage failures non-fatal. */
     (() => {
+      /** Resolve display prose after the shared language script becomes available. */
+      function tr(source, params = {}) {
+        return window.ObservatoryI18n ? window.ObservatoryI18n.t(source, params)
+          : source.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? `{${key}}`));
+      }
+
       // Both local pages share this origin-scoped appearance preference.
       const key = "sts2-agent-theme";
       const modes = ["system", "light", "dark"];
@@ -23,8 +30,8 @@
         const button = document.getElementById("theme-toggle");
         if (!button) return;
         const next = modes[(modes.indexOf(mode) + 1) % modes.length];
-        button.textContent = labels[mode];
-        button.title = `当前${labels[mode]}；点击切换到${labels[next]}`;
+        button.textContent = tr(labels[mode]);
+        button.title = tr("当前{current}；点击切换到{next}", {current: tr(labels[mode]), next: tr(labels[next])});
         button.setAttribute("aria-label", button.title);
       }
       /** Persist a deliberate choice without requiring localStorage availability. */
@@ -89,74 +96,83 @@
   </style>
 </head>
 <body>
-  <header><div><div class="eyebrow">SPIRE CODEX / LOCAL SNAPSHOT</div><h1>离线知识库</h1></div><div class="header-links"><button type="button" class="theme-toggle" id="theme-toggle">跟随系统</button><a href="/">← Agent 仪表盘</a></div></header>
-  <p>本地固定版本的静态资料。模型每次仅收到与当前公开局面相关的有限条目。实时牌面与状态数值优先。</p>
-  <div id="meta" role="status">正在读取本地快照…</div>
-  <form id="search"><input id="query" aria-label="搜索名称、ID或机制" placeholder="搜索名称、ID或机制，例如 Sandpit / Burning Blood"><select id="kind" aria-label="条目分类"><option value="">所有分类</option></select><button>搜索</button></form>
+  <header><div><div class="eyebrow">SPIRE CODEX / LOCAL SNAPSHOT</div><h1 data-i18n="离线知识库">离线知识库</h1></div><div class="header-links"><button type="button" class="theme-toggle" id="theme-toggle">跟随系统</button><a href="/" data-i18n="← Agent 仪表盘">← Agent 仪表盘</a></div></header>
+  <p data-i18n="本地固定版本的静态资料。模型每次仅收到与当前公开局面相关的有限条目。实时牌面与状态数值优先。">本地固定版本的静态资料。模型每次仅收到与当前公开局面相关的有限条目。实时牌面与状态数值优先。</p>
+  <div id="meta" role="status" data-i18n="正在读取本地快照…">正在读取本地快照…</div>
+  <form id="search"><input id="query" aria-label="搜索名称、ID或机制" data-i18n-aria-label="搜索名称、ID或机制" placeholder="搜索名称、ID或机制，例如 Sandpit / Burning Blood" data-i18n-placeholder="搜索名称、ID或机制，例如 Sandpit / Burning Blood"><select id="kind" aria-label="条目分类" data-i18n-aria-label="条目分类"><option value="" data-i18n="所有分类">所有分类</option></select><button data-i18n="搜索">搜索</button></form>
   <p id="notice" aria-live="polite"></p>
-  <main><section id="results" aria-label="搜索结果"></section><article><h2 id="title">选择一个条目</h2><p id="description">可按英文名称、实体 ID 或机制关键词搜索。</p><pre id="detail"></pre></article></main>
+  <main><section id="results" aria-label="搜索结果" data-i18n-aria-label="搜索结果"></section><article><h2 id="title" data-i18n="选择一个条目">选择一个条目</h2><p id="description" data-i18n="可按英文名称、实体 ID 或机制关键词搜索。">可按英文名称、实体 ID 或机制关键词搜索。</p><pre id="detail"></pre></article></main>
   <script>
     "use strict";
-    // A local search is bounded and never contacts an external wiki or the model provider.
-    let searchVersion = 0;
-    let detailVersion = 0;
-    /** Render a value as text while preserving unknown values. */
-    function show(id, value) { document.getElementById(id).textContent = value ?? ""; }
-    /** Request a local read-only resource and report a short user-facing error. */
-    async function read(path) {
-      const response = await fetch(path);
-      if (!response.ok) throw new Error(`本地知识库请求失败 (${response.status})`);
-      return response.json();
-    }
-    /** Load a full local entity without treating reference prose as executable rules. */
-    async function select(entry, button) {
-      const version = ++detailVersion;
-      try {
-        const detail = await read(`/api/knowledge/${encodeURIComponent(entry.kind)}/${encodeURIComponent(entry.entity_id)}`);
-        if (version !== detailVersion) return;
-        document.querySelectorAll(".entry").forEach(node => node.setAttribute("aria-pressed", String(node === button)));
-        show("title", detail.name || detail.entity_id);
-        show("description", detail.description || detail.text || "该条目没有独立的机制正文，请查看下方原始字段。");
-        show("detail", JSON.stringify(detail, null, 2));
-      } catch (error) { show("notice", error.message); }
-    }
-    /** Search local entities and keep stale network responses from replacing newer results. */
-    async function search(event) {
-      event?.preventDefault();
-      const version = ++searchVersion;
-      const params = new URLSearchParams({q: document.getElementById("query").value, kind: document.getElementById("kind").value, limit: "30"});
-      try {
-        const data = await read("/api/knowledge?" + params);
-        if (version !== searchVersion) return;
-        const metadata = data.metadata || {};
-        show("meta", JSON.stringify(metadata, null, 2));
-        const results = document.getElementById("results");
-        results.replaceChildren();
-        show("notice", data.results.length ? `显示 ${data.results.length} 条匹配资料 · 点击查看来源、版本及完整字段` : "没有匹配条目；请尝试英文名或实体 ID。");
-        for (const entry of data.results) {
-          const button = document.createElement("button");
-          button.className = "entry";
-          button.setAttribute("aria-pressed", "false");
-          const name = document.createElement("strong");
-          name.textContent = entry.name || entry.entity_id;
-          const caption = document.createElement("small");
-          caption.textContent = `${entry.kind} · ${entry.entity_id}`;
-          button.append(name, caption);
-          button.addEventListener("click", () => select(entry, button));
-          results.append(button);
-        }
-      } catch (error) { if (version === searchVersion) show("notice", error.message); }
-    }
-    // These categories mirror the imported public static entity types.
-    const kinds = ["cards", "powers", "monsters", "relics", "potions", "events", "encounters", "keywords", "characters", "orbs", "enchantments", "afflictions", "mechanics"];
-    for (const kind of kinds) {
-      const option = document.createElement("option");
-      option.value = kind;
-      option.textContent = kind;
-      document.getElementById("kind").append(option);
-    }
-    document.getElementById("search").addEventListener("submit", search);
-    search();
+    // Deferred language resources load before this read-only page starts its requests.
+    document.addEventListener("DOMContentLoaded", () => {
+      /** Translate only interface prose, leaving imported knowledge text intact. */
+      function tr(source, params = {}) {
+        return window.ObservatoryI18n ? window.ObservatoryI18n.t(source, params)
+          : source.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? `{${key}}`));
+      }
+
+      // A local search is bounded and never contacts an external wiki or the model provider.
+      let searchVersion = 0;
+      let detailVersion = 0;
+      /** Render a value as text while preserving unknown values. */
+      function show(id, value) { document.getElementById(id).textContent = value ?? ""; }
+      /** Request a local read-only resource and report a short user-facing error. */
+      async function read(path) {
+        const response = await fetch(path);
+        if (!response.ok) throw new Error(tr("本地知识库请求失败 ({status})", {status: response.status}));
+        return response.json();
+      }
+      /** Load a full local entity without treating reference prose as executable rules. */
+      async function select(entry, button) {
+        const version = ++detailVersion;
+        try {
+          const detail = await read(`/api/knowledge/${encodeURIComponent(entry.kind)}/${encodeURIComponent(entry.entity_id)}`);
+          if (version !== detailVersion) return;
+          document.querySelectorAll(".entry").forEach(node => node.setAttribute("aria-pressed", String(node === button)));
+          show("title", detail.name || detail.entity_id);
+          show("description", detail.description || detail.text || tr("该条目没有独立的机制正文，请查看下方原始字段。"));
+          show("detail", JSON.stringify(detail, null, 2));
+        } catch (error) { show("notice", error.message); }
+      }
+      /** Search local entities and keep stale network responses from replacing newer results. */
+      async function search(event) {
+        event?.preventDefault();
+        const version = ++searchVersion;
+        const params = new URLSearchParams({q: document.getElementById("query").value, kind: document.getElementById("kind").value, limit: "30"});
+        try {
+          const data = await read("/api/knowledge?" + params);
+          if (version !== searchVersion) return;
+          const metadata = data.metadata || {};
+          show("meta", JSON.stringify(metadata, null, 2));
+          const results = document.getElementById("results");
+          results.replaceChildren();
+          show("notice", data.results.length ? tr("显示 {count} 条匹配资料 · 点击查看来源、版本及完整字段", {count: data.results.length}) : tr("没有匹配条目；请尝试英文名或实体 ID。"));
+          for (const entry of data.results) {
+            const button = document.createElement("button");
+            button.className = "entry";
+            button.setAttribute("aria-pressed", "false");
+            const name = document.createElement("strong");
+            name.textContent = entry.name || entry.entity_id;
+            const caption = document.createElement("small");
+            caption.textContent = `${entry.kind} · ${entry.entity_id}`;
+            button.append(name, caption);
+            button.addEventListener("click", () => select(entry, button));
+            results.append(button);
+          }
+        } catch (error) { if (version === searchVersion) show("notice", error.message); }
+      }
+      // These categories mirror the imported public static entity types.
+      const kinds = ["cards", "powers", "monsters", "relics", "potions", "events", "encounters", "keywords", "characters", "orbs", "enchantments", "afflictions", "mechanics"];
+      for (const kind of kinds) {
+        const option = document.createElement("option");
+        option.value = kind;
+        option.textContent = kind;
+        document.getElementById("kind").append(option);
+      }
+      document.getElementById("search").addEventListener("submit", search);
+      search();
+    });
   </script>
 </body>
 </html>

@@ -12,6 +12,8 @@ from .session import DashboardSession, SessionError, _archive_terminal_ledger
 from .public import configured_start, MAX_START_ASCENSION
 from .save_guard import SaveGuardError, ensure_full_unlock
 from .telemetry import WriterLock, write_json
+from .presentation import (PREFERENCE_FILE, language_from_config, presentation_run_active,
+                           saved_language)
 import json
 
 
@@ -84,6 +86,9 @@ class GameLauncher:
         self.receipts = {}
         self._settings_file = self.root / "local/launch-settings.json"
         self._settings_source = "default"
+        self._presentation_file = self.root / PREFERENCE_FILE
+        self.config.setdefault("presentation", {})["language"] = saved_language(
+            self.root, language_from_config(self.config))
         if self._settings_file.is_file():
             try:
                 saved = configured_start(json.loads(self._settings_file.read_text(encoding="utf-8")))
@@ -97,7 +102,33 @@ class GameLauncher:
         """Combine the current public session with lightweight launch progress."""
         with self.lock:
             return {**self.session.snapshot(), "game_launch": deepcopy(self.state),
-                    "launch_settings": self.launch_settings()}
+                    "launch_settings": self.launch_settings(),
+                    "presentation_settings": self.presentation_settings()}
+
+    def presentation_settings(self) -> dict:
+        """Expose current-run language or the selected next-run preference without game effects."""
+        view = self.session.snapshot() if self.session is not None else {}
+        active = presentation_run_active(view)
+        busy = (self.state["status"] == "starting" or self.closing.is_set()
+                or view.get("desired_state", "paused") != "paused" or bool(view.get("inflight"))
+                or bool(view.get("request_pending")) or bool(view.get("decision_pending"))
+                or (self.root / "local/pending-action.json").exists())
+        current = view.get("presentation_language", language_from_config(
+            getattr(self.session, "config", self.config)))
+        selected = language_from_config(self.config) if view.get("terminal_evidence") else current
+        return {"language": selected, "current_language": current, "editable": not active and not busy,
+                "reason": "Presentation language is fixed for the current run." if active else (
+                    "Pause and wait for all pending operations." if busy else None)}
+
+    def set_presentation_settings(self, language: str) -> dict:
+        """Persist an explicit pre-run preference while keeping completed ledgers unchanged."""
+        with self.lock:
+            if not self.presentation_settings()["editable"]:
+                raise SessionError("Choose the presentation language before a new run while paused.")
+            self.session.configure_presentation(language)
+            write_json(self._presentation_file, {"language": language})
+            self.config.setdefault("presentation", {})["language"] = language
+            return self.presentation_settings()
 
     def launch_settings(self) -> dict:
         """Expose the requested setup and a live edit lock without touching game controls."""

@@ -2,6 +2,12 @@
 "use strict";
 
 (() => {
+  /** Translate display prose while preserving the default Chinese client. */
+  function tr(source, params = {}) {
+    return window.ObservatoryI18n ? window.ObservatoryI18n.t(source, params)
+      : source.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? `{${key}}`));
+  }
+
   // Appearance preferences are shared with the existing local knowledge page.
   const THEME_KEY = "sts2-agent-theme";
   // Panel folding is a presentation preference, independent of the controller.
@@ -43,11 +49,11 @@
     view.theme = Object.hasOwn(THEMES, mode) ? mode : "system";
     document.documentElement.dataset.themeMode = view.theme;
     document.documentElement.dataset.theme = view.theme === "system" ? systemTheme.matches ? "dark" : "light" : view.theme;
-    node("theme-label").textContent = THEMES[view.theme][0];
+    node("theme-label").textContent = tr(THEMES[view.theme][0]);
     node("theme-icon").setAttribute("href", `#i-${THEMES[view.theme][1]}`);
     const modes = Object.keys(THEMES);
     const next = modes[(modes.indexOf(view.theme) + 1) % modes.length];
-    const label = `当前${THEMES[view.theme][0]}；点击切换到${THEMES[next][0]}`;
+    const label = tr("当前{current}；点击切换到{next}", {current: tr(THEMES[view.theme][0]), next: tr(THEMES[next][0])});
     node("theme-toggle").title = label;
     node("theme-toggle").setAttribute("aria-label", label);
     if (persist) {
@@ -159,13 +165,23 @@
     } catch (_) { return new Set(); }
   }
 
+  /** Refresh a fold's visible action without changing its stored state. */
+  function paintFoldLabel(head, source, collapsed) {
+    const label = tr(source);
+    head.setAttribute("aria-label", tr("{label}：{action}", {label, action: tr(collapsed ? "已收起，点击展开" : "点击收起")}));
+    head.title = tr(collapsed ? "展开{label}" : "收起{label}", {label});
+  }
+
   /** Add persistent mouse and keyboard folding to the existing panel headers. */
   function bindFolds() {
     const folded = readFolded();
     document.querySelectorAll(".panel").forEach(panel => {
       const stage = panel.classList.contains("decision");
       const head = panel.querySelector(stage ? ":scope > .decision-head" : ":scope > .panel-head");
-      const label = stage ? "当前决策" : head?.querySelector(".panel-title")?.textContent.trim();
+      const title = head?.querySelector(".panel-title");
+      const label = stage ? tr("当前决策") : title?.textContent.trim();
+      // Keep existing panel preferences stable when their visible titles are translated.
+      const foldKey = stage ? "当前决策" : title?.dataset.i18n || label;
       if (!head || !label) return;
       const chevron = document.createElementNS(SVG_NS, "svg");
       chevron.setAttribute("class", "fold-chevron ico");
@@ -176,18 +192,18 @@
       (head.querySelector(".decision-meta") || head).append(chevron);
       head.setAttribute("role", "button");
       head.tabIndex = 0;
+      head.dataset.foldLabel = foldKey;
       /** Apply one fold without replacing any live rendered data. */
       function apply(collapsed, persist = true) {
         panel.dataset.collapsed = String(collapsed);
         head.setAttribute("aria-expanded", String(!collapsed));
-        head.setAttribute("aria-label", `${label}：${collapsed ? "已收起，点击展开" : "点击收起"}`);
-        head.title = `${collapsed ? "展开" : "收起"}${label}`;
-        if (collapsed) folded.add(label); else folded.delete(label);
+        paintFoldLabel(head, foldKey, collapsed);
+        if (collapsed) folded.add(foldKey); else folded.delete(foldKey);
         if (persist) {
           try { localStorage.setItem(FOLD_KEY, JSON.stringify([...folded])); } catch (_) { /* Folding remains usable. */ }
         }
       }
-      apply(folded.has(label), false);
+      apply(folded.has(foldKey), false);
       head.addEventListener("click", () => apply(panel.dataset.collapsed !== "true"));
       head.addEventListener("keydown", event => {
         if (event.key === "Enter" || event.key === " ") { event.preventDefault(); apply(panel.dataset.collapsed !== "true"); }
@@ -195,10 +211,24 @@
     });
   }
 
+  /** Repaint initialized shell labels after the authoritative run language arrives. */
+  function refreshLanguage() {
+    if (!view.initialized) return;
+    applyTheme(view.theme, false);
+    for (const option of node("codex-kind")?.options || []) {
+      if (option.value === "") option.textContent = tr("所有分类");
+      else if (Object.hasOwn(KNOWLEDGE_KINDS, option.value)) option.textContent = tr(KNOWLEDGE_KINDS[option.value]);
+    }
+    document.querySelectorAll(".panel").forEach(panel => {
+      const head = panel.querySelector(panel.classList.contains("decision") ? ":scope > .decision-head" : ":scope > .panel-head");
+      if (head?.dataset.foldLabel) paintFoldLabel(head, head.dataset.foldLabel, panel.dataset.collapsed === "true");
+    });
+  }
+
   /** Fetch only local read-only knowledge resources and retain useful errors. */
   async function readKnowledge(path) {
     const response = await fetch(path, {cache: "no-store"});
-    if (!response.ok) throw new Error(`本地知识库请求失败 (${response.status})`);
+    if (!response.ok) throw new Error(tr("本地知识库请求失败 ({status})", {status: response.status}));
     return response.json();
   }
 
@@ -206,15 +236,15 @@
   async function selectKnowledge(entry, button) {
     const version = ++view.detailVersion;
     const detail = node("codex-detail");
-    detail.replaceChildren(element("p", "empty-note", "正在读取条目…"));
+    detail.replaceChildren(element("p", "empty-note", tr("正在读取条目…")));
     document.querySelectorAll(".codex-entry").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
     try {
       const data = await readKnowledge(`/api/knowledge/${encodeURIComponent(entry.kind)}/${encodeURIComponent(entry.entity_id)}`);
       if (version !== view.detailVersion) return;
       detail.replaceChildren(element("h2", "", data.name || data.entity_id),
-        element("p", "codex-id", `${KNOWLEDGE_KINDS[entry.kind] || entry.kind} · ${entry.entity_id}`),
-        element("p", "codex-desc", data.description || data.text || "该条目没有独立的机制正文，请查看原始字段。"),
-        element("h3", "", "来源与完整字段"), element("pre", "json-block", JSON.stringify(data, null, 2)));
+        element("p", "codex-id", `${tr(KNOWLEDGE_KINDS[entry.kind] || entry.kind)} · ${entry.entity_id}`),
+        element("p", "codex-desc", data.description || data.text || tr("该条目没有独立的机制正文，请查看原始字段。")),
+        element("h3", "", tr("来源与完整字段")), element("pre", "json-block", JSON.stringify(data, null, 2)));
       detail.scrollTop = 0;
     } catch (error) {
       if (version === view.detailVersion) detail.replaceChildren(element("p", "empty-note", error.message));
@@ -227,7 +257,7 @@
     const version = ++view.searchVersion;
     ++view.detailVersion;
     const params = new URLSearchParams({q: node("codex-search").value.trim(), kind: node("codex-kind").value, limit: String(KNOWLEDGE_LIMIT)});
-    node("codex-count").textContent = "搜索中…";
+    node("codex-count").textContent = tr("搜索中…");
     const results = node("codex-results");
     const detail = node("codex-detail");
     try {
@@ -235,58 +265,52 @@
       if (version !== view.searchVersion) return;
       view.knowledgeLoaded = true;
       const entries = Array.isArray(data.results) ? data.results : [];
-      node("codex-count").textContent = `显示 ${entries.length} 条`;
+      node("codex-count").textContent = tr("显示 {count} 条", {count: entries.length});
       results.replaceChildren(...entries.map(entry => {
         const button = element("button", "codex-entry");
         button.type = "button";
         button.setAttribute("aria-pressed", "false");
-        button.append(element("strong", "", entry.name || entry.entity_id), element("small", "", `${KNOWLEDGE_KINDS[entry.kind] || entry.kind} · ${entry.entity_id}`));
+        button.append(element("strong", "", entry.name || entry.entity_id), element("small", "", `${tr(KNOWLEDGE_KINDS[entry.kind] || entry.kind)} · ${entry.entity_id}`));
         button.addEventListener("click", () => selectKnowledge(entry, button));
         return button;
       }));
-      if (!entries.length) results.append(element("p", "empty-note", "没有匹配条目；试试英文名或实体 ID。"));
-      detail.replaceChildren(element("p", "empty-note", "选择左侧条目查看来源、版本与完整字段。"));
+      if (!entries.length) results.append(element("p", "empty-note", tr("没有匹配条目；试试英文名或实体 ID。")));
+      detail.replaceChildren(element("p", "empty-note", tr("选择左侧条目查看来源、版本与完整字段。")));
       if (data.metadata) {
         const metadata = element("details", "knowledge-metadata");
-        metadata.append(element("summary", "", "本地知识快照"), element("pre", "json-block", JSON.stringify(data.metadata, null, 2)));
+        metadata.append(element("summary", "", tr("本地知识快照")), element("pre", "json-block", JSON.stringify(data.metadata, null, 2)));
         detail.append(metadata);
       }
     } catch (error) {
       if (version !== view.searchVersion) return;
-      node("codex-count").textContent = "搜索失败";
+      node("codex-count").textContent = tr("搜索失败");
       results.replaceChildren(element("p", "empty-note", error.message));
     }
   }
 
   // Fallback width of the live throughput window; the client passes its own value.
   const DEFAULT_SPEED_WINDOW_MS = 10000;
+  // Reused sparkline nodes; streaming updates only replace path data.
+  let spark = null;
 
-  /** Plot time-stamped samples on a fixed window; both edges stay pinned smoothly. */
-  function renderSpeed(points, now = Date.now(), windowMs = DEFAULT_SPEED_WINDOW_MS) {
-    const box = node("speed-bars");
-    const samples = (points || [])
-      .filter(point => point && Number.isFinite(point.time) && Number.isFinite(point.value))
-      .sort((a, b) => a.time - b.time);
-    if (!samples.length) { box.replaceChildren(); return; }
-    const start = now - windowMs;
-    const visible = samples.filter(point => point.time >= start);
-    if (!visible.length) { box.replaceChildren(); return; }
-    // Keep the sample before the window so the left edge can be interpolated.
-    const previous = samples.filter(point => point.time < start).at(-1);
-    const scale = Math.max(SPARK_MIN_SCALE, previous ? previous.value : 0, ...visible.map(point => point.value));
-    const yFor = value => SPARK_HEIGHT * (1 - Math.max(0, value) / scale);
-    const coords = [];
-    if (previous && visible[0].time > start) {
-      const ratio = (start - previous.time) / (visible[0].time - previous.time);
-      coords.push([0, yFor(previous.value + (visible[0].value - previous.value) * ratio)]);
+  /** Draw a smooth quadratic line through sample midpoints without overshooting the values. */
+  function smoothLine(coords) {
+    if (coords.length < 3) {
+      return coords.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
     }
-    visible.forEach(point => coords.push([
-      Math.min(SPARK_WIDTH, Math.max(0, (point.time - start) / windowMs * SPARK_WIDTH)),
-      yFor(point.value),
-    ]));
-    // Hold the newest reading at the live cursor instead of leaving a drifting gap.
-    if (coords.at(-1)[0] < SPARK_WIDTH) coords.push([SPARK_WIDTH, coords.at(-1)[1]]);
-    const line = coords.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+    let path = `M${coords[0][0].toFixed(1)} ${coords[0][1].toFixed(1)}`;
+    for (let index = 1; index < coords.length - 1; index += 1) {
+      const [x, y] = coords[index];
+      const [nextX, nextY] = coords[index + 1];
+      path += ` Q${x.toFixed(1)} ${y.toFixed(1)} ${((x + nextX) / 2).toFixed(1)} ${((y + nextY) / 2).toFixed(1)}`;
+    }
+    const [lastX, lastY] = coords.at(-1);
+    return `${path} L${lastX.toFixed(1)} ${lastY.toFixed(1)}`;
+  }
+
+  /** Create the sparkline once so per-frame updates avoid rebuilding SVG nodes. */
+  function ensureSpark(box) {
+    if (spark && spark.svg.parentNode === box) return spark;
     const svg = document.createElementNS(SVG_NS, "svg");
     svg.setAttribute("viewBox", `0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`);
     svg.setAttribute("preserveAspectRatio", "none");
@@ -302,11 +326,50 @@
     defs.append(gradient);
     const area = document.createElementNS(SVG_NS, "path");
     area.setAttribute("fill", "url(#spark-fill)");
-    area.setAttribute("d", `${line} L${coords.at(-1)[0].toFixed(1)} ${SPARK_HEIGHT} L${coords[0][0].toFixed(1)} ${SPARK_HEIGHT} Z`);
-    const stroke = document.createElementNS(SVG_NS, "path");
-    stroke.setAttribute("class", "spark-line"); stroke.setAttribute("d", line);
-    svg.append(defs, area, stroke);
+    const line = document.createElementNS(SVG_NS, "path");
+    line.setAttribute("class", "spark-line");
+    svg.append(defs, area, line);
     box.replaceChildren(svg);
+    spark = {svg, area, line};
+    return spark;
+  }
+
+  /** Plot time-stamped samples on a fixed window; both edges stay pinned smoothly. */
+  function renderSpeed(points, now = Date.now(), windowMs = DEFAULT_SPEED_WINDOW_MS, liveValue = null) {
+    const box = node("speed-bars");
+    const samples = (points || [])
+      .filter(point => point && Number.isFinite(point.time) && Number.isFinite(point.value))
+      .sort((a, b) => a.time - b.time);
+    if (!samples.length) { box.replaceChildren(); spark = null; return; }
+    const start = now - windowMs;
+    const visible = samples.filter(point => point.time >= start);
+    if (!visible.length) { box.replaceChildren(); spark = null; return; }
+    // Keep the sample before the window so the left edge can be interpolated.
+    const previous = samples.filter(point => point.time < start).at(-1);
+    const live = Number.isFinite(liveValue) && liveValue >= 0 ? liveValue : null;
+    const scale = Math.max(SPARK_MIN_SCALE, previous ? previous.value : 0, live ?? 0,
+      ...visible.map(point => point.value));
+    const yFor = value => SPARK_HEIGHT * (1 - Math.max(0, value) / scale);
+    const coords = [];
+    if (previous && visible[0].time > start) {
+      const ratio = (start - previous.time) / (visible[0].time - previous.time);
+      coords.push([0, yFor(previous.value + (visible[0].value - previous.value) * ratio)]);
+    }
+    visible.forEach(point => coords.push([
+      Math.min(SPARK_WIDTH, Math.max(0, (point.time - start) / windowMs * SPARK_WIDTH)),
+      yFor(point.value),
+    ]));
+    if (live !== null) {
+      // The live estimate moves continuously between samples and holds the cursor honest.
+      coords.push([SPARK_WIDTH, yFor(live)]);
+    } else if (coords.at(-1)[0] < SPARK_WIDTH) {
+      // Hold the newest reading at the live cursor instead of leaving a drifting gap.
+      coords.push([SPARK_WIDTH, coords.at(-1)[1]]);
+    }
+    const line = smoothLine(coords);
+    const sparkline = ensureSpark(box);
+    sparkline.line.setAttribute("d", line);
+    sparkline.area.setAttribute("d", `${line} L${coords.at(-1)[0].toFixed(1)} ${SPARK_HEIGHT} L${coords[0][0].toFixed(1)} ${SPARK_HEIGHT} Z`);
   }
 
   /** Bind appearance and inspectors once; the main client owns network lifecycle and controls. */
@@ -334,7 +397,7 @@
     node("scrim").addEventListener("click", () => closeDrawer());
     document.addEventListener("keydown", handleDrawerKey);
     Object.entries(KNOWLEDGE_KINDS).forEach(([kind, label]) => {
-      const option = element("option", "", label); option.value = kind; node("codex-kind").append(option);
+      const option = element("option", "", tr(label)); option.value = kind; node("codex-kind").append(option);
     });
     node("codex-kind").addEventListener("change", searchKnowledge);
     node("codex-search").addEventListener("input", () => {
@@ -347,5 +410,5 @@
     bindFolds();
   }
 
-  window.Observatory = {initialize, openDrawer, closeDrawer, applyCharacter, renderSpeed};
+  window.Observatory = {initialize, refreshLanguage, openDrawer, closeDrawer, applyCharacter, renderSpeed};
 })();

@@ -5,6 +5,7 @@ Card, event, resource replacement, and other strategic choices remain with the m
 """
 
 from .public import ActionError, character_id, configured_start, validate_action
+from .presentation import display_text, language_from_config
 
 
 # These relics make an empty potion slot or potion inventory strategically valuable.
@@ -100,6 +101,7 @@ def automatic_decision(observation: dict, config: dict | None = None, *,
     screen = state.get("screen")
     action = None
     reason = ""
+    language = language_from_config(config)
 
     if screen == "CHARACTER_SELECT":
         try:
@@ -112,15 +114,15 @@ def automatic_decision(observation: dict, config: dict | None = None, *,
                           if character_id(row.get("character_id", row.get("line"))) == target["character"]]
             if "select_character" in actions and len(candidates) == 1:
                 action = {"type": "select_character", "option_index": candidates[0]["i"]}
-                reason = f"按开局配置选择 {target['character']}。"
+                reason = display_text(language, "select_character", character=target["character"])
         elif type(selection.get("ascension")) is int:
             current = selection["ascension"]
             if current != target["ascension"]:
                 kind = "increase_ascension" if current < target["ascension"] else "decrease_ascension"
                 if kind in actions:
-                    action, reason = {"type": kind}, f"按开局配置逐步调整至 A{target['ascension']}。"
+                    action, reason = {"type": kind}, display_text(language, "ascension", ascension=target["ascension"])
             elif "embark" in actions and selection.get("embark") is True:
-                action, reason = {"type": "embark"}, "角色和难度已符合开局配置，自动出发。"
+                action, reason = {"type": "embark"}, display_text(language, "embark")
     elif screen == "REWARD":
         reward = state.get("reward", {})
         # Looking at a card reward is automatic; choosing a card or skipping never is.
@@ -136,9 +138,9 @@ def automatic_decision(observation: dict, config: dict | None = None, *,
             for row in reward.get("rewards", []) if isinstance(row, dict))
         if "claim_reward" in actions:
             for kind, explanation in (
-                    ("GOLD", "自动领取金币奖励。"),
-                    ("POTION", "药水栏有空位且没有空槽收益取舍，自动领取药水。"),
-                    ("CARD", "自动打开卡牌奖励；拿牌或跳过仍由模型决定。")):
+                    ("GOLD", "gold_reward"),
+                    ("POTION", "potion_reward"),
+                    ("CARD", "card_reward")):
                 if kind == "CARD" and (potion_swap_needs_policy or card_reward_opened):
                     # One automatic open per reward screen; a model skip must not reopen the choice.
                     continue
@@ -147,33 +149,33 @@ def automatic_decision(observation: dict, config: dict | None = None, *,
                         state.get("run", {}), option, upstream=upstream))), None)
                 if chosen is not None:
                     action = {"type": "claim_reward", "option_index": chosen["i"]}
-                    reason = "按上游流程自动领取可接收的药水。" if kind == "POTION" and upstream else explanation
+                    reason = display_text(language, "upstream_potion" if kind == "POTION" and upstream else explanation)
                     break
         if (action is None and not options and not potion_swap_needs_policy
                 and "proceed" in actions and reward.get("can_proceed") is True):
-            action, reason = {"type": "proceed"}, "奖励已处理，自动进入地图。"
+            action, reason = {"type": "proceed"}, display_text(language, "rewards_done")
     elif screen == "MAP" and "choose_map_node" in actions and not actions - ({"choose_map_node"} | TRANSITION_AUXILIARY_ACTIONS):
         options = _enabled(state.get("map", {}).get("options"))
         if len(options) == 1:
             action = {"type": "choose_map_node", "option_index": options[0]["i"]}
-            reason = "地图只有一个可达节点，自动前进。"
+            reason = display_text(language, "forced_map")
     elif screen == "SHOP":
         if "close_shop_inventory" in scene_actions and "proceed" in actions:
-            action, reason = {"type": "proceed"}, "商店购买决策已结束，自动进入地图。"
+            action, reason = {"type": "proceed"}, display_text(language, "shop_done")
         elif ("open_shop_inventory" in actions and "open_shop_inventory" not in scene_actions
               and not actions - ({"open_shop_inventory", "proceed", "use_potion"} | TRANSITION_AUXILIARY_ACTIONS)):
-            action, reason = {"type": "open_shop_inventory"}, "自动打开商店库存供模型比较。"
+            action, reason = {"type": "open_shop_inventory"}, display_text(language, "open_shop")
         elif actions - TRANSITION_AUXILIARY_ACTIONS == {"proceed"}:
-            action, reason = {"type": "proceed"}, "当前仅剩前进操作，自动继续。"
+            action, reason = {"type": "proceed"}, display_text(language, "proceed")
     elif screen == "COMBAT" and _forced_turn_end(state, actions):
-        action, reason = {"type": "end_turn"}, "无可用手牌、药水或其他操作，自动结束回合。"
+        action, reason = {"type": "end_turn"}, display_text(language, "end_turn")
     elif actions - TRANSITION_AUXILIARY_ACTIONS == {"proceed"} and screen not in {
             "COMBAT", "REWARD", "CARD_SELECTION", "EVENT", "MODAL"}:
-        action, reason = {"type": "proceed"}, "当前仅剩前进操作，自动继续。"
+        action, reason = {"type": "proceed"}, display_text(language, "proceed")
     elif len(actions) == 1:
         kind = next(iter(actions))
         if kind in SINGLE_FINISH_ACTIONS:
-            action, reason = {"type": kind}, "当前仅剩确认或关闭信息界面的操作，自动完成。"
+            action, reason = {"type": kind}, display_text(language, "finish")
 
     if action is None:
         return None

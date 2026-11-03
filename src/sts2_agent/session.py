@@ -18,7 +18,9 @@ from .automatic import automatic_decision
 from .instructions import InstructionBook
 from .memory import PublicMemory, SCENE_OVERLAYS
 from .model_tools import SIMULATION_TOOL_SUMMARY_PROFILE, bounded_tool_result
-from .provider import DECISION_PROMPT, DECISION_SCHEMA, Provider, ProviderCancelled, ProviderError
+from .provider import DECISION_SCHEMA, Provider, ProviderCancelled, ProviderError, decision_prompt
+from .presentation import (DEFAULT_LANGUAGE, PRESENTATION_LANGUAGES, display_text,
+                           language_from_config, presentation_run_active, saved_language)
 from .public import ActionError, configured_start, observation, validate_action
 from .public_history import PublicCombatHistory, observation_coverage
 from .rules import verify_selected_plan
@@ -66,18 +68,19 @@ def _fingerprint(state: dict) -> str:
     return hashlib.sha256(json.dumps(public, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
 
 
-def _action_label(action: dict, obs: dict) -> str:
+def _action_label(action: dict, obs: dict, language: str = DEFAULT_LANGUAGE) -> str:
     """Capture names from the decision's own public frame for later readable history."""
     state = obs.get("state", {})
     kind = action.get("type", "")
     if kind == "skip_selection":
-        return "跳过当前选牌"
+        return display_text(language, "skip_selection")
     label = kind
     if kind == "play_card":
         combat = state.get("combat", {})
         card = next((item for item in combat.get("hand", [])
                      if item.get("i") == action.get("card_index")), {})
-        label = "打出 " + str(card.get("name") or card.get("line") or card.get("card_id") or kind)
+        label = display_text(language, "play_card", name=str(
+            card.get("name") or card.get("line") or card.get("card_id") or kind))
         if "target_index" in action:
             enemy = next((item for item in combat.get("enemies", [])
                           if item.get("i") == action["target_index"]), {})
@@ -175,7 +178,14 @@ class DashboardSession:
                         request["status"] = "interrupted"
             self._cached = self._state.pop("cached_decision", None)
         else:
+            self.config.setdefault("presentation", {})["language"] = saved_language(
+                self.root, language_from_config(self.config))
             self._state = self._new_state()
+        # The current ledger wins over a newer next-run preference, including older Chinese runs.
+        language = self._state.get("presentation_language", DEFAULT_LANGUAGE)
+        self._state["presentation_language"] = (language if isinstance(language, str)
+            and language in PRESENTATION_LANGUAGES else DEFAULT_LANGUAGE)
+        self.config.setdefault("presentation", {})["language"] = self._state["presentation_language"]
         self._state["decision_pending"] = False
         if self._state.get("launch_policy"):
             # A resumed run keeps the starting policy recorded with its ledger.
@@ -283,6 +293,7 @@ class DashboardSession:
             "combat_decision_counter_source": "session_public_decision_episodes",
             "encounter_id": None, "assistance_mode": "autonomous", "commands": {},
             "finished_requests": [], "bridge_identity": None, "error": None, "plan": "",
+            "presentation_language": language_from_config(self.config),
             "strategy_memory_version": 2, "scene_scope": None, "scene_plan": "", "tool_calls": [],
             "metrics": {"requests_used": 0, "actions_completed": 0, "retries": 0,
                 "format_repairs": 0, "unknown_usage_requests": 0, **{key: 0 for key in TOKEN_FIELDS}}}
@@ -295,7 +306,7 @@ class DashboardSession:
             # Test doubles may replace the optional client without implementing its provenance API.
             simulation = self._simulation_rules
         return {"admission_rules_version": CACHED_PROPOSAL_RULES_VERSION,
-                "prompt_sha256": hashlib.sha256(DECISION_PROMPT.encode("utf-8")).hexdigest(),
+                "prompt_sha256": hashlib.sha256(decision_prompt(self.config).encode("utf-8")).hexdigest(),
                 "action_schema_sha256": hashlib.sha256(schema.encode("utf-8")).hexdigest(),
                 "simulation_tool_encoding": (SIMULATION_TOOL_SUMMARY_PROFILE
                     if self.config.get("provider", {}).get(
@@ -858,6 +869,27 @@ class DashboardSession:
             self._discard_rule_stale_proposal()
             self._persist()
 
+    def configure_presentation(self, language: str) -> None:
+        """Set a fresh run's spectator language; a terminal ledger keeps its original text identity."""
+        if language not in PRESENTATION_LANGUAGES:
+            raise ValueError("Unsupported presentation language.")
+        with self._condition:
+            if (self._state.get("desired_state") != "paused" or self._state.get("request_pending")
+                    or self._state.get("decision_pending") or self._state.get("inflight")
+                    or (self.root / "local/pending-action.json").exists()
+                    or presentation_run_active(self._state)):
+                raise SessionError("Choose the presentation language before a new run while paused.")
+            if self._state.get("terminal_evidence"):
+                # The launcher stores the next-run preference without rewriting the finished ledger.
+                return
+            if self._state["presentation_language"] == language:
+                return
+            self.config.setdefault("presentation", {})["language"] = language
+            self._state["presentation_language"] = language
+            self._discard_rule_stale_proposal()
+            self._reset_provider = True
+            self._persist()
+
     def prepare_launch_connection(self) -> None:
         """Explicitly reconnect an unfinished run only after all previous native work is resolved."""
         if (self._state["inflight"] or self._state["request_pending"]
@@ -1079,7 +1111,8 @@ class DashboardSession:
                     "rules_identity": self._proposal_rule_identity()}
                 self._state["decision"] = {key: deepcopy(value) for key, value in self._cached.items()
                     if key not in {"token", "observation", "instructions"}}
-                self._state["decision"]["action_label"] = _action_label(automatic["action"], obs)
+                self._state["decision"]["action_label"] = _action_label(
+                    automatic["action"], obs, self._state["presentation_language"])
                 self._state["phase"] = "decision_ready"
                 self._journal.event("decisions", self._state["decision"])
                 self._emit("decision", self._state["decision"])
@@ -1144,7 +1177,8 @@ class DashboardSession:
                     diagnostics = (simulation.get("diagnostics") or (simulation.get("result") or {}).get("errors")
                                    or (simulation.get("result") or {}).get("support") or simulation.get("status"))
                     raise SessionError(f"上游{decision_phase}决策不可用；未调用语言模型。{json.dumps(diagnostics, ensure_ascii=False)[:180]}")
-                decision = {"action": deepcopy(action), "reason": "采用上游程序本次合法动作；未调用语言模型。",
+                decision = {"action": deepcopy(action), "reason": display_text(
+                    self._state["presentation_language"], "upstream_decision"),
                     "decision_source": "upstream_mcts" if decision_phase == "combat" else "upstream_ppo",
                     "model_identity": deepcopy(((simulation.get("results") or {}).get("mcts") or {}).get("network_identity")
                         if decision_phase == "combat" else (simulation.get("result") or {}).get("model_identity")),
@@ -1216,7 +1250,8 @@ class DashboardSession:
                 self._cached["upstream_next_context"] = {"scope": self._run_policy_scope(obs), "context": deepcopy(next_context)}
             self._state["decision"] = {key: deepcopy(value) for key, value in self._cached.items()
                                        if key not in {"token", "observation", "instructions", "prediction"}}
-            self._state["decision"]["action_label"] = _action_label(decision["action"], obs)
+            self._state["decision"]["action_label"] = _action_label(
+                decision["action"], obs, self._state["presentation_language"])
             self._state["phase"] = "decision_ready"
             self._prepare = False
             self._journal.event("decisions", self._state["decision"])

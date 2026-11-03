@@ -20,6 +20,7 @@ from sts2_agent.model_view import model_view
 from sts2_agent.prompt_context import active_instructions, current_action_reference, prompt_payload, serialize, stable_prefix
 from sts2_agent.prompt_projection import compact_public, serialize_projection, PROJECTION_GUIDE
 from sts2_agent.public import ActionError, INDEX_SOURCES, configured_start, validate_action
+from sts2_agent.presentation import language_from_config
 
 
 # Only these HTTP failures can benefit from a bounded transient retry.
@@ -192,6 +193,19 @@ class ProviderCancelled(ProviderError):
 
 class _StreamInterrupted(ProviderError):
     """A stream ended before its completion marker and may be retried."""
+
+
+def decision_prompt(config: dict) -> str:
+    """Change only spectator output language, preserving the default prompt verbatim."""
+    if language_from_config(config) != "en":
+        return DECISION_PROMPT
+    return DECISION_PROMPT.replace(
+        "Explain the chosen action and build plan in concise Chinese for the spectator dashboard.",
+        "Use English for all spectator-facing model text, including any reasoning text emitted by the API. "
+        "Explain the chosen action in reason and write build_plan, scene_plan, and the legacy plan "
+        "in concise English for the spectator dashboard. Preserve game identifiers, action parameters, "
+        "and the required JSON schema.",
+    )
 
 
 class Provider:
@@ -785,7 +799,7 @@ class Provider:
             # Also removes model answers that could paraphrase a withdrawn instruction.
             self.reset_context("active_instructions_changed")
         self._instruction_signature = signature
-        prefix = {"role": "system", "content": stable_prefix(DECISION_PROMPT) + "\n" + PROJECTION_GUIDE}
+        prefix = {"role": "system", "content": stable_prefix(decision_prompt(self.config)) + "\n" + PROJECTION_GUIDE}
         knowledge = self.knowledge.context_for_model(observation)
         target_version = self.knowledge.metadata().get("target", {}).get("version")
         if self.knowledge_game_version and target_version and self.knowledge_game_version != target_version:

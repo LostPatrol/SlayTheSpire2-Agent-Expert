@@ -610,6 +610,10 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
   font: 500 9.5px/1 var(--font-mono); font-style: normal;
   letter-spacing: .16em; color: var(--ink-faint); transform: translateY(1px);
 }
+/* English headings wrap within narrow sidebars without changing the Chinese layout. */
+:root:lang(en) .panel-head { gap: 7px; }
+:root:lang(en) .panel-head .panel-title { min-width: 0; white-space: normal; line-height: 1.4; padding: 6px 0; }
+:root:lang(en) .panel-head .fold-chevron { margin-left: 3px; }
 .tag {
   font: 500 9px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
   padding: 3px 5px; border: 1px solid var(--edge); border-radius: 2px; color: var(--ink-faint);
@@ -732,6 +736,10 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
 .run-divider::before, .run-divider::after { content: ""; height: 1px; flex: 1; background: var(--edge-soft); }
 .run-divider span { font: 500 9px/1 var(--font-mono); letter-spacing: .14em; color: var(--ink-faint); white-space: nowrap; }
 .newrun { display: grid; grid-template-columns: minmax(0, 1fr) 84px auto; gap: 7px; align-items: end; }
+/* Keep the pre-run language selection separate from native launch controls. */
+.presentation-settings { margin-bottom: 10px; }
+.presentation-settings select { width: 100%; }
+.presentation-settings .fineprint { margin-top: 5px; }
 .asc-field output { float: right; font-size: 10px; }
 .asc-field input { margin-top: 2px; }
 .start-compact { height: 31px; padding: 0 9px; font-size: 11px; }
@@ -870,8 +878,8 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
 .decision-candidate-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .decision-candidate-top b { min-width: 0; font-size: 12px; font-weight: 500; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .decision-candidate-top span { flex: none; font: 500 11px/1.2 var(--font-mono); color: var(--brass); }
-.decision-candidate-bar { height: 3px; margin-top: 4px; background: var(--edge-soft); overflow: hidden; }
-.decision-candidate-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass-dim), var(--brass-hi)); }
+.decision-candidate-bar { height: 5px; margin-top: 5px; background: var(--edge-soft); overflow: hidden; }
+.decision-candidate-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass-dim), var(--brass-hi)); transition: width .18s ease; }
 .decision-candidate-facts { margin-top: 4px; font: 500 9px/1.4 var(--font-mono); color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .decision-side > .link-button { margin-top: 10px; }
 .pipeline { display: none; }
@@ -1210,7 +1218,7 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
 .spark svg { display: block; width: 100%; height: 100%; }
 .spark-stop-top { stop-color: var(--brass); stop-opacity: .30; }
 .spark-stop-bottom { stop-color: var(--brass); stop-opacity: 0; }
-.spark-line { fill: none; stroke: var(--brass); stroke-width: 1.25px; vector-effect: non-scaling-stroke; }
+.spark-line { fill: none; stroke: var(--brass); stroke-width: 1.25px; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
 .spark::after {
   content: ""; position: absolute; right: 0; top: 6px; bottom: 0; width: 2px;
   background: var(--brass-hi); box-shadow: 0 0 9px color-mix(in srgb, var(--brass) 55%, transparent);
@@ -1502,6 +1510,8 @@ input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border-radius
 .simulation-facts, .simulation-gap { margin-top: 7px; color: var(--ink-faint); font-size: 11.5px; line-height: 1.65; overflow-wrap: anywhere; }
 .simulation-gap { color: var(--copper); }
 .simulation-score { display: block; margin-top: 7px; color: var(--brass); font: 500 12px/1.4 var(--font-mono); }
+.simulation-card .candidate-meter { height: 5px; margin-top: 6px; background: var(--edge-soft); overflow: hidden; }
+.simulation-card .candidate-meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass-dim), var(--brass-hi)); transition: width .18s ease; }
 .inspector { margin-top: 8px; font-size: 11px; color: var(--ink-faint); }
 .inspector summary { cursor: pointer; color: var(--brass-dim); }
 .inspector pre { max-height: 320px; overflow: auto; padding: 10px; margin-top: 7px; background: color-mix(in srgb, var(--panel-3) 45%, transparent); border: 1px solid var(--edge-soft); white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.7 var(--font-mono); }
@@ -1610,7 +1620,7 @@ body.drawer-open { overflow: hidden; }
   display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: baseline; gap: 8px;
   padding: 3px 0 7px;
   background-image: linear-gradient(90deg, color-mix(in srgb, var(--brass) 30%, transparent), color-mix(in srgb, var(--brass) 30%, transparent));
-  background-repeat: no-repeat; background-position: 0 100%; background-size: var(--v, 0%) 2px;
+  background-repeat: no-repeat; background-position: 0 100%; background-size: var(--v, 0%) 3px;
 }
 .bay-row:first-child {
   background-image: linear-gradient(90deg, var(--brass), var(--brass));
