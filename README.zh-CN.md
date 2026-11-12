@@ -4,6 +4,8 @@
 ![Platform: Windows](https://img.shields.io/badge/platform-Windows-5865F2?style=flat-square)
 ![Steam: v0.107.1](https://img.shields.io/badge/Steam-v0.107.1-355E3B?style=flat-square)
 ![Languages: 中文 / English](https://img.shields.io/badge/languages-中文%20%2F%20English-8B6B45?style=flat-square)
+[![GitHub stars](https://img.shields.io/github/stars/LostPatrol/SlayTheSpire2-Agent-Expert?style=flat-square)](https://github.com/LostPatrol/SlayTheSpire2-Agent-Expert/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/LostPatrol/SlayTheSpire2-Agent-Expert?style=flat-square)](https://github.com/LostPatrol/SlayTheSpire2-Agent-Expert/commits/main)
 
 [English](README.md)
 
@@ -15,12 +17,23 @@
 - 支持五角色和 A0–A10 配置。
 
 <p align="center">
-  <a href="docs/images/dashboard.jpg"><img src="docs/images/dashboard.jpg" alt="尖塔观测台仪表盘中的对局战斗记录" width="1200"></a>
+  <a href="docs/images/dashboard-zh-dark.jpg"><img src="docs/images/dashboard-zh-dark.jpg" alt="尖塔观测台中文仪表盘夜间主题的对局记录回放" width="1200"></a>
   <br>
-  <sub>尖塔观测台 · 使用对局记录渲染的战斗画面</sub>
+  <sub>尖塔观测台 · 夜间主题 · 对局记录回放，历史内容按原文保留。</sub>
 </p>
 
-当前适配 Steam 主分支 `v0.107.1`。项目仍在开发，完整内容覆盖、纯自主通关及正式胜率评估尚未完成。
+<details>
+  <summary>白天主题</summary>
+  <p align="center">
+    <a href="docs/images/dashboard-zh-light.jpg"><img src="docs/images/dashboard-zh-light.jpg" alt="尖塔观测台中文仪表盘白天主题的对局记录回放" width="1200"></a>
+    <br>
+    <sub>尖塔观测台 · 白天主题 · 对局记录回放，历史内容按原文保留。</sub>
+  </p>
+</details>
+
+> [!NOTE]
+> 当前适配 Steam 主分支 `v0.107.1`。
+> 项目仍在开发，完整内容覆盖、纯自主通关及正式胜率评估尚未完成。
 
 一个可参考的效果是：使用deepseek-v4.1-flash1017，开启推演辅助，推理强度为low，极高概率爬至48层 ，较高概率通关A0；整局总token约为50M-60M，耗时2小时以上，API成本 8.5 元。关闭推演辅助，则爬至48层概率下降，且通关概率显著下降。
 
