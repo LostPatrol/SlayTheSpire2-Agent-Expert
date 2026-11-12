@@ -18,7 +18,7 @@ An AI agent for *Slay the Spire 2* on Windows, using a game mod's structured obs
 <p align="center">
   <a href="docs/images/dashboard-en-light.jpg"><img src="docs/images/dashboard-en-light.jpg" alt="Spire Observatory English dashboard showing a recorded session replay" width="1200"></a>
   <br>
-  <sub>Spire Observatory · recorded session replay; historical content remains in its original language.</sub>
+  <sub>Spire Observatory · recorded session replay, with display text translated into English for this preview.</sub>
 </p>
 
 > [!NOTE]
