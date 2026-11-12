@@ -4,7 +4,6 @@
 ![Platform: Windows](https://img.shields.io/badge/platform-Windows-5865F2?style=flat-square)
 ![Steam: v0.107.1](https://img.shields.io/badge/Steam-v0.107.1-355E3B?style=flat-square)
 ![Languages: 中文 / English](https://img.shields.io/badge/languages-中文%20%2F%20English-8B6B45?style=flat-square)
-[![GitHub stars](https://img.shields.io/github/stars/LostPatrol/SlayTheSpire2-Agent-Expert?style=flat-square)](https://github.com/LostPatrol/SlayTheSpire2-Agent-Expert/stargazers)
 [![Last commit](https://img.shields.io/github/last-commit/LostPatrol/SlayTheSpire2-Agent-Expert?style=flat-square)](https://github.com/LostPatrol/SlayTheSpire2-Agent-Expert/commits/main)
 
 [English](README.md)
@@ -17,19 +16,10 @@
 - 支持五角色和 A0–A10 配置。
 
 <p align="center">
-  <a href="docs/images/dashboard-zh-dark.jpg"><img src="docs/images/dashboard-zh-dark.jpg" alt="尖塔观测台中文仪表盘夜间主题的对局记录回放" width="1200"></a>
+  <a href="docs/images/dashboard-zh-light.jpg"><img src="docs/images/dashboard-zh-light.jpg" alt="尖塔观测台中文仪表盘的对局记录回放" width="1200"></a>
   <br>
-  <sub>尖塔观测台 · 夜间主题 · 对局记录回放，历史内容按原文保留。</sub>
+  <sub>尖塔观测台 · 对局记录回放，历史内容按原文保留。</sub>
 </p>
-
-<details>
-  <summary>白天主题</summary>
-  <p align="center">
-    <a href="docs/images/dashboard-zh-light.jpg"><img src="docs/images/dashboard-zh-light.jpg" alt="尖塔观测台中文仪表盘白天主题的对局记录回放" width="1200"></a>
-    <br>
-    <sub>尖塔观测台 · 白天主题 · 对局记录回放，历史内容按原文保留。</sub>
-  </p>
-</details>
 
 > [!NOTE]
 > 当前适配 Steam 主分支 `v0.107.1`。

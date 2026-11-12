@@ -4,7 +4,6 @@
 ![Platform: Windows](https://img.shields.io/badge/platform-Windows-5865F2?style=flat-square)
 ![Steam: v0.107.1](https://img.shields.io/badge/Steam-v0.107.1-355E3B?style=flat-square)
 ![Languages: 中文 / English](https://img.shields.io/badge/languages-中文%20%2F%20English-8B6B45?style=flat-square)
-[![GitHub stars](https://img.shields.io/github/stars/LostPatrol/SlayTheSpire2-Agent-Expert?style=flat-square)](https://github.com/LostPatrol/SlayTheSpire2-Agent-Expert/stargazers)
 [![Last commit](https://img.shields.io/github/last-commit/LostPatrol/SlayTheSpire2-Agent-Expert?style=flat-square)](https://github.com/LostPatrol/SlayTheSpire2-Agent-Expert/commits/main)
 
 [中文文档](README.zh-CN.md)
@@ -17,19 +16,10 @@ An AI agent for *Slay the Spire 2* on Windows, using a game mod's structured obs
 - Supports all five characters and A0–A10 configurations.
 
 <p align="center">
-  <a href="docs/images/dashboard-en-dark.jpg"><img src="docs/images/dashboard-en-dark.jpg" alt="Spire Observatory English dashboard in night theme showing a recorded session replay" width="1200"></a>
+  <a href="docs/images/dashboard-en-light.jpg"><img src="docs/images/dashboard-en-light.jpg" alt="Spire Observatory English dashboard showing a recorded session replay" width="1200"></a>
   <br>
-  <sub>Spire Observatory · night theme · recorded session replay; historical content remains in its original language.</sub>
+  <sub>Spire Observatory · recorded session replay; historical content remains in its original language.</sub>
 </p>
-
-<details>
-  <summary>Day theme</summary>
-  <p align="center">
-    <a href="docs/images/dashboard-en-light.jpg"><img src="docs/images/dashboard-en-light.jpg" alt="Spire Observatory English dashboard in day theme showing a recorded session replay" width="1200"></a>
-    <br>
-    <sub>Spire Observatory · day theme · recorded session replay; historical content remains in its original language.</sub>
-  </p>
-</details>
 
 > [!NOTE]
 > Currently targets the Steam main branch, `v0.107.1`.
