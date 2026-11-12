@@ -1,6 +1,10 @@
 <!-- Public overview and setup instructions for SlayTheSpire2-Agent-Expert. -->
 # SlayTheSpire2-Agent-Expert
 
+![Platform: Windows](https://img.shields.io/badge/platform-Windows-5865F2?style=flat-square)
+![Steam: v0.107.1](https://img.shields.io/badge/Steam-v0.107.1-355E3B?style=flat-square)
+![Languages: 中文 / English](https://img.shields.io/badge/languages-中文%20%2F%20English-8B6B45?style=flat-square)
+
 [中文文档](README.zh-CN.md)
 
 An AI agent for *Slay the Spire 2* on Windows, using a game mod's structured observations and action interface.
@@ -9,6 +13,12 @@ An AI agent for *Slay the Spire 2* on Windows, using a game mod's structured obs
 - Provides a bilingual local dashboard for streaming reasoning, action receipts, full history, and budgets, with pause, resume, single-step, and manual guidance.
 - Includes an English and Chinese static knowledge base; the model and public simulations use public information by default.
 - Supports all five characters and A0–A10 configurations.
+
+<p align="center">
+  <a href="docs/images/dashboard.jpg"><img src="docs/images/dashboard.jpg" alt="Spire Observatory dashboard showing a recorded combat session" width="1200"></a>
+  <br>
+  <sub>Spire Observatory · recorded combat session, rendered with the dashboard UI</sub>
+</p>
 
 Currently targets the Steam main branch, `v0.107.1`. The project is still in development; full content coverage, fully autonomous completion, and formal win-rate evaluation remain unfinished.
 

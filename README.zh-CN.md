@@ -1,6 +1,10 @@
 <!-- Public overview and setup instructions for SlayTheSpire2-Agent-Expert. -->
 # SlayTheSpire2-Agent-Expert
 
+![Platform: Windows](https://img.shields.io/badge/platform-Windows-5865F2?style=flat-square)
+![Steam: v0.107.1](https://img.shields.io/badge/Steam-v0.107.1-355E3B?style=flat-square)
+![Languages: 中文 / English](https://img.shields.io/badge/languages-中文%20%2F%20English-8B6B45?style=flat-square)
+
 [English](README.md)
 
 在 Windows 运行 *Slay the Spire 2* 的 AI Agent，通过游戏 Mod 的结构化观测与动作接口操作游戏。
@@ -9,6 +13,12 @@
 - 提供中英文本地仪表盘，查看流式推理、动作回执、完整历史与预算，支持暂停、继续、单步和人工指导。
 - 内置中英文静态知识库；默认模型与公开推演使用公开信息。
 - 支持五角色和 A0–A10 配置。
+
+<p align="center">
+  <a href="docs/images/dashboard.jpg"><img src="docs/images/dashboard.jpg" alt="尖塔观测台仪表盘中的对局战斗记录" width="1200"></a>
+  <br>
+  <sub>尖塔观测台 · 使用对局记录渲染的战斗画面</sub>
+</p>
 
 当前适配 Steam 主分支 `v0.107.1`。项目仍在开发，完整内容覆盖、纯自主通关及正式胜率评估尚未完成。
 
